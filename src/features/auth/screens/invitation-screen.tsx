@@ -1,149 +1,107 @@
+import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
+import { useCallback, useState } from 'react';
+import { View } from 'react-native';
 import { inviteService } from '@/core/services/invite';
-import { useQrScanStore } from '@/core/stores';
-import { CenteredScreen } from '@/shared/components/layout';
-import { Panel } from '@/shared/components/ui/panel';
-import { Button } from '@/shared/components/ui/button';
-import { Icon } from '@/shared/components/ui/icon';
-import { Text } from '@/shared/components/ui/text';
 import { IS_NATIVE } from '@/shared/constants';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { parseInvitationQr } from '@/shared/libs/invitation-qr';
-import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
-import { View } from 'react-native';
+import { Button } from '@/shared/ui/button';
+import { Notice } from '@/shared/ui/notice';
+import { Presence } from '@/shared/ui/presence';
+import { Text } from '@/shared/ui/text';
+import { InfoRows } from '@/features/auth/components/info-rows';
+import { MismatchView } from '@/features/auth/components/mismatch-view';
+import { OnboardingFrame } from '@/features/auth/components/onboarding-frame';
+import { OnboardingTop } from '@/features/auth/components/onboarding-top';
+import { INVITATION_ROWS } from '@/features/auth/constants/invitation.constant';
+import { useQrScan } from '@/features/auth/hooks/use-qr-scan';
+import { invitationCopyOf, invitationOutcomeOf } from '@/features/auth/model/invitation-outcome';
+import type { InvitationOutcome } from '@/features/auth/model/invitation-outcome';
+import { invitationRevokedText } from '@/features/auth/model/invitation-refusal';
 import { holdInviteToken } from '@/features/auth/model/invite-slot';
-import {
-  invitationRevokedBy,
-  invitationRevokedText,
-  type InvitationRevoked,
-} from '@/features/auth/model/invitation-refusal';
-import { nextHref } from '@/features/auth/model/onboarding-flow';
-import { OnboardingSteps } from '@/features/auth/components/onboarding-steps';
+import { useOnboardingLayout } from '@/features/auth/hooks/use-onboarding-layout';
+import { useOnboardingNext } from '@/features/auth/hooks/use-onboarding-next';
 
-type InvitationPhase = 'idle' | 'resolving' | 'accepted' | 'error' | 'mismatch' | 'revoked';
+const FRESH: InvitationOutcome = { phase: 'idle', role: null, revoked: null };
+
+function revokedOutcome(revoked: string | undefined): InvitationOutcome {
+  if (!revoked) return FRESH;
+  return {
+    phase: 'expired',
+    role: null,
+    revoked: { moduleId: revoked === 'none' ? null : revoked },
+  };
+}
 
 function InvitationScreen() {
   const router = useRouter();
   const { t } = useTranslation();
-  const status = useQrScanStore((state) => state.status);
-  const value = useQrScanStore((state) => state.value);
+  const { next } = useOnboardingNext();
+  const { hero } = useOnboardingLayout();
   const params = useLocalSearchParams<{ revoked?: string }>();
-  const [phase, setPhase] = useState<InvitationPhase>(params.revoked ? 'revoked' : 'idle');
-  const [revoked, setRevoked] = useState<InvitationRevoked | null>(
-    params.revoked ? { moduleId: params.revoked === 'none' ? null : params.revoked } : null
-  );
-
-  const openScanner = useCallback(() => {
-    useQrScanStore.getState().open({ purpose: 'invite' });
-    router.push('/qr');
-  }, [router]);
-
-  useEffect(() => {
-    if (status !== 'scanned' || !value || phase !== 'idle') return;
-    useQrScanStore.getState().clear();
+  const [outcome, setOutcome] = useState<InvitationOutcome>(() => revokedOutcome(params.revoked));
+  const [token, setToken] = useState<string | null>(null);
+  const resolve = useCallback(async (value: string) => {
     const qr = parseInvitationQr(value);
     if (!qr) {
-      queueMicrotask(() => setPhase('error'));
+      setOutcome({ ...FRESH, phase: 'expired' });
       return;
     }
+    setOutcome({ ...FRESH, phase: 'resolving' });
+    const answer = await inviteService.accept(qr);
+    setToken(qr.token);
+    setOutcome(invitationOutcomeOf({ ...answer, role: answer.info?.role ?? null }));
+  }, []);
+  const scan = useQrScan('invite', (value) => void resolve(value));
+  const start = () => {
+    if (token) holdInviteToken(token);
+    router.replace(next('invited', 'invitation'));
+  };
+  const { phase, revoked } = outcome;
+  const back = () => router.replace('/welcome');
 
-    let active = true;
-    queueMicrotask(() => {
-      if (!active) return;
-      setPhase('resolving');
-      void inviteService.accept(qr).then((response) => {
-        if (!active) return;
-        if (!response.ok || !response.info) {
-          const refusal = invitationRevokedBy(response.errors);
-          if (refusal) setRevoked(refusal);
-          setPhase(refusal ? 'revoked' : response.errors?.code === 'FINGERPRINT_MISMATCH' ? 'mismatch' : 'error');
-          return;
-        }
-        setPhase('accepted');
-        holdInviteToken(qr.token);
-        router.replace(nextHref('invited', 'invitation', { native: IS_NATIVE }) ?? '/');
-      });
-    });
-    return () => {
-      active = false;
-    };
-  }, [phase, router, status, value]);
-
-  const retry = useCallback(() => {
-    setPhase('idle');
-    openScanner();
-  }, [openScanner]);
-
+  if (phase === 'mismatch')
+    return <MismatchView onBack={back} onRestart={() => setOutcome(FRESH)} />;
+  const copy = invitationCopyOf(outcome);
+  const action = {
+    accept: { label: t('screens.invitation.accept'), onPress: start },
+    understood: { label: t('screens.invitation.understood'), onPress: back },
+    scan: { label: t('screens.invitation.scan'), onPress: scan },
+  }[copy.action];
   return (
-    <CenteredScreen maxWidth={448} className="items-stretch">
-      <View className="gap-1.5">
-        <OnboardingSteps flow="invited" step="invitation" className="mb-4" />
-        <Text variant="title">{t('screens.invitation.title')}</Text>
-        <Text variant="caption" className="text-foreground-secondary">
-          {t('screens.invitation.subtitle')}
+    <OnboardingFrame
+      top={<OnboardingTop onBack={back} />}
+      footer={
+        <Button
+          variant="primary"
+          block
+          icon={copy.action === 'scan' ? 'qr' : undefined}
+          busy={phase === 'resolving'}
+          {...action}
+        />
+      }>
+      <View className="mt-4 items-center gap-2">
+        <Presence state={phase === 'expired' ? 'idle' : 'happy'} size={hero} />
+        <Text variant="heroCompact" heading={1} align="center">
+          {t(copy.title)}
         </Text>
+        <Text variant="body" tone="2" align="center">
+          {t(copy.lead)}
+        </Text>
+        {revoked ? (
+          <Text variant="meta" tone="2" align="center">
+            {invitationRevokedText(revoked, t)}
+          </Text>
+        ) : null}
       </View>
-
-      <Panel title={t('screens.invitation.scan-title')} className="gap-4">
-        {phase === 'idle' ? (
-          <Button size="lg" onPress={openScanner}>
-            <Icon name="scan-barcode" />
-            <Text>{t('screens.invitation.scan')}</Text>
-          </Button>
-        ) : null}
-
-        {phase === 'resolving' ? (
-          <View className="flex-row items-center gap-3 py-1">
-            <Icon name="refresh-cw" className="text-accent-strong size-5" />
-            <Text>{t('screens.invitation.validating')}</Text>
-          </View>
-        ) : null}
-
-        {phase === 'accepted' ? (
-          <View className="flex-row items-center gap-3 py-1">
-            <Icon name="check-circle" className="text-success size-5" />
-            <Text>{t('screens.invitation.accepted')}</Text>
-          </View>
-        ) : null}
-
-        {phase === 'revoked' ? (
-          <View className="gap-3">
-            <View className="flex-row items-start gap-3">
-              <Icon name="triangle-alert" className="text-warning-strong mt-0.5 size-5" />
-              <View className="min-w-0 flex-1 gap-1">
-                <Text variant="body">{t('screens.invitation.revoked.title')}</Text>
-                <Text variant="caption">{revoked ? invitationRevokedText(revoked, t) : ''}</Text>
-                <Text variant="caption" className="text-foreground-secondary">
-                  {t('screens.invitation.revoked.hint')}
-                </Text>
-              </View>
-            </View>
-            <Button variant="outline" onPress={() => router.replace('/welcome')}>
-              <Text>{t('screens.invitation.revoked.back')}</Text>
-            </Button>
-          </View>
-        ) : null}
-
-        {phase === 'error' || phase === 'mismatch' ? (
-          <View className="gap-3">
-            <View className="flex-row items-start gap-3">
-              <Icon name="triangle-alert" className="text-error-strong mt-0.5 size-5" />
-              <View className="min-w-0 flex-1 gap-1">
-                <Text variant="body" className="text-error-strong">
-                  {phase === 'mismatch' ? t('screens.invitation.mismatch-title') : t('screens.invitation.error')}
-                </Text>
-                {phase === 'mismatch' ? (
-                  <Text variant="caption">{t('screens.invitation.mismatch-hint')}</Text>
-                ) : null}
-              </View>
-            </View>
-            <Button variant="outline" onPress={retry}>
-              <Text>{t('common.retry')}</Text>
-            </Button>
-          </View>
-        ) : null}
-      </Panel>
-    </CenteredScreen>
+      {copy.action === 'accept' ? <InfoRows rows={INVITATION_ROWS} /> : null}
+      {phase === 'unreachable' ? (
+        <View className="mt-6">
+          <Notice inline tone="alert" title={t('screens.invitation.unreachable')} />
+        </View>
+      ) : null}
+      <View className="min-h-6 flex-1" />
+    </OnboardingFrame>
   );
 }
 

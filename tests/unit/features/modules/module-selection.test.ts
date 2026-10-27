@@ -2,7 +2,6 @@ import { describe, expect, test } from 'bun:test';
 import type { ModuleCatalog, ModuleJob, ModuleRecord } from '@/core/types';
 import {
   focusedFirst,
-  addedByOf,
   defaultSelection,
   isChoosable,
   selectionSummary,
@@ -82,7 +81,6 @@ describe('choosing modules', () => {
     expect(toggleModule(all, [], 'reports')).toEqual(['reports', 'surveillance']);
     expect(toggleModule(all, ['reports', 'surveillance', 'productivity'], 'surveillance')).toEqual(['productivity']);
     expect(toggleModule(all, ['surveillance'], 'agronomy')).toEqual(['surveillance']);
-    expect(addedByOf(all, ['reports', 'surveillance'], 'surveillance')).toEqual(['reports']);
   });
 
   test('the summary counts what is left to download and checks the disk', () => {

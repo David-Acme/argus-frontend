@@ -2,13 +2,14 @@ import { clsx } from 'clsx';
 import { View } from 'react-native';
 import { size, typeRoles, useThemeTokens, useWindowLayout } from '@/shared/theme';
 import { Avatar } from '@/shared/ui/avatar';
+import type { AvatarTone } from '@/shared/ui/avatar';
 import { Button } from '@/shared/ui/button';
 import { Icon, type IconGlyph } from '@/shared/ui/icon';
 import { Presence, type PresenceState } from '@/shared/ui/presence';
 import { PressableSurface } from '@/shared/ui/pressable';
 import { Text } from '@/shared/ui/text';
 
-export type NoticeTone = 'info' | 'attention';
+export type NoticeTone = 'info' | 'attention' | 'ok' | 'alert';
 
 export type NoticeAction = {
   label: string;
@@ -39,6 +40,22 @@ type CardActionProps = { action: NoticeAction; block: boolean };
 
 const BANNER_LINK_SLOP = (size.target - typeRoles.label.line) / 2;
 
+const BANNER_SURFACE: Record<NoticeTone, string> = {
+  info: 'bg-fill',
+  attention: 'bg-attn-soft',
+  ok: 'bg-ok-soft',
+  alert: 'bg-alert-soft',
+};
+
+const BANNER_DOT: Partial<Record<NoticeTone, string>> = { ok: 'bg-ok', alert: 'bg-alert' };
+
+const CARD_WELL: Record<NoticeTone, AvatarTone> = {
+  info: 'ok',
+  attention: 'attn',
+  ok: 'ok',
+  alert: 'alert',
+};
+
 function CardAction({ action, block }: CardActionProps) {
   const button = (
     <Button
@@ -58,9 +75,7 @@ function NoticeCard({ title, body, tone = 'info', icon, action, presence, testID
   const { elevation } = useThemeTokens();
   const { windowClass } = useWindowLayout();
   const card = { boxShadow: elevation.card };
-  const well = icon ? (
-    <Avatar icon={icon} tone={tone === 'attention' ? 'attn' : 'ok'} size="small" />
-  ) : null;
+  const well = icon ? <Avatar icon={icon} tone={CARD_WELL[tone]} size="small" /> : null;
   return (
     <View
       role="status"
@@ -122,15 +137,17 @@ function NoticeCentred({ title, body, icon, action, testID }: CentredProps) {
 
 function NoticeBanner({ title, body, tone = 'info', icon, action, testID }: BannerProps) {
   const attention = tone === 'attention';
+  const dot = icon ? undefined : BANNER_DOT[tone];
   return (
     <View
       role="status"
       testID={testID}
       className={clsx(
         'rounded-well gap-banner-gap px-banner-x py-banner-y flex-row items-center',
-        attention ? 'bg-attn-soft' : 'bg-fill'
+        BANNER_SURFACE[tone]
       )}>
       {icon ? <Icon name={icon} size="small" tone={attention ? 'attn' : 'text'} /> : null}
+      {dot ? <View className={clsx('size-dot rounded-full', dot)} /> : null}
       <View className="min-w-0 flex-1">
         <Text variant="meta" tone="default">
           {body ? `${title} ${body}` : title}

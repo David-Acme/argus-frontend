@@ -156,6 +156,8 @@ export const copy = {
   checkWifi: 'Revisa el Wi-Fi.',
   offlineBanner: 'Sin conexión. Datos de las 15:32.',
   callsOff: 'Las llamadas están apagadas en esta casa.',
+  argusFound: 'Encontré a tu Argus en tu red.',
+  wrongCode: 'Ese código no es de este Argus. Revisa la pantalla de Argus.',
   allCalm: 'Todo tranquilo',
   allCalmMeta: 'Aún no ha pasado nada que contar.',
   nothingToday: 'Nada pendiente hoy',

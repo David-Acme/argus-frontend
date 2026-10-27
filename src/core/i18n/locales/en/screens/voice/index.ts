@@ -1,6 +1,4 @@
 export const voice = {
-  'intro-title': 'Meet Argus',
-  'intro-hint': 'Talk to Argus anytime. You can answer or skip the questions.',
   'status-reconnecting': 'Reconnecting…',
   'status-thinking': 'Thinking…',
   'status-done': 'Call ended',

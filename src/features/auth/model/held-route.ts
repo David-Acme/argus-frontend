@@ -21,7 +21,11 @@ export function holdRoute(holder: HeldRoute, pathname: string, params: RoutePara
   if (pathname !== '/' && pathname !== '') holder.path = hrefOf(pathname, params);
 }
 
-export function routeToRestore(holder: HeldRoute, pathname: string, view: AccessView): string | null {
+export function routeToRestore(
+  holder: HeldRoute,
+  pathname: string,
+  view: AccessView
+): string | null {
   const held = holder.path;
   if (held === null || !view.ready) return null;
   holder.path = null;

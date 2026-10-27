@@ -1,24 +1,25 @@
 export const invitation = {
-  title: 'Join Argus',
-  subtitle: 'Scan the administrator invitation to connect your phone securely.',
-  'scan-title': 'Secure invitation',
-  scan: 'Scan invitation',
-  validating: 'Verifying the invitation and server…',
-  accepted: 'Server verified. Now register your face.',
-  error: 'We could not verify this invitation. Ask the administrator for a new code.',
-  'mismatch-title': 'This server is not the one in the invitation.',
-  'mismatch-hint':
-    'Nothing was sent. Make sure you are on the home network and ask the administrator to show you the invitation again.',
-  revoked: {
-    title: 'This invitation no longer works',
-    hint: 'Ask whoever invited you for a new one once it is back on.',
-    back: 'Back to the start',
+  title: 'Join a home',
+  lead: 'Scan the invitation the person who invited you shows you.',
+  scan: 'Scan the invitation',
+  'valid-title': 'You were invited to a home',
+  role: {
+    resident: 'You will join as a resident: you will see the home calendar, the cameras and can talk to Argus.',
+    guard: 'You will join as a guard: you will see the cameras and the security alerts.',
+    guest: 'You will join as a guest: you can talk to Argus and see what is shared with you.',
   },
-  'revoked-module': 'It was revoked because {module} was turned off in that house. A revoked invitation is never used again.',
+  face: { title: 'First, your face', meta: 'So Argus recognises you' },
+  yours: { title: 'Your data is yours', meta: 'Nobody else sees your calendar' },
+  accept: 'Accept and start',
+  'expired-title': 'This invitation is no longer valid',
+  'expired-lead': 'Invitations work once and expire. Ask the person who invited you for a new one.',
+  'revoked-module': 'It was closed because {module} was switched off in that home.',
+  unreachable: 'I could not check the invitation. Make sure you are on the home network and try again.',
+  understood: 'Understood',
   modules: {
-    surveillance: 'Surveillance',
+    surveillance: 'Security',
     productivity: 'Productivity',
     agronomy: 'Agronomy',
     other: 'a module',
   },
-};
+} as const;

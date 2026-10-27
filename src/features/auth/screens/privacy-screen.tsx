@@ -1,54 +1,41 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ScrollView, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useState } from 'react';
 import type { PrivacyChoices } from '@/core/types';
-import { ConsentForm, NO_CHOICES, consentDraft, coreSignals, onlyCoreChoices } from '@/features/privacy';
-import { OnboardingSteps } from '@/features/auth/components/onboarding-steps';
-import { flowOf, nextHref } from '@/features/auth/model/onboarding-flow';
+import { consentDraft, coreSignals, NO_CHOICES, onlyCoreChoices } from '@/features/privacy';
+import { PrivacyStep } from '@/features/auth/components/privacy-step';
+import { consentSignalsOf } from '@/features/auth/model/consent-signals';
 import { clearInviteToken } from '@/features/auth/model/invite-slot';
-import { useTranslation } from '@/shared/hooks/use-translation';
-import { toast } from '@/shared/libs/toast';
-import { IS_NATIVE } from '@/shared/constants';
+import { flowOf } from '@/features/auth/model/onboarding-flow';
+import { useOnboardingNext } from '@/features/auth/hooks/use-onboarding-next';
 
 export default function PrivacyScreen() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
-  const { t } = useTranslation();
   const { mode } = useLocalSearchParams<{ mode?: string }>();
   const flow = flowOf({ mode });
-  const signals = flow === 'owner' ? coreSignals() : undefined;
+  const { next } = useOnboardingNext();
+  const [choices, setChoices] = useState<PrivacyChoices>(() => consentDraft.peek() ?? NO_CHOICES);
+  const signals = consentSignalsOf(flow, coreSignals());
 
-  const accept = (choices: PrivacyChoices) => {
+  const accept = () => {
     consentDraft.set(flow === 'owner' ? onlyCoreChoices(choices) : choices);
-    router.replace(nextHref(flow, 'privacy', { native: IS_NATIVE }) ?? '/');
+    router.replace(next(flow, 'privacy'));
   };
 
-  const decline = () => {
+  const leave = () => {
     consentDraft.take();
     if (flow === 'invited') clearInviteToken();
-    toast.info(
-      t('screens.privacy.consent.decline-onboarding-title'),
-      t('screens.privacy.consent.decline-onboarding-description')
-    );
     router.replace('/welcome');
   };
 
   return (
-    <View className="bg-background flex-1">
-      <ScrollView
-        contentContainerClassName="grow justify-center px-6"
-        contentContainerStyle={{ paddingTop: insets.top + 24, paddingBottom: insets.bottom + 24 }}>
-        <ConsentForm
-          variant="onboarding"
-          initial={consentDraft.peek() ?? NO_CHOICES}
-          signals={signals}
-          header={
-            <OnboardingSteps flow={flow} step="privacy" />
-          }
-          onAccept={accept}
-          onDecline={decline}
-        />
-      </ScrollView>
-    </View>
+    <PrivacyStep
+      place={{ flow, step: 'privacy' }}
+      signals={signals}
+      choices={choices}
+      failed={false}
+      onChange={(signal, value) => setChoices((previous) => ({ ...previous, [signal]: value }))}
+      onAccept={accept}
+      onBack={leave}
+    />
   );
 }

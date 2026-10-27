@@ -1,7 +1,12 @@
 import { usePathname, useRouter, type Href } from 'expo-router';
 import { useEffect } from 'react';
 import { useAccessView } from '@/shared/hooks/use-capabilities';
-import { holdRoute, routeToRestore, type HeldRoute, type RouteParams } from '@/features/auth/model/held-route';
+import {
+  holdRoute,
+  routeToRestore,
+  type HeldRoute,
+  type RouteParams,
+} from '@/features/auth/model/held-route';
 
 const requested: HeldRoute = { path: null };
 

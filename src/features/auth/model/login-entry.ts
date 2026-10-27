@@ -20,7 +20,11 @@ export type LoginPollInput = {
 
 export type LoginPollOutcome = 'approved' | 'expired' | 'waiting';
 
-export function loginPollOutcome({ status, accessToken, refreshToken }: LoginPollInput): LoginPollOutcome {
+export function loginPollOutcome({
+  status,
+  accessToken,
+  refreshToken,
+}: LoginPollInput): LoginPollOutcome {
   if (status === 'expired') return 'expired';
   if (status !== 'approved') return 'waiting';
   return accessToken && refreshToken ? 'approved' : 'waiting';

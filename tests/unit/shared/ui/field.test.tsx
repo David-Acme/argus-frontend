@@ -114,6 +114,29 @@ describe('Field', () => {
     );
   });
 
+  test('names, a typed code and an address get their own autofill and keyboard', () => {
+    render(
+      <>
+        <Field label="Nombre" content="given" value="" onChangeText={() => undefined} />
+        <Field label="Apellido" content="family" value="" onChangeText={() => undefined} />
+        <Field label="Código" content="code" value="" onChangeText={() => undefined} />
+        <Field label="Dirección" content="address" value="" onChangeText={() => undefined} />
+      </>
+    );
+    expect(screen.getByRole('textbox', { name: 'Nombre' }).getAttribute('autocomplete')).toBe(
+      'given-name'
+    );
+    expect(screen.getByRole('textbox', { name: 'Apellido' }).getAttribute('autocomplete')).toBe(
+      'family-name'
+    );
+    expect(screen.getByRole('textbox', { name: 'Código' }).getAttribute('autocapitalize')).toBe(
+      'characters'
+    );
+    expect(screen.getByRole('textbox', { name: 'Dirección' }).getAttribute('inputmode')).toBe(
+      'url'
+    );
+  });
+
   test('a multiline field is a text area', () => {
     render(<Controlled kind="multiline" />);
     expect(screen.getByRole('textbox', { name: 'Título' }).tagName).toBe('TEXTAREA');

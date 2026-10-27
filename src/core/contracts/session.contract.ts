@@ -85,3 +85,11 @@ export function readSessionSignal(info: unknown): SessionSignal | null {
   }
   return { reason: 'sessionsChanged' };
 }
+
+export const selfNameSchema = z.object({
+  userId: z.number().int().positive(),
+  name: z.string().min(1),
+  lastName: z.string(),
+});
+
+export type SelfName = z.infer<typeof selfNameSchema>;

@@ -3569,39 +3569,20 @@ the module manager; `/modules` REST; `/sync` operation 12 `module_update`).
 
 ### The welcome
 
-- The hero is a mascot drawn in code (`features/auth/components/welcome-mascot/`:
-  body, eyes, props, figure, orbit chip and track as views and code paths — no
-  image assets): it greets with a hello bubble, dresses itself (hat and lens),
-  then tours its three module chips — Seguridad (escudo), Productividad and the
-  coming-soon Agronomía — leaning in to inspect each one before settling into
-  the orbit. The whole play is data (`welcome-choreography.ts` steps) run by
-  one timer book that keeps only live handles, so a screen left open stays
-  bounded; `use-frame-budget` measures the first frames and rests the mascot
-  when the phone cannot hold the animation, and reduce motion starts at that
-  same rest pose (hat on, lens up, every chip revealed). The screen sizes the
-  stage from the room the copy leaves (its height measured with `onLayout`,
-  the side layout from the window width). No glows: fills and borders only, in
-  both themes.
-- Known follow-up, deferred at the demo freeze (2026-10-10): one `accessible`
-  stage in `welcome-hero.tsx` hides the module chips, the hello bubble and the
-  unlabeled replay from screen readers; the frontend pass takes it.
-- Copy: "Hola, soy Argus", one line of what it does, the promise card (lock
-  tile + "Todo se queda en tu casa" + what stays), one primary "Comenzar",
-  "Tengo una invitación" on phones, and the network requirement. Staged
-  `BlurReveal` entrances as before. Phones stack hero over text; landscape
-  tablets (≥ 900) and desktops put the hero left and the text right.
+Replaced on 2026-10-26 by the owner's prototype (see "Bienvenida y acceso",
+P7, below): the 12 s mascot choreography, its timer book and its frame budget
+are gone, and the welcome is Estela at rest, one sentence, the privacy chip
+and two buttons.
 
 ### Flows as data
 
 `features/auth/model/onboarding-flow.ts` (unit-tested in
-`tests/unit/onboarding-flow.test.ts`). The pairing, invitation, privacy,
-face, modules and call screens ask it for the next route and render
-`OnboardingSteps flow step`, which now shows the segments (done, current
-wider in arena, upcoming) and "Paso 4 de 5 · Módulos". The face step
-continues to `modules` for an Owner and to `meet` for an invited person; the
-entry gate's "server without an owner" redirect is the step after `pair`.
-The desktop sees only `pair`, so no stepper there. The old
-`ONBOARDING_STEPS` constant is gone.
+`tests/unit/features/auth/onboarding-flow.test.ts`). Every onboarding screen
+asks it for the next route through `useOnboardingNext` and draws its dots
+with `OnboardingTop place`. Since P7 a step says whether it is `counted`:
+the dots count the setup steps only (pairing, privacy, face, name, modules
+and their privacy), not the invitation, the permissions, the first call or
+Listo. The desktop sees only `pair`, so no dots there.
 
 ### Modules
 
@@ -3973,11 +3954,12 @@ showing reminders with productivity; Inicio's Today no longer repeats them.
 
 ### Welcome order (final, accepted by the owner)
 
-Owner: `pair -> privacy (notice, face consent and core signals, surveillance sent off) ->
-face -> modules -> module-privacy (only the signals of the modules chosen,
-second PUT /privacy/me) -> meet`. Consent stays before the biometric step
-(Ley 29733); the second step drops out, and its count, when no chosen module
-has signals. Invited: unchanged, all four signals, privacy before the face.
+Owner: `pair -> privacy (notice, face consent and core signals) -> face ->
+name -> modules -> module-privacy (only the signals of the modules chosen,
+second PUT /privacy/me) -> permissions -> meet -> ready`. Consent stays
+before the biometric step (Ley 29733); the second privacy step drops out,
+and its dot, when no chosen module has signals. Invited: `invitation ->
+privacy (all four signals) -> face -> name -> permissions -> meet -> ready`.
 
 ### Local plumbing
 
@@ -3987,8 +3969,7 @@ has signals. Invited: unchanged, all four signals, privacy before the face.
   (`/welcome/module-privacy`, `/settings/activity`) were added to it by hand in
   this tree and a dev server regenerates them.
 - `shared/components/ui/orbit-hero.tsx` and `brand-mark.tsx` serve the
-  inactive-role screen; the welcome left the ring for the mascot on
-  2026-10-10.
+  inactive-role screen and the splash.
 
 ### Navigation names its destination (2026-10-07, order from David)
 
@@ -7333,3 +7314,64 @@ replaces §9.4's Hoy/Calendario split: a Teams-like agenda.
   `core/types/agenda.type.ts` and `FREE_SLOT_RULES` in the calendar constants.
   The event share dialog is still the legacy one, opened from the detail's
   «Más acciones».
+
+## Bienvenida y acceso (P7, 2026-10-26, p7/onboarding)
+
+The first run and the sign-in screens follow the owner's prototype
+(`uiux-map/redesign/later-phases/owner-2026-10-26/onboarding/onboarding.html`,
+v2). What was decided while building it:
+
+- **One frame.** `OnboardingFrame` is the whole screen on a phone (Aura at the
+  top, keyboard-aware scroll) and one centred card of `layout.dialog` (480)
+  on the Aura from tablet width; a phone on its side stays full screen.
+  `OnboardingTop` holds back, the dots and a trailing slot;
+  `OnboardingHeading` keeps titles and leads left (with Estela at 52 or a
+  well as the title mark); `OnboardingMid` centres every other block in the
+  room between the title and the footer, or top-aligns it for forms.
+  `onboardingLayoutOf` (pure, tested) reads the height class from
+  `shared/theme/height-layout.ts` and picks the Estela hero (120/96/72) and
+  the finder (268/228/188, 148 on its side) so the first content starts in
+  the top 40 %.
+- **The order is the law's, not the drawing's.** The prototype draws
+  Vincular → Nombre → Cara → Privacidad. Consent stays before the face
+  (rule 36, Ley 29733: biometric data needs consent before it is taken), and
+  «¿Cómo te llamo?» comes right after the face because `PATCH /auth/me`
+  sits behind `JwtFilter`: the face enrolment is the first moment a session
+  exists. The name is never prefilled with the server's placeholders
+  (`Administrador`, `Usuario`); `knownName` drops them.
+- **The name is checked as the server checks it** (`person-name.ts`: NFC,
+  trimmed and collapsed, letters, marks, `'` `’` `-` `.`, 1–60 and 0–80
+  characters by code point), so the 422 is the exception; when it comes, the
+  field it names shows our message, never the server's words. A network
+  failure stays on screen with the save button as the retry.
+- **The finder is driven by the capture, not a timer.** `faceProgressOf`
+  maps the guide state and the capture phase to the ring (0 → held face 0.5
+  → capture 0.75 → upload 0.9 → known 1) and to one cue. The capture takes
+  one frontal photo, so the prototype's «Gira la cabeza despacio» is not
+  said: it would ask for a movement nothing measures. The ring is two SVG
+  paths (all 72 ticks in `fill-press`, the lit ones in `ok`), and the lit
+  count sweeps three ticks a frame towards its target (`useTickSweep`),
+  jumping straight there under reduce motion.
+- **The pairing code is a text field.** The server's code is 26–32 base32
+  characters (or 8–12 hex), which six boxes cannot hold; the code field and
+  the discovery fact sit centred, and a network that hides Argus opens the
+  address view with both fields. Discovery has no home name, so the fact
+  reads «Encontré a tu Argus en tu red».
+- **The first call** is the existing call stage (`CallSurface`, which gained
+  a `footnote` slot for «Puedes colgar cuando quieras») started with
+  `useCall({ purpose: 'onboarding' })`; the purpose travels in the
+  `/rtc/token` body and in the socket leg's `voice:start`. Without a voice
+  path or the microphone permission the step redirects to Listo
+  (`callStepOf`).
+- **Approving on the phone**: «No fui yo» has no server route; it leaves the
+  challenge unapproved (it expires on its own) and says so.
+- **Invitation**: the resolve answers the role, never the inviter's name or
+  the home's, so the valid view says «Te invitaron a una casa» and the role's
+  sentence.
+- **Data sources.** Pairing: discovery and the pinned pair call (no local
+  data). Name: the session user, `PATCH /auth/me`, the `user` row through
+  `/sync`. Consent: a local draft sent after the face. Module privacy:
+  `GET /privacy/me` (view cache `privacyMe`, re-read on `ResourceChanged`
+  identity/privacy_choice) and `PUT`. Modules and Listo: the module catalog
+  view cache and its `ModuleUpdate` frames. Sign-in QR, approval and
+  invitation: HTTP only, short-lived challenges with no local copy.

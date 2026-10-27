@@ -1,69 +1,94 @@
-import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback } from 'react';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Button } from '@/shared/components/ui/button';
-import { Icon } from '@/shared/components/ui/icon';
-import { PermissionList } from '@/shared/components/ui/permission-list';
-import { Text } from '@/shared/components/ui/text';
-import { IS_NATIVE } from '@/shared/constants';
+import type { DevicePermission } from '@/core/types';
 import { useDevicePermissions } from '@/shared/hooks/use-device-permissions';
 import { useTranslation } from '@/shared/hooks/use-translation';
-import { OnboardingSteps } from '@/features/auth/components/onboarding-steps';
-import { flowOf, nextHref } from '@/features/auth/model/onboarding-flow';
+import { Avatar } from '@/shared/ui/avatar';
+import { Button } from '@/shared/ui/button';
+import { Chip } from '@/shared/ui/chip';
+import { Row } from '@/shared/ui/row';
+import { Section } from '@/shared/ui/section';
+import { OnboardingFrame } from '@/features/auth/components/onboarding-frame';
+import { OnboardingHeading } from '@/features/auth/components/onboarding-heading';
+import { OnboardingTop } from '@/features/auth/components/onboarding-top';
+import { PERMISSION_COPY } from '@/features/auth/constants/permissions.constant';
+import { flowOf } from '@/features/auth/model/onboarding-flow';
+import { useOnboardingNext } from '@/features/auth/hooks/use-onboarding-next';
+
+type PermissionRowProps = { permission: DevicePermission; first: boolean; onAllow: () => void };
+
+function PermissionRow({ permission, first, onAllow }: PermissionRowProps) {
+  const { t } = useTranslation();
+  const { id, granted } = permission;
+  const copy = PERMISSION_COPY[id];
+  return (
+    <Row
+      title={t(copy.title)}
+      meta={t(copy.meta)}
+      leading={<Avatar icon={copy.glyph} tone={granted ? 'ok' : 'default'} />}
+      trailing={
+        granted ? (
+          <Chip tone="ok" icon="check" label={t('screens.welcome.permissions.granted')} />
+        ) : (
+          <Button
+            compact
+            variant={first ? 'primary' : 'secondary'}
+            label={t('common.permissions.allow')}
+            onPress={onAllow}
+          />
+        )
+      }
+    />
+  );
+}
 
 export default function OnboardingPermissionsScreen() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const { t } = useTranslation();
-  const params = useLocalSearchParams<{ flow?: string; mode?: string }>();
-  const flow = flowOf(params);
-  const { permissions, allGranted, request, requestRuntime } = useDevicePermissions('onboarding');
-  const next = nextHref(flow, 'permissions', { native: IS_NATIVE });
-
-  const goOn = useCallback(() => router.replace(next ?? '/'), [next, router]);
-  const allowAndGoOn = useCallback(async () => {
+  const { next } = useOnboardingNext();
+  const flow = flowOf(useLocalSearchParams<{ flow?: string; mode?: string }>());
+  const { permissions, request, requestRuntime } = useDevicePermissions('onboarding');
+  const firstMissing = permissions.find((permission) => !permission.granted)?.id;
+  const goOn = () => router.replace(next(flow, 'permissions'));
+  const allowAndGoOn = async () => {
     await requestRuntime();
     goOn();
-  }, [goOn, requestRuntime]);
-
-  if (!IS_NATIVE) return <Redirect href="/" />;
+  };
 
   return (
-    <View className="bg-background flex-1">
-      <View
-        className="w-full max-w-xl gap-6 self-center px-6"
-        style={{ paddingTop: insets.top + 24, paddingBottom: insets.bottom + 24, flex: 1 }}>
-        <OnboardingSteps flow={flow} step="permissions" />
-        <View className="gap-3">
-          <View className="bg-accent-soft size-14 items-center justify-center rounded-3xl">
-            <Icon name="bell" className="text-accent-strong size-7" />
-          </View>
-          <Text variant="micro" className="font-semibold tracking-wide uppercase">
-            {t('screens.welcome.permissions.eyebrow')}
-          </Text>
-          <Text variant="title">{t('screens.welcome.permissions.title')}</Text>
-          <Text variant="body" className="text-foreground-secondary">
-            {t('screens.welcome.permissions.intro')}
-          </Text>
-        </View>
-
-        <PermissionList permissions={permissions} onRequest={request} />
-        {allGranted ? (
-          <Text variant="caption" className="text-success">
-            {t('screens.welcome.permissions.ready')}
-          </Text>
-        ) : null}
-
-        <View className="mt-auto gap-3">
-          <Button size="lg" onPress={() => void allowAndGoOn()}>
-            <Text>{t('screens.welcome.permissions.continue')}</Text>
-          </Button>
-          <Button variant="ghost" onPress={goOn}>
-            <Text>{t('screens.welcome.permissions.later')}</Text>
-          </Button>
-        </View>
-      </View>
-    </View>
+    <OnboardingFrame
+      top={<OnboardingTop />}
+      footer={
+        <>
+          <Button
+            variant="primary"
+            block
+            label={t('screens.welcome.permissions.continue')}
+            onPress={allowAndGoOn}
+          />
+          <Button
+            variant="ghost"
+            block
+            label={t('screens.welcome.permissions.later')}
+            onPress={goOn}
+          />
+        </>
+      }>
+      <OnboardingHeading
+        title={t('screens.welcome.permissions.title')}
+        lead={t('screens.welcome.permissions.lead')}
+      />
+      <Section>
+        {permissions.map((permission) => (
+          <PermissionRow
+            key={permission.id}
+            permission={permission}
+            first={permission.id === firstMissing}
+            onAllow={() => request(permission.id)}
+          />
+        ))}
+      </Section>
+      <View className="min-h-6 flex-1" />
+    </OnboardingFrame>
   );
 }

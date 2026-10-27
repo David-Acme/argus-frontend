@@ -35,7 +35,9 @@ export function faceErrorFromUnknown(error: unknown, fallbackCode: string): Face
 }
 
 export function faceErrorMessage(error: FaceError, t: TranslateFn): string {
-  const detail = [error.message, ...Object.values(error.fields ?? {}).flat()].join(' ').toLowerCase();
+  const detail = [error.message, ...Object.values(error.fields ?? {}).flat()]
+    .join(' ')
+    .toLowerCase();
   if (error.code === 'CAPTURE_FAILED' || error.code === 'CAPTURE_NO_URI') {
     return t('screens.face.error-camera-capture');
   }
@@ -43,7 +45,9 @@ export function faceErrorMessage(error: FaceError, t: TranslateFn): string {
     error.code === 'VALIDATION_ERROR' &&
     (detail.includes('exceed') || detail.includes('10mb') || detail.includes('empty'))
   ) {
-    return detail.includes('empty') ? t('screens.face.error-empty-image') : t('screens.face.error-image-too-large');
+    return detail.includes('empty')
+      ? t('screens.face.error-empty-image')
+      : t('screens.face.error-image-too-large');
   }
   if (error.code === 'LIVENESS_CHECK_FAILED') return t('screens.face.error-liveness');
   if (error.code === 'LIVENESS_UNAVAILABLE') return t('screens.face.error-liveness-unavailable');
@@ -56,4 +60,9 @@ export function faceErrorMessage(error: FaceError, t: TranslateFn): string {
   if (error.code === 'NETWORK_ERROR') return t(faceNetworkKey(detail));
   const known = serviceErrorKey(error);
   return known === 'common.errors.unknown' ? t('screens.face.error') : t(known);
+}
+
+export function faceNotRecognised(error: FaceError): boolean {
+  const detail = error.message.toLowerCase();
+  return error.code === 'UNAUTHORIZED' || detail.includes('face not recognized');
 }

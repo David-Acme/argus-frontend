@@ -16,6 +16,8 @@ export {
   signalsToAsk,
 } from './model/privacy';
 export { PrivacyChoiceList } from './components/privacy-choice-list';
+export { PrivacyNoticeDialog } from './components/privacy-notice-dialog';
+export { PRIVACY_NOTICE_VERSION } from './constants/privacy';
 export { usePrivacy } from './hooks/use-privacy';
 export { VisitorAcknowledgementDialog } from './components/visitor-acknowledgement-dialog';
 export { useVisitorRecognitionSwitch } from './hooks/use-visitor-recognition-switch';

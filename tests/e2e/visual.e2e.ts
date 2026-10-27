@@ -15,7 +15,7 @@ const WIDTHS = [
 
 const SHOT = { maxDiffPixels: 40, timeout: 15000 } as const;
 
-const HERO = 'Argus greets you with its modules: Security, Productivity and Agronomy, coming soon.';
+const ESTELA = 'Argus, at rest';
 
 const INTRO_MS = 3000;
 
@@ -80,7 +80,7 @@ for (const size of WIDTHS) {
     await settle(INTRO_MS);
     await expect(screen).toHaveScreenshot(`welcome-${size.name}-${platform}.png`, {
       ...SHOT,
-      mask: [screen.getByRole('button', HERO)],
+      mask: [screen.getByRole('img', ESTELA)],
     });
   });
 }

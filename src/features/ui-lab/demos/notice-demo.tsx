@@ -1,6 +1,6 @@
 import { Notice } from '@/shared/ui/notice';
-import { LabCase } from '../components/lab-case';
-import { copy } from './demo-copy';
+import { LabCase } from '@/features/ui-lab/components/lab-case';
+import { copy } from '@/features/ui-lab/demos/demo-copy';
 
 const noop = () => undefined;
 
@@ -41,6 +41,12 @@ export function NoticeDemo() {
       </LabCase>
       <LabCase id="banner-info" block>
         <Notice inline icon="lock" title={copy.callsOff} />
+      </LabCase>
+      <LabCase id="banner-ok" block>
+        <Notice inline tone="ok" title={copy.argusFound} />
+      </LabCase>
+      <LabCase id="banner-alert" block>
+        <Notice inline tone="alert" title={copy.wrongCode} />
       </LabCase>
     </>
   );

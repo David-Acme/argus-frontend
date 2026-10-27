@@ -6,5 +6,6 @@ export {
   type ScreenColumnProps,
   type ScreenColumnsProps,
 } from './screen-columns';
-export type { ScreenRefresh } from './screen-scroll-types';
+export { ScreenScroll } from './screen-scroll';
+export type { ScreenRefresh, ScreenScrollProps } from './screen-scroll-types';
 export type { ScreenBack } from './screen-top-bar';

@@ -1,4 +1,5 @@
-import { bytesToFetch, installPlan, isJobOpen, type InstallPlan } from '@/core/services/modules/module-state';
+import { bytesToFetch, installPlan, isJobOpen } from '@/core/services/modules/module-state';
+import type { InstallPlan } from '@/core/services/modules/module-state';
 import type { ModuleCatalog, ModuleRecord } from '@/core/types';
 import { MODULE_DISK_HEADROOM } from '@/shared/constants';
 
@@ -81,11 +82,3 @@ export function focusedFirst(modules: readonly ModuleRecord[], focusId: string |
   return focused ? [focused, ...modules.filter((module) => module !== focused)] : [...modules];
 }
 
-export function addedByOf(
-  catalog: ModuleCatalog | null,
-  selection: readonly string[],
-  id: string
-): string[] {
-  if (!selection.includes(id)) return [];
-  return selection.filter((chosen) => chosen !== id && requirementsOf(catalog, chosen).includes(id));
-}

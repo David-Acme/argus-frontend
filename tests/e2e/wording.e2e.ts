@@ -5,10 +5,13 @@ import { unpairedDevice } from './support/seed';
 test('pairing on a computer speaks of the computer, never of scanning or a phone', async ({ app, browser, screen }) => {
   const escapes = await openFirst(browser, app, unpairedDevice('A'));
   await app.open('/welcome/pairing');
-  await expect(screen.getByText('Link your server', { exact: true })).toBeVisible({ timeout: 10000 });
+  await expect(screen.getByRole('heading', 'I cannot find Argus on your network')).toBeVisible({
+    timeout: 10000,
+  });
   const text = await browser.evaluate(() => document.body.innerText);
-  expect(text).not.toMatch(/this phone/i);
-  expect(text).not.toMatch(/Scan your Argus/);
+  expect(text).toMatch(/Your computer and Argus/);
+  expect(text).not.toMatch(/phone/i);
+  expect(text).not.toMatch(/Scan/);
   expect(escapes).toEqual([]);
 });
 

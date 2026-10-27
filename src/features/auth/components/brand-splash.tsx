@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { useUniwind } from 'uniwind';
+import { BrandMark } from '@/shared/components/ui/brand-mark';
 import { Text } from '@/shared/components/ui/text';
 import { colorTokens, IS_TAURI } from '@/shared/constants';
 import { useTranslation } from '@/shared/hooks/use-translation';
-import { SPLASH_SLOW_MS } from '@/features/auth/constants/welcome';
-import { BrandMark } from '@/shared/components/ui/brand-mark';
+import { SPLASH_SLOW_MS } from '@/features/auth/constants/welcome.constant';
 
 export function BrandSplash() {
   const { t } = useTranslation();

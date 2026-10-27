@@ -3,7 +3,10 @@ import { localeDictionaries } from '@/core/i18n/locales';
 import { translate } from '@/core/i18n/translate';
 import { readEnvelope } from '@/core/services/http/http-envelope';
 import type { TranslateFn } from '@/core/types';
-import { invitationRevokedBy, invitationRevokedText } from '@/features/auth/model/invitation-refusal';
+import {
+  invitationRevokedBy,
+  invitationRevokedText,
+} from '@/features/auth/model/invitation-refusal';
 import { invitationClosingOf, invitationStateOf } from '@/features/people/model/people-optimistic';
 
 const es = ((key: string, params?: Record<string, string>) =>
@@ -33,21 +36,28 @@ describe('an invitation revoked because its module went off', () => {
   });
 
   test('says it in plain words in both languages, for a known module and an unknown one', () => {
-    expect(invitationRevokedText({ moduleId: 'surveillance' }, es)).toContain('Vigilancia');
-    expect(invitationRevokedText({ moduleId: 'surveillance' }, en)).toContain('Surveillance');
+    expect(invitationRevokedText({ moduleId: 'surveillance' }, es)).toContain('Seguridad');
+    expect(invitationRevokedText({ moduleId: 'surveillance' }, en)).toContain('Security');
     expect(invitationRevokedText({ moduleId: 'agronomy' }, en)).toContain('Agronomy');
     expect(invitationRevokedText({ moduleId: 'new-thing' }, es)).toContain('un módulo');
     expect(invitationRevokedText({ moduleId: null }, en)).toContain('a module');
   });
 
   test('the inviter sees the reason on the closed invitation and only then', () => {
-    const closed = { revokedAt: 5, revokedReason: 'module_disabled', revokedModule: 'surveillance' };
+    const closed = {
+      revokedAt: 5,
+      revokedReason: 'module_disabled',
+      revokedModule: 'surveillance',
+    };
     expect(invitationClosingOf(closed)).toEqual({ reason: 'module', moduleId: 'surveillance' });
     expect(invitationClosingOf({ ...closed, revokedAt: null })).toBeNull();
     expect(invitationClosingOf({ ...closed, revokedReason: null })).toBeNull();
     expect(invitationClosingOf({ revokedAt: 5 })).toBeNull();
     expect(
-      invitationStateOf({ ...closed, expiresAt: 9_999_999_999, redemptionCount: 0, maxRedemptions: 1 }, 1_000)
+      invitationStateOf(
+        { ...closed, expiresAt: 9_999_999_999, redemptionCount: 0, maxRedemptions: 1 },
+        1_000
+      )
     ).toBe('closed');
   });
 });
