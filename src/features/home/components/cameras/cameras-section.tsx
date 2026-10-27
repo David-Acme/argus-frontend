@@ -54,6 +54,7 @@ export function CamerasSection() {
       tile={tile}
       detail={tileDetail(tile, { now: section.now, format: section.format })}
       frame={section.frames.get(tile.id)}
+      order={section.tiles.indexOf(tile)}
       fill={column}
       onOpen={open}
     />

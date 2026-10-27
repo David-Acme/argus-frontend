@@ -6593,7 +6593,9 @@ grid itself is at least `layout.mediaGridWide` (640) wide, which is where the pr
 switches at a 2400 px window. The section measures its own width with `onLayout`
 because a feature never reads the window. The grid shows no clip, as in the prototype.
 
-**Old Android.** The section never mounts a player. It paints the snapshot path the
+**Old Android.** Superseded on 2026-10-27 by "Live camera previews" below: the
+tiles now play live, capped per tier (two on `low`). What follows is the earlier rule.
+The section never mounted a player. It paints the snapshot path the
 cameras screen already uses (`CameraThumbnailPoller`: one `GET /camera/{id}/snapshot`
 per live camera, in sequence, cross-faded by `MediaFrame`): at `perfTier` low it reads
 each picture once per focus and stops (`repeat` false), otherwise every 30 s. The old
@@ -8231,3 +8233,37 @@ phone, tablet, desktop and web.
   security hours (`hours-fields.tsx`, `environment-settings-panel.tsx`) keep
   their half-hour lists: their windows end at `24:00`, which the picker's
   0–23 hours cannot say.
+
+## Live camera previews (2026-10-27, owner: «en tiempo real, eficiente y ordenado»)
+
+Every camera tile outside the full view plays live: Inicio's cameras section (strip and
+grid), Seguridad's cameras section and the camera list. The plan, the options and their
+sources are in `uiux-map/redesign/later-phases/briefs/R-live-previews.md`; the server
+side is the backend's `services/camera/CONTEXT.md` › "Live previews".
+
+- **One socket.** `cameraPreviewMux` (`features/cameras/services/camera-preview-mux.ts`)
+  keeps one `/media` socket for all tiles of all screens, subscribes each tile with
+  `{quality: 'sub', preview: true}` (sub stream, video only, no viewer seat, its own
+  credit window on the server), routes binary frames by `subId` to the tile's sink
+  (`PreviewChannel`), acknowledges per subscription, renews the token in band, and
+  closes 3 s after the last tile leaves so moving between Inicio and Seguridad does not
+  churn. The same URL serves the LAN and the tunnel; WebRTC is never used for tiles
+  (no TURN, and it would take the full view's seats).
+- **Ordered.** Subscriptions go out one at a time, the lowest tile order first, the
+  next once the previous one is answered; frames that arrive before the answer belong to
+  the subscription being asked. A refused or closed tile waits with the existing
+  back-off and the next tile is asked at once.
+- **Only what is seen.** `useCameraPreview` measures its tile once a second
+  (`measureInWindow` against the window) while the screen is focused and the app is in
+  the foreground; `previewBoard` grants live play to the first visible tiles in order,
+  one per camera, up to `PREVIEW_LIVE_CAP` (`low` 2, `mid` 4, `high` 6, under every
+  declared AVC decoder-instance limit with room for the full view and a call). A tile
+  past the cap, scrolled away, or on a blurred or backgrounded screen keeps its still.
+- **No flicker.** The still (snapshot cache) stays painted under the video. Native
+  (`camera-preview.native.tsx`, `ArgusCameraView`, muted) reveals the player 250 ms after
+  its first fragment and hides it again on a stall or close; it subscribes without
+  `fastStart`, because ExoPlayer would keep the replayed GOP's age as latency. Web
+  (`camera-preview.web.tsx`, `WebCameraPlayer`) subscribes with `fastStart` and paints
+  on a transparent canvas; without WebCodecs the tile keeps its still.
+- **Stills only where needed.** `CameraThumbnailPoller` skips a camera that is playing
+  live; it still paints every tile once before its video starts.

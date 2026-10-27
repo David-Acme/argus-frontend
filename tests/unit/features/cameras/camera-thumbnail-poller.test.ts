@@ -14,6 +14,7 @@ mock.module('@/features/cameras/services/camera-control.service', () => ({
 
 const { CameraThumbnailPoller } =
   await import('@/features/cameras/services/camera-thumbnail.service');
+const { previewBoard } = await import('@/features/cameras/services/preview-board');
 
 type Poller = InstanceType<typeof CameraThumbnailPoller>;
 
@@ -54,5 +55,12 @@ describe('camera thumbnails', () => {
     const { seen, scheduled } = await refreshes(false);
     expect(seen.at(-1)?.size).toBe(2);
     expect(scheduled).toBe(0);
+  });
+
+  test('a camera already playing live is not polled for a still', async () => {
+    previewBoard.markLive('2', true);
+    const { seen } = await refreshes(false);
+    previewBoard.markLive('2', false);
+    expect(seen.at(-1)).toEqual(new Map([['1', 'frame-1']]));
   });
 });

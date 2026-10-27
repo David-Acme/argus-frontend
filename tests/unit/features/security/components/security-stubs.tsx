@@ -126,6 +126,9 @@ mock.module('@/shared/components/layout/use-offline-notice', () => ({
 }));
 
 mock.module('@/features/cameras', () => ({
+  CameraPreview: ({ cameraId, order }: { cameraId: string; order: number }) => (
+    <span data-testid={`preview-${cameraId}`}>{order}</span>
+  ),
   CameraForm: ({ open }: { open: boolean }) => (open ? <span>camera-wizard</span> : null),
   TamperEvidenceView: () => <span>evidence</span>,
   objectLabelKey: () => 'screens.cameras.objects.person',
