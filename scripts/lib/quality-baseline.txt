@@ -1,5 +1,5 @@
 hex-literal 68
-arbitrary-value 51
+arbitrary-value 50
 style-object 64
 raw-pressable-in-features 20
 window-dimensions-in-features 3
@@ -15,5 +15,5 @@ source-text-test 4
 legacy-token-class 681
 manual-memo 336
 shared-value-dot-value 105
-untested-component-or-screen 155
+untested-component-or-screen 154
 scanned-files 2056

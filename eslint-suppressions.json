@@ -377,13 +377,7 @@
       "count": 1
     },
     "better-tailwindcss/no-restricted-classes": {
-      "count": 2
-    },
-    "complexity": {
       "count": 1
-    },
-    "i18next/no-literal-string": {
-      "count": 3
     }
   },
   "src/features/cameras/components/camera-live-view.native.tsx": {
