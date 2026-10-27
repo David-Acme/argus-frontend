@@ -11,7 +11,7 @@ import {
 
 const HTTP_METHODS = new Set(['get', 'post', 'put', 'patch', 'delete', 'postMultipart']);
 const CHECKER =
-  /^(parsed|checked|parse|safeParse|parseAsync|safeParseAsync)$|^(parse|check|read|validate)[A-Z]|[a-z]Of$/;
+  /^(parsed|checked|expectShape|parse|safeParse|parseAsync|safeParseAsync)$|^(parse|check|read|validate)[A-Z]|[a-z]Of$/;
 const IS_FLAG = /^IS_[A-Z_]+$/;
 
 export function reactNativeImports(file: SourceFile, names: ReadonlySet<string>): number {

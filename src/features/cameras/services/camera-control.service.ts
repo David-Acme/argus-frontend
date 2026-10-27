@@ -23,35 +23,7 @@ import type {
 } from '@/core/types';
 import { cameraAimSchema } from '@/core/contracts/camera-sight.contract';
 import { CAMERA_PATROL_ROUTE, readCameraPatrol } from '@/core/contracts/camera-patrol.contract';
-import { httpService } from '@/core/services/http';
-
-function aimOf(result: IServiceResponse<unknown>): IServiceResponse<CameraAim> {
-  if (!result.ok) return { status: result.status, ok: false, info: null, errors: result.errors };
-  const parsed = cameraAimSchema.safeParse(result.info);
-  if (!parsed.success) {
-    return {
-      status: result.status,
-      ok: false,
-      info: null,
-      errors: { code: 'INVALID_RESPONSE', message: 'The camera answered an unexpected aim shape' },
-    };
-  }
-  return { status: result.status, ok: true, info: parsed.data, errors: null };
-}
-
-function patrolOf(result: IServiceResponse<unknown>): IServiceResponse<CameraPatrolAnswer> {
-  if (!result.ok) return { status: result.status, ok: false, info: null, errors: result.errors };
-  const answer = readCameraPatrol(result.info);
-  if (!answer) {
-    return {
-      status: result.status,
-      ok: false,
-      info: null,
-      errors: { code: 'INVALID_RESPONSE', message: 'The camera answered an unexpected patrol shape' },
-    };
-  }
-  return { status: result.status, ok: true, info: answer, errors: null };
-}
+import { expectShape, httpService } from '@/core/services/http';
 
 class CameraControlService {
   status(id: string): Promise<IServiceResponse<ICameraDeviceStatus>> {
@@ -71,27 +43,54 @@ class CameraControlService {
   }
 
   async aim(id: string): Promise<IServiceResponse<CameraAim>> {
-    return aimOf(await httpService.get<unknown>(`/camera/${id}/aim`));
+    return expectShape(
+      await httpService.get<unknown>(`/camera/${id}/aim`),
+      cameraAimSchema,
+      'The camera aim'
+    );
   }
 
   async setAim(id: string, body: CameraAimPatch): Promise<IServiceResponse<CameraAim>> {
-    return aimOf(await httpService.patch<unknown>(`/camera/${id}/aim`, body));
+    return expectShape(
+      await httpService.patch<unknown>(`/camera/${id}/aim`, body),
+      cameraAimSchema,
+      'The camera aim'
+    );
   }
 
   async lease(id: string, action: CameraLeaseAction): Promise<IServiceResponse<CameraAim>> {
-    return aimOf(await httpService.post<unknown>(`/camera/${id}/ptz/lease`, { action }));
+    return expectShape(
+      await httpService.post<unknown>(`/camera/${id}/ptz/lease`, { action }),
+      cameraAimSchema,
+      'The camera aim'
+    );
   }
 
   async patrol(id: string): Promise<IServiceResponse<CameraPatrolAnswer>> {
-    return patrolOf(await httpService.get<unknown>(CAMERA_PATROL_ROUTE(id)));
+    return expectShape(
+      await httpService.get<unknown>(CAMERA_PATROL_ROUTE(id)),
+      readCameraPatrol,
+      'The camera patrol'
+    );
   }
 
-  async setPatrol(id: string, body: CameraPatrolPatch): Promise<IServiceResponse<CameraPatrolAnswer>> {
-    return patrolOf(await httpService.patch<unknown>(CAMERA_PATROL_ROUTE(id), body));
+  async setPatrol(
+    id: string,
+    body: CameraPatrolPatch
+  ): Promise<IServiceResponse<CameraPatrolAnswer>> {
+    return expectShape(
+      await httpService.patch<unknown>(CAMERA_PATROL_ROUTE(id), body),
+      readCameraPatrol,
+      'The camera patrol'
+    );
   }
 
   async removePatrol(id: string): Promise<IServiceResponse<CameraPatrolAnswer>> {
-    return patrolOf(await httpService.delete<unknown>(CAMERA_PATROL_ROUTE(id)));
+    return expectShape(
+      await httpService.delete<unknown>(CAMERA_PATROL_ROUTE(id)),
+      readCameraPatrol,
+      'The camera patrol'
+    );
   }
 
   capabilities(id: string): Promise<IServiceResponse<ICameraCapabilities>> {

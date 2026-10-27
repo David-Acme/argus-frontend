@@ -1,6 +1,5 @@
 import { biometricErasureSchema } from '@/core/contracts/voiceprint.contract';
-import { httpService } from '@/core/services/http';
-import { errorResponse } from '@/core/services/http/http-envelope';
+import { expectShape, httpService } from '@/core/services/http';
 import type {
   IServiceResponse,
   IUserManagementRecord,
@@ -13,7 +12,7 @@ const USER_PATH = '/user';
 class UserManagementService {
   update(
     id: number,
-    input: IUserManagementUpdate,
+    input: IUserManagementUpdate
   ): Promise<IServiceResponse<IUserManagementRecord>> {
     return httpService.patch<IUserManagementRecord>(`${USER_PATH}/${id}`, input);
   }
@@ -24,12 +23,7 @@ class UserManagementService {
 
   async eraseBiometrics(id: number): Promise<IServiceResponse<BiometricErasure>> {
     const response = await httpService.delete<unknown>(`${USER_PATH}/${id}/biometrics`);
-    if (!response.ok) return { ...response, info: null };
-    const parsed = biometricErasureSchema.safeParse(response.info);
-    if (!parsed.success) {
-      return errorResponse(response.status, 'INVALID_RESPONSE', 'The erasure answer is not in the expected shape');
-    }
-    return { ...response, info: parsed.data };
+    return expectShape(response, biometricErasureSchema, 'The erasure answer');
   }
 }
 

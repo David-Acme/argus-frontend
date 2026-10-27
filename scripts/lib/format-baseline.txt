@@ -44,7 +44,6 @@ src/core/i18n/translate.ts
 src/core/interfaces/calendar.interface.ts
 src/core/interfaces/camera.interface.ts
 src/core/interfaces/project.interface.ts
-src/core/services/auth.service.ts
 src/core/services/beacon/beacon.native.ts
 src/core/services/calendar-event-share.service.ts
 src/core/services/calendar-event.service.ts
@@ -57,7 +56,6 @@ src/core/services/crypto-random/secure-random.native.ts
 src/core/services/database.service.ts
 src/core/services/desktop/desktop-bridge.ts
 src/core/services/device-login/login-proof.ts
-src/core/services/guard.service.ts
 src/core/services/heartbeat/heartbeat-engine.ts
 src/core/services/heartbeat/heartbeat-plan.ts
 src/core/services/heartbeat/heartbeat.native.ts
@@ -71,7 +69,6 @@ src/core/services/modules/index.ts
 src/core/services/modules/module-engine.ts
 src/core/services/modules/module-state.ts
 src/core/services/modules/module-text.ts
-src/core/services/modules/modules.service.ts
 src/core/services/native-trace-sink/native-trace-sink.native.ts
 src/core/services/native-trace.ts
 src/core/services/net/device-credential.ts
@@ -184,7 +181,6 @@ src/features/cameras/model/stream-recovery.ts
 src/features/cameras/model/tamper-evidence.ts
 src/features/cameras/screens/camera-lab-screen.tsx
 src/features/cameras/services/camera-call.service.ts
-src/features/cameras/services/camera-control.service.ts
 src/features/cameras/services/camera-media-session.ts
 src/features/cameras/services/camera-media.service.ts
 src/features/cameras/services/camera-rtc/camera-rtc-session.ts
@@ -215,9 +211,6 @@ src/features/notification/hooks/use-notification-permission.ts
 src/features/people/model/biometric-erase.ts
 src/features/people/model/presence.ts
 src/features/people/model/role-areas.ts
-src/features/people/services/presence.service.ts
-src/features/people/services/user-management.service.ts
-src/features/people/services/voiceprint.service.ts
 src/features/privacy/components/consent-form.tsx
 src/features/privacy/components/household-privacy-panel.tsx
 src/features/privacy/components/privacy-choice-list.tsx
@@ -230,7 +223,6 @@ src/features/privacy/hooks/use-privacy.ts
 src/features/privacy/model/minor.ts
 src/features/privacy/model/privacy.ts
 src/features/privacy/model/signage.ts
-src/features/privacy/services/privacy.service.ts
 src/features/privacy/services/signage-share/signage-share.web.ts
 src/features/proximity/components/labelled-input.tsx
 src/features/proximity/components/proximity-section.tsx
@@ -243,7 +235,6 @@ src/features/proximity/model/proximity-people.ts
 src/features/proximity/model/proximity.ts
 src/features/proximity/screens/proximity-devices-screen.tsx
 src/features/proximity/screens/proximity-people-screen.tsx
-src/features/proximity/services/proximity.service.ts
 src/features/qr/components/qr-guide-frame.tsx
 src/features/qr/components/qr-manual-entry.tsx
 src/features/qr/components/qr-scan-sheet.tsx
@@ -255,7 +246,6 @@ src/features/safety/components/pin-setup-dialog.tsx
 src/features/safety/components/safety-section.tsx
 src/features/safety/hooks/use-safety.ts
 src/features/safety/model/safety.ts
-src/features/safety/services/safety.service.ts
 src/features/security/components/camera-context-editor.tsx
 src/features/security/components/camera-context-panel.tsx
 src/features/security/components/camera-environment-panel.tsx
@@ -280,7 +270,6 @@ src/features/security/model/maintenance.ts
 src/features/security/model/mode-change.ts
 src/features/security/model/response-recipients.ts
 src/features/security/model/tamper-notice.ts
-src/features/sessions/services/sessions.service.ts
 src/features/settings/hooks/use-settings.ts
 src/features/visitors/components/visitor-card.tsx
 src/features/visitors/components/visitor-face.tsx
@@ -324,7 +313,6 @@ src/features/watch/model/watch-conversation.ts
 src/features/watch/model/watch-notification.ts
 src/features/watch/screens/watch-screen.tsx
 src/features/watch/services/watch-feed.ts
-src/features/watch/services/watch.service.ts
 src/shared/components/cameras/masked-cameras-notice.tsx
 src/shared/components/layout/edge-fade.tsx
 src/shared/components/layout/offline-transition.ts
