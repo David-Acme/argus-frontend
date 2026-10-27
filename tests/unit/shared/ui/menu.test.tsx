@@ -28,7 +28,7 @@ describe('Menu', () => {
   test('on pointer the trigger is named and opens a dropdown whose item runs once', async () => {
     const log: string[] = [];
     render(<Menu label="Opciones de Pagar la luz" items={items(log)} />);
-    const trigger = screen.getByLabelText('Opciones de Pagar la luz');
+    const trigger = screen.getByRole('button', { name: 'Opciones de Pagar la luz' });
     fireEvent.keyDown(trigger, { key: 'Enter' });
     fireEvent.click(await screen.findByRole('menuitem', { name: 'Borrar' }));
     expect(log).toEqual(['erase']);
