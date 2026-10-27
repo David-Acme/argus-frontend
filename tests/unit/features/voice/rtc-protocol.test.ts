@@ -119,6 +119,10 @@ describe('data topics', () => {
       payload: { text: 'hola', final: true },
     });
     expect(readRtcData('argus.done', '')).toEqual({ type: 'voice:done', payload: {} });
+    expect(readRtcData('argus.result', '{"id":"ab12","tool":"memory.remind","ok":false,"data":{}}')).toEqual({
+      type: 'voice:result',
+      payload: { id: 'ab12', tool: 'memory.remind', ok: false, data: {} },
+    });
     expect(readRtcData('argus.unknown', '{}')).toBeNull();
     expect(readRtcData('argus.stt', '{broken')).toBeNull();
   });
@@ -129,6 +133,7 @@ describe('data topics', () => {
     expect(rtcTopicOf('voice:mute')).toBe('argus.mute');
     expect(rtcTopicOf('voice:skip')).toBe('argus.skip');
     expect(rtcTopicOf('voice:stop')).toBe('argus.hangup');
+    expect(rtcTopicOf('voice:confirm')).toBe('argus.confirm');
     expect(rtcTopicOf('voice:start')).toBeNull();
   });
 });

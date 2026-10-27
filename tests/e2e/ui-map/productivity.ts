@@ -505,7 +505,7 @@ export const PRODUCTIVITY_SCREENS: ScreenSpec[] = [
           await sleep(1000);
         },
         notes:
-          'voice:result is the assumed result frame (P5 adapter); results anchor by arrival time',
+          'voice:result is the turn result the backend sends (VoiceResult = 16); live results anchor by arrival time, persisted ones on the line that carries them',
       },
       {
         state: 'thread-argus-module-off',

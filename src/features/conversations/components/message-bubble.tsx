@@ -80,6 +80,10 @@ function useBubbleMeta(message: IConversationMessageCacheRow, sending: boolean):
   const leg = legOf(message);
   const state = deliveryStateOf(message);
   const where = state ? t(DELIVERY_STATE_KEYS[state]) : leg ? t(LEG_KEYS[leg]) : null;
+  if (message.via === 'voice')
+    return where
+      ? t('screens.conversations.meta-voice', { where, time })
+      : t('screens.conversations.meta-voice-plain', { time });
   return where ? t('screens.conversations.meta', { where, time }) : time;
 }
 

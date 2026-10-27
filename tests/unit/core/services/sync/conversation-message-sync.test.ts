@@ -26,6 +26,8 @@ const row = (patch: Record<string, unknown> = {}): Record<string, unknown> => ({
   state: 'sent',
   messageKey: 'msg-1',
   replyToKey: null,
+  result: null,
+  via: null,
   isRead: true,
   readAt: null,
   createdAt: 1_790_000_000,
@@ -86,11 +88,27 @@ describe('mapping a conversation row', () => {
       state: 'sent',
       message_key: 'msg-1',
       reply_to_key: null,
+      result: null,
+      via: null,
       is_read: true,
       read_at: 1_790_000_050_000,
       created_at: 1_790_000_000_000,
       updated_at: 1_790_000_060_000,
     });
+  });
+
+  test("Argus's line keeps its results as JSON and both lines say how they were said", () => {
+    const frames = [
+      { id: 'a1b2', tool: 'memory.remind', ok: true, data: { title: 'Regar', remindAt: 1_790_000_600 } },
+      { id: 'c3d4', tool: 'memory.remind', ok: false, data: {} },
+    ];
+    const raw = toDirtyRaw('conversation_message', row({ direction: 'in', kind: 'turn', result: frames, via: 'voice' }));
+    expect(JSON.parse(String(raw.result))).toEqual(frames);
+    expect(raw.via).toBe('voice');
+    expect(toModelProps('conversation_message', row({ via: 'text' })).via).toBe('text');
+    expect(toModelProps('conversation_message', row({ via: 'sms' })).via).toBeNull();
+    expect(toModelProps('conversation_message', row({ result: [{ tool: 'x' }, 'junk'] })).result).toBeNull();
+    expect(toModelProps('conversation_message', row({ result: JSON.stringify(frames) })).result).toEqual(frames);
   });
 
   test('Argus is counterpart 0, kept as the string "0"', () => {

@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type { GuardMode, VoiceAction, VoiceActionOutcome } from '@/core/types';
 import { GUARD_MODES } from '@/shared/constants';
+import { AGENDA_DAY_MAX_ITEMS } from '@/features/voice/constants/voice';
 import { holdTalkInline } from '@/features/voice/model/hold-talk';
 
 export type ArgusResultStatus = 'pending' | 'done' | 'failed';
@@ -11,9 +12,15 @@ export type CameraResult = ResultBase & { kind: 'camera'; cameraId: string | nul
 
 export type ScreenResult = ResultBase & { kind: 'screen'; screen: string; module: string | null };
 
+export type OfferAnswer = 'yes' | 'no';
+
+export type VoiceConfirm = { id: string; answer: OfferAnswer };
+
 export type ReminderResult = ResultBase & {
   kind: 'reminder';
+  offerId: string;
   asking: boolean;
+  answer: OfferAnswer | null;
   title: string;
   remindAt: number;
 };
@@ -104,7 +111,7 @@ const agendaDayData = z.object({
         kind: z.enum(['event', 'task', 'reminder']).catch('event'),
       })
     )
-    .max(50),
+    .transform((items) => items.slice(0, AGENDA_DAY_MAX_ITEMS)),
 });
 
 const moduleData = z.object({ module: z.string().regex(/^[a-z0-9-]+$/) });
@@ -116,7 +123,7 @@ const resultFrame = z.object({
   data: z.record(z.string(), z.unknown()),
 });
 
-type ResultFrame = z.infer<typeof resultFrame>;
+export type ResultFrame = z.infer<typeof resultFrame>;
 
 type Base = Pick<ResultBase, 'id' | 'at'>;
 
@@ -133,7 +140,9 @@ function reminderOf(frame: ResultFrame, base: Base): ReminderResult | null {
     ...base,
     kind: 'reminder',
     status: asking ? 'pending' : 'done',
+    offerId: frame.id,
     asking,
+    answer: null,
     title: data.data.title,
     remindAt: ms(data.data.remindAt),
   };
@@ -204,11 +213,23 @@ const FRAME_READERS: Readonly<
   'modules.enable': moduleOf,
 };
 
+const resultIdOf = (frameId: string): string => `result:${frameId}`;
+
+export function readResultFrame(payload: unknown): ResultFrame | null {
+  const frame = resultFrame.safeParse(payload);
+  return frame.success ? frame.data : null;
+}
+
+export function resultIdOfFrame(payload: unknown): string | null {
+  const frame = readResultFrame(payload);
+  return frame ? resultIdOf(frame.id) : null;
+}
+
 export function resultOfFrame(payload: unknown, at: number): ArgusResult | null {
   const frame = resultFrame.safeParse(payload);
   if (!frame.success || !frame.data.ok) return null;
   const read = FRAME_READERS[frame.data.tool];
-  return read ? read(frame.data, { id: `result:${frame.data.id}`, at }) : null;
+  return read ? read(frame.data, { id: resultIdOf(frame.data.id), at }) : null;
 }
 
 const argumentText = (value: unknown): string => (typeof value === 'string' ? value.trim() : '');
@@ -257,9 +278,9 @@ export function settleResult(result: ArgusResult, settlement: ActionSettlement):
   };
 }
 
-export function answeredOffer(result: ArgusResult, accepted: boolean): ArgusResult {
-  if (result.kind !== 'reminder' || !result.asking) return result;
-  return { ...result, asking: false, status: accepted ? 'done' : 'failed' };
+export function answeredOffer(result: ReminderResult, answer: OfferAnswer): ReminderResult {
+  if (!result.asking) return result;
+  return { ...result, asking: false, answer };
 }
 
 export function upsertResult(
@@ -274,7 +295,9 @@ export function upsertResult(
 }
 
 export function shownResults(results: readonly ArgusResult[]): ArgusResult[] {
-  return results.filter((result) => result.status !== 'failed' || result.kind === 'camera');
+  return results.filter(
+    (result) => result.status !== 'failed' || result.kind === 'camera' || result.kind === 'reminder'
+  );
 }
 
 export function liveCameraResultId(results: readonly ArgusResult[]): string | null {

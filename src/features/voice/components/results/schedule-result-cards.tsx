@@ -23,17 +23,23 @@ export type ScheduleCardProps<R> = { result: R; actions: ResultActions; now: num
 
 type AgendaLineProps = { item: AgendaDayItem; time: string };
 
+function useReminderState(result: ReminderResult): string | null {
+  const { t } = useTranslation();
+  if (result.asking) return null;
+  if (result.status === 'done') return t('screens.voice.results.reminder-set');
+  if (result.status === 'failed') return t('screens.voice.results.reminder-dropped');
+  return result.answer === 'yes'
+    ? t('screens.voice.results.answered-yes')
+    : t('screens.voice.results.answered-no');
+}
+
 export function ReminderResultCard({ result, actions, now }: ScheduleCardProps<ReminderResult>) {
   const { t } = useTranslation();
   const when = useResultWhen(now);
   const { answer } = actions;
-  const settled =
-    result.status === 'done'
-      ? t('screens.voice.results.reminder-set')
-      : t('screens.voice.results.reminder-dropped');
-  const meta = result.asking
-    ? when.whenOf(result.remindAt)
-    : `${when.whenOf(result.remindAt)} · ${settled}`;
+  const state = useReminderState(result);
+  const meta =
+    state === null ? when.whenOf(result.remindAt) : `${when.whenOf(result.remindAt)} · ${state}`;
   return (
     <ResultShell surface={actions.surface} label={result.title}>
       <ResultHead
@@ -42,7 +48,7 @@ export function ReminderResultCard({ result, actions, now }: ScheduleCardProps<R
         title={result.title}
         meta={meta}
       />
-      {result.asking && answer ? (
+      {result.asking ? (
         <ResultActionsRow>
           <Button
             compact
@@ -56,13 +62,6 @@ export function ReminderResultCard({ result, actions, now }: ScheduleCardProps<R
             onPress={() => answer(result, false)}
           />
         </ResultActionsRow>
-      ) : null}
-      {result.asking && !answer ? (
-        <View className="px-4 pb-3">
-          <Text variant="rowMeta" tone="2">
-            {t('screens.voice.results.say-yes-no')}
-          </Text>
-        </View>
       ) : null}
     </ResultShell>
   );
@@ -127,7 +126,7 @@ export function AgendaDayCard({ result, actions, now }: ScheduleCardProps<Agenda
         : t('screens.voice.results.agenda-many', { count: String(result.items.length) });
   const title = when.dayOf(result.day);
   return (
-    <ResultShell surface={actions.surface} label={title}>
+    <ResultShell surface={actions.surface} label={`${title}. ${meta}`}>
       <ResultHead icon="cal" title={title} meta={meta} />
       {result.items.map((item) => (
         <AgendaLine

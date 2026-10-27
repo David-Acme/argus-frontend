@@ -257,6 +257,27 @@ describe('a WebRTC call', () => {
     unsubscribe();
   });
 
+  test('a result on argus.result reaches the result listeners and a button answer goes out on argus.confirm', async () => {
+    tokenAnswers = [grant(userCall)];
+    await voiceService.start();
+    const results: unknown[] = [];
+    const unsubscribe = voiceService.onResult((payload) => results.push(payload));
+    call.listener({
+      kind: 'data',
+      topic: 'argus.result',
+      payload: '{"id":"ab12","tool":"memory.remind","ok":false,"data":{}}',
+    });
+    expect(results).toEqual([{ id: 'ab12', tool: 'memory.remind', ok: false, data: {} }]);
+    expect(voiceService.confirm({ id: 'ab12', answer: 'yes' })).toBe(true);
+    await settle();
+    expect(call.sent.at(-1)).toEqual({
+      topic: 'argus.confirm',
+      payload: '{"id":"ab12","answer":"yes"}',
+    });
+    expect(sentFrames).toEqual([]);
+    unsubscribe();
+  });
+
   test('context sent while the call connects reaches the room once it is up', async () => {
     tokenAnswers = [grant(userCall)];
     const starting = voiceService.start();

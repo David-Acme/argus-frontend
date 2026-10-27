@@ -147,7 +147,9 @@ export const migrations = schemaMigrations({
       steps: [
         createTable({
           name: CONVERSATION_MESSAGE_SCHEMA.name,
-          columns: CONVERSATION_MESSAGE_SCHEMA.columnArray,
+          columns: CONVERSATION_MESSAGE_SCHEMA.columnArray.filter(
+            (column) => column.name !== 'result' && column.name !== 'via'
+          ),
           unsafeSql: (sql) => sql + CONVERSATION_THREAD_INDEX_SQL,
         }),
       ],
@@ -181,6 +183,18 @@ export const migrations = schemaMigrations({
     {
       toVersion: 18,
       steps: [unsafeExecuteSql('drop table if exists "reminder";')],
+    },
+    {
+      toVersion: 19,
+      steps: [
+        addColumns({
+          table: 'conversation_message',
+          columns: [
+            { name: 'result', type: 'string', isOptional: true },
+            { name: 'via', type: 'string', isOptional: true },
+          ],
+        }),
+      ],
     },
   ],
 });

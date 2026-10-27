@@ -13,6 +13,8 @@ export const conversations = {
   unread: '{count} unread',
   'preview-state': '{preview} · {state}',
   meta: '{where} · {time}',
+  'meta-voice': '{where} · by voice · {time}',
+  'meta-voice-plain': 'By voice · {time}',
   empty: 'You are not talking to anyone at home yet',
   'empty-hint': 'Tell Argus: “tell Ana that…” and it will pass it on.',
   'thread-empty': 'This conversation is empty',

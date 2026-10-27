@@ -13,6 +13,8 @@ export const conversations = {
   unread: '{count} sin leer',
   'preview-state': '{preview} · {state}',
   meta: '{where} · {time}',
+  'meta-voice': '{where} · por voz · {time}',
+  'meta-voice-plain': 'Por voz · {time}',
   empty: 'Aún no hablas con nadie de casa',
   'empty-hint': 'Dile a Argus: «dile a Ana que…» y él se lo hará llegar.',
   'thread-empty': 'Esta conversación está vacía',

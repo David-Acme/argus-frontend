@@ -1381,6 +1381,19 @@ backend /sync → WatermelonDB durable projection → ViewCacheCoordinatorServic
   `changes[field].current` to partial Watermelon props; omitted columns are
   never defaulted. The processor batches compatible updates and requests a
   context recovery if the target row is absent.
+- **A diff inside a JSON column is a path (2026-10-27).** The backend's
+  `JsonDiff::createFlatDiff` descends into objects, so a change to a
+  notification's `data` arrives as `data.kind`, `data.callId`, … and never as
+  `data`. `toAuditPatch` keeps those as `paths` for the columns the mapper
+  stores as JSON (`isJsonProp`), and the processor applies them over the row's
+  current value (`patchedProps`: a `null` current removes the key, a later diff
+  of the whole column replaces the earlier paths). Without this a missed
+  reminder call, which now rewrites the reminder's own feed row in place
+  (`type`, `title`, `body`, unread again, its `data` merged; backend
+  `services/notification/CONTEXT.md`, "One reminder occurrence, one feed
+  row"), changed the words of the row and lost the call's data. The feed
+  observes `type`, `title`, `body`, `data` and the read state, so the view
+  cache repaints the same row.
 - During initial synchronization, live `Add`, `Delete` and `Log` messages are
   queued and replayed in that order so an audit patch cannot run before its
   creation.
@@ -7662,9 +7675,9 @@ always takes typed turns, and voice is the microphone beside the field or the ca
   with Estela at 28 beside the last bubble of each of its groups; only the
   newest reply's Estela moves (`newestIncomingId`), the rest are still frames,
   so a screen never runs more than two loops. Under a group: «Desde el
-  portátil · 21:54» (the row's `leg`; the row does not say whether a turn was
-  typed or spoken, so «por voz» cannot be drawn honestly) or the delivery
-  state. A failed typed turn stays as «No enviado. …» with Reintentar and
+  portátil · 21:54» (the row's `leg`), «Desde el teléfono · por voz · 21:54»
+  when the row's `via` is `voice` («Por voz · 21:54» without a leg), or the
+  delivery state. A failed typed turn stays as «No enviado. …» with Reintentar and
   Descartar. Thinking is the three-dot bubble with Estela `think`.
 - **The composer** is a real field (`Field kind="message"`, Enter sends on the
   web, Shift+Enter breaks the line) and one ink round button: the microphone
@@ -7680,36 +7693,54 @@ always takes typed turns, and voice is the microphone beside the field or the ca
   by the time of day and what the role may ask; «Recuérdame…» fills the
   draft). An empty thread is Estela (96, 72, 52 by the height class), «Puedes
   escribirme o hablarme» and the same three suggestions.
-- **Result cards come only from what the backend returns.** `ArgusResults`
-  (`features/voice/services/results`) keeps this session's results: the app
-  actions it already receives (`voice:action` `app.show_camera`, `app.open`),
-  settled by the call bridge with the camera it resolved, and the
-  `voice:result` frames read by `resultOfFrame` (zod, unknown tools and
-  failed results draw nothing). `anchorResults` puts each card under the reply
-  to the request it answered (by arrival time, 10 s of clock slack), or at the
-  end until that reply arrives. Cards (`ArgusResultCard`, shared by the chat
-  and the call): the live camera (the newest shown camera plays, with «En
-  vivo», «Argus mira» in the tile's eye corner, Ver en grande and Hablar;
-  older ones are a line with Ver), the implicit reminder («Sí, recuérdamelo» /
-  «No, gracias» send those words as the next typed turn, which argus-llm's
-  pending confirmation reads like a spoken yes or no; in the call it says
-  «Dímelo: “sí” o “no”»), the moved event (before and after, Abrir, Deshacer
-  through `calendarEventService.update`), the mode change (Ver Seguridad,
-  Deshacer through `guardService.setMode`), the day's list and the module that
-  is off («Activar Productividad»).
-- **The `voice:result` frame is assumed** (2026-10-26). Nothing on the wire
-  carries a tool's structured result today: argus-voice sends `voice:action`
-  for the client actions only, and argus-guard sets the mode itself. The
-  adapter types `{id, tool, ok, data}` with `memory.remind {title, remindAt,
-  confirm}`, `calendar.move_event {eventId, title, startsAt, endsAt?,
+- **Result cards come only from what the backend returns.** The frame is
+  `{id, tool, ok, data}` (backend `services/llm/CONTEXT.md`, "What Argus did,
+  as data"; times in epoch seconds): `memory.remind {title, remindAt,
+  confirm?}`, `calendar.move_event {eventId, title, startsAt, endsAt?,
   previousStartsAt, previousEndsAt?}`, `app.set_guard_mode {mode,
-  previousMode?, environmentId?, environmentName?}` and `calendar.list_events
-  {day, items[{id, title, startsAt, allDay?, kind}]}` and `modules.enable
-  {module}` (a request that needs a module that is off), times in epoch seconds.
-  Until argus-voice sends it (and argus-sync relays it on `/sync`; the RTC leg
-  needs it on the agent's data channel), only the camera and module cards
-  appear. Results live in memory for the session, so they are not on another
-  device and not after a restart: the turn rows would need to carry them.
+  previousMode?, environmentId?, environmentName?}`, `calendar.list_events
+  {day, items[]}` (at most 50, `AGENDA_DAY_MAX_ITEMS`) and `modules.enable
+  {module}`. It arrives three ways, all keyed by `result:<id>`:
+  `voice:result` on `/sync` (`SyncOperation.VoiceResult = 16`, rendered by
+  argus-sync as the typed frame, to every socket of the speaker), topic
+  `argus.result` in a LiveKit call (`RTC_INBOUND_TOPICS`, handed by
+  `voiceService.onResult` only on the RTC leg), and persisted on Argus's
+  `conversation_message` line as `result` (a JSON array of the same frames).
+  `ArgusResults` (`features/voice/services/results`) listens to both live
+  transports and keeps one card per id (`applyResultFrame`, `mergeResult`):
+  a card only moves forward (asking, then answered, then done or failed) and
+  keeps the time it first arrived, so the copy from the other transport or a
+  repeated offer never reopens it. `ok:false` carries the offer's id and
+  settles that card as failed («No lo guardé»); it is never dropped.
+  The session's app actions (`voice:action` `app.show_camera`, `app.open`)
+  stay cards of their own, settled by the call bridge.
+- **The thread reads the cards from its rows.** `resultsOfRows` folds the
+  frames of every Argus line in order: a card sits under the line that first
+  carried it, with the state of the latest line that names its id (the offer
+  line, then the answer line's kept reminder or `ok:false`), so the cards
+  survive a restart and show on the user's other devices. `threadResultsOf`
+  merges this session's live cards into them by id; the live ones the rows do
+  not carry yet are anchored by `anchorResults` under the reply to the request
+  they answered (by arrival time, 10 s of clock slack), or at the end until
+  that reply arrives.
+- **Cards** (`ArgusResultCard`, shared by the chat and the call): the live
+  camera (the newest shown camera plays, with «En vivo», «Argus mira» in the
+  tile's eye corner, Ver en grande and Hablar; older ones are a line with
+  Ver); the implicit reminder, whose «Sí, recuérdamelo» / «No, gracias» send
+  `voice:confirm {id, answer: "yes" | "no"}` with the offer's id (on `/sync`
+  through the chat session, on topic `argus.confirm` in a call), never words,
+  and leave the card at «Le dijiste que sí/no» until its result arrives; a
+  stale id is answered by Argus with «Esa pregunta ya no está abierta.» and no
+  frame, so that card stays settled at what the user answered; the moved event
+  (before and after, Abrir, Deshacer through `calendarEventService.update`,
+  the app's `PATCH`, with the previous times); the mode change (Ver
+  Seguridad, and Deshacer through `guardService.setMode` only when the result
+  carries `previousMode`); the day's list (every item, its label the day and
+  the count); the module that is off: «Activar Productividad» for whoever
+  holds `modules.manage`, «Pídele a <owner> que active Productividad.» for
+  everyone else (the first active owner of `people.users`, «al propietario»
+  when this role does not see the directory), since argus-llm sends
+  `modules.enable` for every role.
 - **The call** keeps P5c's dark stage and shows only its newest result, under
   the captions (`CallResults`, `callResultOf` since the call opened), live only
   on a regular-height window. The old one-line `CallResultCard` is gone.
@@ -7723,8 +7754,10 @@ always takes typed turns, and voice is the microphone beside the field or the ca
   field has focus (`use-space-to-talk.web.ts`, `startsSpaceTalk`). A member's
   thread takes the centre with no right column.
 - **Data sources.** Thread and list: the synced `conversation_message` table
-  through the view cache (paged), live with `/sync`. Results: the socket frames
-  of this session (no local copy). En casa: HTTP presence, re-read on
+  through the view cache (paged), live with `/sync`. Results: the `result`
+  column of those rows (WatermelonDB v19 adds `result` and `via`), plus the
+  `voice:result` / `argus.result` frames of this session until their row
+  arrives. En casa: HTTP presence, re-read on
   `ResourceChanged` (home's hook). Suggestions: the camera list view cache and
   the capabilities.
 - **Shared changes.** `Field` gains `kind="message"`; `Button` gains `ink`
@@ -7771,7 +7804,7 @@ reconnect or a remount), **removed** (to be removed by F-reminders).
 | Cámara · ajustes, zonas | `camera`, `zone` → `camera.list` | `/camera/catalog` (static) | |
 | Agenda | `calendar_event`, `project_task`, `reminder` → `calendar.entries`; `calendar_event_share` → `calendar.event.shares`; `project` → `dashboard.projects`; `user` → `people.users` | | `reminder` rows removed (F-reminders) |
 | Proyectos, proyecto | `project`, `project_task`, `project_member`, `user` → `project.list`, `project.tasks`, `project.members`, `people.users` | | |
-| Argus · hilo, Conversaciones | `conversation_message` → `conversation.thread` (paged), `conversation.list` | | results: `voice:result`/`voice:action` frames of the session |
+| Argus · hilo, Conversaciones | `conversation_message` (with its `result` and `via`) → `conversation.thread` (paged), `conversation.list` | | live results: `voice:result` (`/sync`), `argus.result` (call) and `voice:action` frames until the row carries them |
 | Personas · directorio, invitaciones | `user`, `user_invitation` → `people.users`, `people.invitations` | | |
 | Personas · voces | | `/voiceprint/users` → identity·voiceprints | |
 | Personas · visitantes | `camera` → `camera.list` | `/visitor`, `/visitor/{id}`, `/visitor-settings` → identity·visitors | |

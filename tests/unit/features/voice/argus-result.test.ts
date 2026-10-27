@@ -11,8 +11,8 @@ import {
   settleResult,
   shownResults,
   upsertResult,
-  type ArgusResult,
 } from '@/features/voice/model/argus-result';
+import type { ArgusResult, ReminderResult } from '@/features/voice/model/argus-result';
 
 const AT = 1_000;
 
@@ -45,15 +45,19 @@ describe('a result frame from the backend', () => {
       at: AT,
       status: 'pending',
       kind: 'reminder',
+      offerId: '9',
       asking: true,
+      answer: null,
       title: 'Pagar el agua',
       remindAt: 1_800_000,
     });
-    expect(result && answeredOffer(result, true)).toMatchObject({ asking: false, status: 'done' });
-    expect(result && answeredOffer(result, false)).toMatchObject({
+    const offer = result as ReminderResult;
+    expect(answeredOffer(offer, 'yes')).toMatchObject({
       asking: false,
-      status: 'failed',
+      answer: 'yes',
+      status: 'pending',
     });
+    expect(answeredOffer({ ...offer, asking: false }, 'no').answer).toBeNull();
   });
 
   test('a moved event keeps the time it had before, in milliseconds', () => {
@@ -119,6 +123,16 @@ describe('a result frame from the backend', () => {
     expect(resultOfFrame(frame('modules.enable', { module: '../x' }), AT)).toBeNull();
   });
 
+  test('a day of the agenda keeps at most fifty items', () => {
+    const items = Array.from({ length: 60 }, (_, index) => ({
+      id: index + 1,
+      title: `Cita ${index + 1}`,
+      startsAt: 3_100 + index,
+    }));
+    const result = resultOfFrame(frame('calendar.list_events', { day: 3_000, items }), AT);
+    expect(result?.kind === 'agenda-day' ? result.items.length : 0).toBe(50);
+  });
+
   test('a failed tool, an unknown tool and a malformed payload draw no card', () => {
     expect(
       resultOfFrame(frame('memory.remind', { title: 'x', remindAt: 1 }, false), AT)
@@ -176,7 +190,7 @@ describe('which results show', () => {
     expect(upsertResult(kept, camera('c', 3), 2).map((r) => r.id)).toEqual(['b', 'c']);
   });
 
-  test('failed results show only for a camera, so a refusal is never drawn as a fact', () => {
+  test('failed results show only for a camera and a settled reminder, so a refusal is never drawn as a fact', () => {
     const failedMode: ArgusResult = {
       id: 'm',
       at: 1,

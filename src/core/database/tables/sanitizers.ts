@@ -3,13 +3,16 @@ import {
   CONVERSATION_KINDS,
   CONVERSATION_LEGS,
   CONVERSATION_STATES,
+  CONVERSATION_VIAS,
   CREATED_VIA,
 } from '@/core/types';
 import type {
   ConversationDirection,
   ConversationKind,
   ConversationLeg,
+  ConversationResultFrame,
   ConversationState,
+  ConversationVia,
   CreatedVia,
   RecurrenceException,
   ZonePoint,
@@ -50,6 +53,28 @@ export const sanitizeConversationLeg = (raw: unknown): ConversationLeg | null =>
 
 export const sanitizeConversationState = (raw: unknown): ConversationState =>
   memberOf(CONVERSATION_STATES, raw) ?? 'received';
+
+export const sanitizeConversationVia = (raw: unknown): ConversationVia | null =>
+  memberOf(CONVERSATION_VIAS, raw);
+
+const frameIdOf = (raw: unknown): string =>
+  typeof raw === 'string' || typeof raw === 'number' ? String(raw) : '';
+
+function resultFrameOf(raw: unknown): ConversationResultFrame | null {
+  const frame = sanitizeObject(raw);
+  const id = frameIdOf(frame.id);
+  if (id.length === 0 || typeof frame.tool !== 'string' || typeof frame.ok !== 'boolean')
+    return null;
+  return { id, tool: frame.tool, ok: frame.ok, data: sanitizeObject(frame.data) };
+}
+
+export const sanitizeResultFrames = (raw: unknown): ConversationResultFrame[] | null => {
+  if (!Array.isArray(raw)) return null;
+  const frames = raw
+    .map(resultFrameOf)
+    .filter((frame): frame is ConversationResultFrame => frame !== null);
+  return frames.length > 0 ? frames : null;
+};
 
 const finiteOrUndefined = (value: unknown): number | undefined =>
   typeof value === 'number' && Number.isFinite(value) ? value : undefined;

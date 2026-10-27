@@ -36,6 +36,8 @@ const summary = (
     state: 'received',
     messageKey: `k${counterpartId}`,
     replyToKey: null,
+    result: null,
+    via: null,
     isRead: false,
     createdAt: NOW,
   },

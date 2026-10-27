@@ -1,13 +1,13 @@
 import type { IConversationMessageCacheRow } from '@/core/interfaces';
 import type { PresenceState } from '@/shared/ui/presence';
-import type { ArgusResult } from '@/features/voice';
+import type { ArgusResult, ResultRow, ThreadResults } from '@/features/voice';
 
 export type AnchoredResults = {
   byRow: ReadonlyMap<string, readonly ArgusResult[]>;
   trailing: readonly ArgusResult[];
 };
 
-type ThreadRow = Pick<IConversationMessageCacheRow, 'id' | 'direction' | 'createdAt'>;
+type ThreadRow = Pick<IConversationMessageCacheRow, 'id' | 'direction' | 'createdAt' | 'result'>;
 
 export const RESULT_SLACK_MS = 10_000;
 
@@ -22,21 +22,27 @@ function anchorOf(rows: readonly ThreadRow[], at: number, slackMs: number): stri
   return rows.slice(asked + 1).find((row) => row.direction === 'in')?.id ?? null;
 }
 
+export function resultRowsOf(rows: readonly ThreadRow[]): ResultRow[] {
+  return rows
+    .filter((row) => row.direction === 'in' && row.result !== null)
+    .map((row) => ({ id: row.id, at: row.createdAt, frames: row.result ?? [] }));
+}
+
 export function anchorResults(
   rows: readonly ThreadRow[],
-  results: readonly ArgusResult[],
+  { placed, unplaced }: ThreadResults,
   slackMs: number = RESULT_SLACK_MS
 ): AnchoredResults {
-  if (results.length === 0) return NO_RESULTS;
+  if (placed.length === 0 && unplaced.length === 0) return NO_RESULTS;
   const byRow = new Map<string, ArgusResult[]>();
-  const trailing: ArgusResult[] = [];
-  for (const result of results) {
-    const anchor = anchorOf(rows, result.at, slackMs);
-    if (anchor === null) {
-      trailing.push(result);
-      continue;
-    }
+  const add = (anchor: string, result: ArgusResult) =>
     byRow.set(anchor, [...(byRow.get(anchor) ?? []), result]);
+  for (const { anchor, result } of placed) add(anchor, result);
+  const trailing: ArgusResult[] = [];
+  for (const result of unplaced) {
+    const anchor = anchorOf(rows, result.at, slackMs);
+    if (anchor === null) trailing.push(result);
+    else add(anchor, result);
   }
   return { byRow, trailing };
 }

@@ -56,21 +56,21 @@ export function GuardModeCard({ result, actions }: HomeCardProps<GuardModeResult
 
 export function ScreenResultCard({ result, actions }: HomeCardProps<ScreenResult>) {
   const { t } = useTranslation();
-  const { openScreen } = actions;
+  const { openScreen, enablesModules, ownerName } = actions;
   const moduleKey = result.module ? MODULE_NAME_KEYS[result.module] : undefined;
   const screenKey = SCREEN_NAME_KEYS[result.screen];
   if (moduleKey) {
     const name = t(moduleKey);
+    const title = t('screens.voice.results.module-off', { module: name });
+    const hint = enablesModules
+      ? t('screens.voice.results.module-off-hint')
+      : ownerName
+        ? t('screens.voice.results.module-ask-owner', { owner: ownerName, module: name })
+        : t('screens.voice.results.module-ask-anyone', { module: name });
     return (
-      <ResultShell
-        surface={actions.surface}
-        label={t('screens.voice.results.module-off', { module: name })}>
-        <ResultHead
-          icon="grid"
-          title={t('screens.voice.results.module-off', { module: name })}
-          meta={t('screens.voice.results.module-off-hint')}
-        />
-        {openScreen ? (
+      <ResultShell surface={actions.surface} label={`${title}. ${hint}`}>
+        <ResultHead icon="grid" title={title} meta={hint} />
+        {enablesModules && openScreen ? (
           <ResultActionsRow>
             <Button
               compact

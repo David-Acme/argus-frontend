@@ -23,6 +23,8 @@ const source = (patch: Partial<ConversationMessageSource> & { id: string }): Con
   state: 'received',
   messageKey: `key-${patch.id}`,
   replyToKey: null,
+  result: null,
+  via: null,
   isRead: true,
   createdAt: new Date(T0),
   ...patch,

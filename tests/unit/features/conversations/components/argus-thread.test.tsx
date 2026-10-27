@@ -6,6 +6,7 @@ import type { AssistantChatEntry } from '@/core/types';
 import { createDateFormatter } from '@/shared/hooks/use-date-formatter/date';
 import { Text } from '@/shared/ui/text';
 import type { ArgusResult, HoldTalkStage } from '@/features/voice';
+import { threadResultsOf } from '@/features/voice/model/result-merge';
 import type { ConversationThread } from '@/features/conversations/hooks/use-conversation-thread';
 import '../../../shared/ui/translation-stub';
 
@@ -38,6 +39,8 @@ const message = (
   state: 'delivered',
   messageKey: `k${id}`,
   replyToKey: null,
+  result: null,
+  via: null,
   isRead: true,
   createdAt: Date.UTC(2026, 9, 26, 15, 0),
   ...patch,
@@ -134,6 +137,7 @@ mock.module('@/features/voice', () => ({
   liveCameraResultId: (results: ArgusResult[]) =>
     results.findLast((result) => result.kind === 'camera')?.id ?? null,
   shownResults: (results: ArgusResult[]) => results,
+  threadResultsOf,
   useArgusResults: () => voice.results,
   useResultActions: () => ({ surface: 'chat' }),
   useVoiceHeard: () => 'muéstrame',
@@ -228,6 +232,34 @@ describe('the Argus thread', () => {
     const reply = screen.getByText('Aquí está la cocina.');
     const card = screen.getByText('card camera live');
     expect(reply.compareDocumentPosition(card) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  test('the cards kept with the conversation come back after a restart, settled by later lines', async () => {
+    const offer = {
+      id: 'ab12',
+      tool: 'memory.remind',
+      ok: true,
+      data: { title: 'Regar', remindAt: 1_800, confirm: true },
+    };
+    const rows = [
+      message('1', { direction: 'out', body: 'Regar las plantas', createdAt: 1_000, via: 'voice' }),
+      message('2', { body: '¿Te lo recuerdo?', createdAt: 2_000, result: [offer], via: 'voice' }),
+      message('3', { direction: 'out', body: 'sí', createdAt: 3_000, via: 'text' }),
+      message('4', {
+        body: 'Listo.',
+        createdAt: 4_000,
+        result: [{ ...offer, data: { title: 'Regar', remindAt: 1_800 } }],
+        via: 'text',
+      }),
+    ];
+    await show(<ArgusThread thread={thread(rows)} desktop={false} />);
+    expect(screen.getAllByText('card reminder')).toHaveLength(1);
+    const question = screen.getByText('¿Te lo recuerdo?');
+    const card = screen.getByText('card reminder');
+    expect(question.compareDocumentPosition(card) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(
+      card.compareDocumentPosition(screen.getByText('sí')) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
   });
 
   test('a typed message that failed stays as «No enviado» with Reintentar', async () => {
@@ -390,6 +422,25 @@ describe('the pieces of a thread', () => {
     expect(screen.getByText(/^Desde el portátil · /)).toBeDefined();
     expect(screen.getByRole('status', { name: 'Argus está pensando' })).toBeDefined();
     expect(screen.getByRole('heading', { name: 'Hoy' })).toBeDefined();
+  });
+
+  test('a spoken exchange says so in its meta', async () => {
+    await show(
+      <>
+        <MessageBubble
+          message={message('1', { direction: 'out', body: 'Hola', leg: 'phone', via: 'voice' })}
+          repliedBody={null}
+        />
+        <MessageBubble message={message('2', { body: 'Hola', via: 'voice' })} repliedBody={null} />
+        <MessageBubble
+          message={message('3', { body: 'Escrito', via: 'text' })}
+          repliedBody={null}
+        />
+      </>
+    );
+    expect(screen.getByText(/^Desde el teléfono · por voz · /)).toBeDefined();
+    expect(screen.getByText(/^Por voz · /)).toBeDefined();
+    expect(screen.queryAllByText(/por voz/i)).toHaveLength(2);
   });
 
   test('suggestions fill the draft when they need more words', async () => {

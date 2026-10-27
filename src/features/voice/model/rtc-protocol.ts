@@ -14,12 +14,14 @@ import {
   VOICE_ACTION_RESULT_TYPE,
   VOICE_ACTION_TYPE,
   VOICE_ASSISTANT_TYPE,
+  VOICE_CONFIRM_TYPE,
   VOICE_CONTEXT_TYPE,
   VOICE_DONE_TYPE,
   VOICE_EVENT_TYPE,
   VOICE_HANDOFF_KIND,
   VOICE_INTERRUPTED_TYPE,
   VOICE_MUTE_TYPE,
+  VOICE_RESULT_TYPE,
   VOICE_SKIP_TYPE,
   VOICE_STOP_TYPE,
   VOICE_STT_CORRECTION_TYPE,
@@ -37,6 +39,7 @@ export const RTC_INBOUND_TOPICS: Readonly<Record<string, string>> = {
   'argus.event': VOICE_EVENT_TYPE,
   'argus.done': VOICE_DONE_TYPE,
   'argus.handoff': VOICE_HANDOFF_KIND,
+  'argus.result': VOICE_RESULT_TYPE,
 };
 
 export const RTC_OUTBOUND_TOPICS: Readonly<Record<string, string>> = {
@@ -45,6 +48,7 @@ export const RTC_OUTBOUND_TOPICS: Readonly<Record<string, string>> = {
   [VOICE_MUTE_TYPE]: 'argus.mute',
   [VOICE_SKIP_TYPE]: 'argus.skip',
   [VOICE_STOP_TYPE]: 'argus.hangup',
+  [VOICE_CONFIRM_TYPE]: 'argus.confirm',
 };
 
 const AGENT_STATES: readonly RtcAgentState[] = [
