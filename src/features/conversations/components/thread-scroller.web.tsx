@@ -19,6 +19,7 @@ type ThreadScrollerProps = Pick<
   | 'maintainScrollAtEnd'
   | 'maintainVisibleContentPosition'
   | 'onScroll'
+  | 'onLoad'
   | 'onStartReachedThreshold'
   | 'onEndReachedThreshold'
   | 'contentContainerStyle'
