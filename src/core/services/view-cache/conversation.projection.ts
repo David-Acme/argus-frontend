@@ -20,6 +20,8 @@ export type ConversationMessageSource = Pick<
   | 'state'
   | 'messageKey'
   | 'replyToKey'
+  | 'result'
+  | 'via'
   | 'isRead'
   | 'createdAt'
 >;
@@ -60,6 +62,8 @@ export const toConversationRow = (message: ConversationMessageSource): IConversa
   state: message.state,
   messageKey: message.messageKey,
   replyToKey: message.replyToKey ?? null,
+  result: message.result ?? null,
+  via: message.via ?? null,
   isRead: message.isRead,
   createdAt: message.createdAt.getTime(),
 });

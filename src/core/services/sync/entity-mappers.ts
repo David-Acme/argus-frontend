@@ -4,9 +4,11 @@ import {
   sanitizeConversationKind,
   sanitizeConversationLeg,
   sanitizeConversationState,
+  sanitizeConversationVia,
   sanitizeCreatedVia,
   sanitizeObject,
   sanitizeRecurrenceExceptions,
+  sanitizeResultFrames,
   sanitizeStringArray,
   sanitizeZonePoints,
 } from '@/core/database/tables/sanitizers';
@@ -218,6 +220,8 @@ export const TABLE_MAPS: Record<SyncTableKey, EntityFieldMap> = {
     state: sanitizeConversationState,
     messageKey: toStr,
     replyToKey: toOptStr,
+    result: (v) => sanitizeResultFrames(parseJson(v)),
+    via: sanitizeConversationVia,
     isRead: toBool,
     readAt: toOptMs,
     createdAt: toMs,
@@ -233,6 +237,7 @@ const JSON_COLUMNS = new Set([
   'data',
   'details',
   'recurrence_exceptions',
+  'result',
 ]);
 
 const toSnake = (prop: string): string => prop.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`);

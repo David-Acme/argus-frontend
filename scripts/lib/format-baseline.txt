@@ -16,7 +16,6 @@ src/core/contracts/safety.contract.ts
 src/core/contracts/watch.contract.ts
 src/core/database/tables/calendar-event.table.ts
 src/core/database/tables/camera.table.ts
-src/core/database/tables/conversation-message.table.ts
 src/core/database/tables/index.ts
 src/core/database/tables/project-task.table.ts
 src/core/i18n/locales/en/screens/approve/index.ts

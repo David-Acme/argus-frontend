@@ -28,6 +28,8 @@ export function typedMessageRow(
     state: 'sent',
     messageKey: '',
     replyToKey: null,
+    result: null,
+    via: null,
     isRead: true,
     createdAt: values.createdAt ?? 0,
   };

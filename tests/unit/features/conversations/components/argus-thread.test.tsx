@@ -38,6 +38,8 @@ const message = (
   state: 'delivered',
   messageKey: `k${id}`,
   replyToKey: null,
+  result: null,
+  via: null,
   isRead: true,
   createdAt: Date.UTC(2026, 9, 26, 15, 0),
   ...patch,

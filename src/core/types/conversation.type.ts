@@ -16,6 +16,17 @@ export type ConversationState = (typeof CONVERSATION_STATES)[number];
 
 export type ConversationDeliveryState = Exclude<ConversationState, 'received'>;
 
+export const CONVERSATION_VIAS = ['voice', 'text'] as const;
+
+export type ConversationVia = (typeof CONVERSATION_VIAS)[number];
+
+export type ConversationResultFrame = {
+  id: string;
+  tool: string;
+  ok: boolean;
+  data: Record<string, unknown>;
+};
+
 export const ARGUS_COUNTERPART_ID = 0;
 
 export type ConversationMessage = {

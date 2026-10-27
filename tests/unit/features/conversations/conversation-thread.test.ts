@@ -39,6 +39,8 @@ const message = (patch: Partial<IConversationMessageCacheRow> & { id: string }):
   state: 'sent',
   messageKey: `key-${patch.id}`,
   replyToKey: null,
+  result: null,
+  via: null,
   isRead: true,
   createdAt: T0,
   ...patch,

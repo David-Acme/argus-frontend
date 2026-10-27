@@ -34,6 +34,11 @@ const tableNamesOf = (db: Database): string[] =>
     (row) => row.name
   );
 
+const columnsOf = (db: Database, table: string): string[] =>
+  (db.query(`select name from pragma_table_info('${table}')`).all() as { name: string }[]).map(
+    (row) => row.name
+  );
+
 type Step =
   | { type: 'create_table'; schema: { name: string; columnArray: { name: string }[] } }
   | { type: 'add_columns'; table: string; columns: { name: string }[] }
@@ -586,9 +591,6 @@ describe('the conversation_message table', () => {
 });
 
 describe('the recurrence exceptions column', () => {
-  const columnsOf = (db: Database, table: string): string[] =>
-    (db.query(`select name from pragma_table_info('${table}')`).all() as { name: string }[]).map((row) => row.name);
-
   const atVersionFifteen = (): AppSchema => {
     const tables = Object.fromEntries(
       Object.entries({ ...schema.tables, reminder: reminderTable() }).map(([name, table]) => {
@@ -633,11 +635,6 @@ describe('the recurrence exceptions column', () => {
 });
 
 describe('the created via column', () => {
-  const columnsOf = (db: Database, table: string): string[] =>
-    (db.query(`select name from pragma_table_info('${table}')`).all() as { name: string }[]).map(
-      (row) => row.name
-    );
-
   const atVersionSixteen = (): AppSchema => {
     const tables = Object.fromEntries(
       Object.entries(schema.tables).map(([name, table]) => {
@@ -666,7 +663,7 @@ describe('the created via column', () => {
       'insert into project_task (id, _changed, _status, project_id, created_by, assignee_id, title, status, priority, due_at, sort_order, created_at, updated_at) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
     ).run('1', '', 'synced', '3', '1', null, 'Pintar la reja', 'todo', 'low', null, 1, 1, 1);
 
-    const steps = stepsForMigration({ migrations, fromVersion: 16, toVersion: SCHEMA_VERSION });
+    const steps = stepsForMigration({ migrations, fromVersion: 16, toVersion: 17 });
     expect(steps).not.toBeNull();
     db.exec(encodeMigrationSteps(steps ?? []));
 
@@ -723,5 +720,46 @@ describe('the retired reminder table', () => {
     db.exec(encodeSchema(schema));
     expect(() => migrateFromSeventeen(db)).not.toThrow();
     expect(tableNamesOf(db)).not.toContain('reminder');
+  });
+});
+
+describe('how a conversation turn was said and what Argus did', () => {
+  const atVersionEighteen = (): AppSchema => {
+    const tables = Object.fromEntries(
+      Object.entries(schema.tables).map(([name, table]) => {
+        if (name !== 'conversation_message') return [name, table];
+        const columns = Object.fromEntries(
+          Object.entries(table.columns).filter(([column]) => column !== 'result' && column !== 'via')
+        );
+        return [name, { ...table, columns, columnArray: Object.values(columns) }];
+      })
+    );
+    return { ...schema, version: 18, tables } as AppSchema;
+  };
+
+  test('a fresh database has both columns on conversation messages', () => {
+    const db = new Database(':memory:');
+    db.exec(encodeSchema(schema));
+    expect(columnsOf(db, 'conversation_message')).toEqual(expect.arrayContaining(['result', 'via']));
+  });
+
+  test('a version 18 database gains them through the migration and keeps its messages', () => {
+    const db = new Database(':memory:');
+    db.exec(encodeSchema(atVersionEighteen()));
+    expect(columnsOf(db, 'conversation_message')).not.toContain('result');
+    db.query(
+      'insert into conversation_message (id, _changed, _status, user_id, counterpart_id, counterpart_name, direction, kind, body, leg, state, message_key, reply_to_key, is_read, read_at, created_at, updated_at) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    ).run('41', '', 'synced', '7', '0', '', 'in', 'turn', 'Listo', 'phone', 'received', 'k', null, 1, null, 1, 1);
+
+    const steps = stepsForMigration({ migrations, fromVersion: 18, toVersion: 19 });
+    expect(steps).not.toBeNull();
+    db.exec(encodeMigrationSteps(steps ?? []));
+
+    expect(columnsOf(db, 'conversation_message')).toEqual(expect.arrayContaining(['result', 'via']));
+    expect(db.query('select body, result, via from conversation_message').get()).toEqual({
+      body: 'Listo',
+      result: null,
+      via: null,
+    });
   });
 });

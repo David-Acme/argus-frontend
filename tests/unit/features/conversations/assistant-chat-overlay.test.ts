@@ -25,6 +25,8 @@ const row = (
   state: 'delivered',
   messageKey: '',
   replyToKey: null,
+  result: null,
+  via: null,
   isRead: true,
   createdAt: 0,
   ...facts,

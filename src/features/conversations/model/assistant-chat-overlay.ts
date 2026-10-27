@@ -33,6 +33,8 @@ const chatRow = (
   state: 'delivered',
   messageKey: '',
   replyToKey: null,
+  result: null,
+  via: null,
   isRead: true,
   ...facts,
 });

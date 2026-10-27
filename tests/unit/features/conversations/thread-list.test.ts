@@ -32,6 +32,8 @@ const message = (
   state: 'delivered',
   messageKey: `key-${patch.id}`,
   replyToKey: null,
+  result: null,
+  via: null,
   isRead: true,
   createdAt: T0,
   ...patch,

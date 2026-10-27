@@ -1,6 +1,14 @@
 import { Model, tableSchema } from '@nozbe/watermelondb';
-import { date, field, text } from '@nozbe/watermelondb/decorators';
-import type { ConversationDirection, ConversationKind, ConversationLeg, ConversationState } from '@/core/types';
+import { date, field, json, text } from '@nozbe/watermelondb/decorators';
+import type {
+  ConversationDirection,
+  ConversationKind,
+  ConversationLeg,
+  ConversationResultFrame,
+  ConversationState,
+  ConversationVia,
+} from '@/core/types';
+import { sanitizeResultFrames } from './sanitizers';
 
 export const CONVERSATION_THREAD_INDEX_SQL =
   'create index if not exists "conversation_message_thread" on "conversation_message" ("user_id", "counterpart_id", "created_at");';
@@ -19,6 +27,8 @@ export const CONVERSATION_MESSAGE_SCHEMA = tableSchema({
     { name: 'state', type: 'string' },
     { name: 'message_key', type: 'string' },
     { name: 'reply_to_key', type: 'string', isOptional: true },
+    { name: 'result', type: 'string', isOptional: true },
+    { name: 'via', type: 'string', isOptional: true },
     { name: 'is_read', type: 'boolean' },
     { name: 'read_at', type: 'number', isOptional: true },
     { name: 'created_at', type: 'number' },
@@ -39,6 +49,8 @@ export class ConversationMessageModel extends Model {
   @field('state') state!: ConversationState;
   @field('message_key') messageKey!: string;
   @field('reply_to_key') replyToKey!: string | null;
+  @json('result', sanitizeResultFrames) result!: ConversationResultFrame[] | null;
+  @field('via') via!: ConversationVia | null;
   @field('is_read') isRead!: boolean;
   @date('read_at') readAt!: Date | null;
   @date('created_at') createdAt!: Date;
