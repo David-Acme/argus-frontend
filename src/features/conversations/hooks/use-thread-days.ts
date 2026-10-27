@@ -10,6 +10,7 @@ export function useThreadDays(now: number): ThreadDays {
   const todayStart = today.getTime();
   const yesterdayStart = date.addDays(today, -1).getTime();
   return {
+    today: todayStart,
     startOfDay: (at) => date.startOfDay(new Date(at)).getTime(),
     dayLabel: (day) => {
       const kind = dayKindOf(day, todayStart, yesterdayStart);

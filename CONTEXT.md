@@ -7901,12 +7901,18 @@ suggestion chips over the field and the microphone as tap-to-talk.
   app does not have.
 - **Days and scrolling**: separators are pills (Hoy, Ayer, the weekday
   within the week, «19 oct») that stay in the flow between groups. A floating
-  pill shows the day of the first visible line only while the user scrolls
-  away from the newest line and its own separator is not at the top
-  (`floatingDayOf`, `dayPillOf`); it fades out 1 s after the last scroll
-  event (`DAY_PILL_HOLD_MS`, `useScrollActivity`). It sits in its own band at
-  the top of the list, on the screen background with a solid pill, so it
-  never lies over a bubble's text (phone run 2 #2). The scroll button is
+  pill, as in WhatsApp, names the day of the first visible line while the
+  user scrolls through older days: it never says «Hoy» (today is implied),
+  it is not shown at the newest line, and it gives way while its day's own
+  separator tops the list (`floatingDayOf`, `dayPillOf`). Each scroll arms
+  its fade on the UI thread (`useScrollActivity`, `scrollArmOf`: fade in
+  over `motion.duration.base`, hold `DAY_PILL_HOLD_MS` = 1 s after the last
+  scroll, fade out over `motion.duration.slow`; no fade with reduced
+  motion), re-armed at most once per `base` ms, so the list does not
+  re-render while scrolling; only `FloatingDay` does, and only when the top
+  day changes (its `viewed` handle, fed by `onViewableItemsChanged`). It
+  sits in its own band at the top of the list, on the screen background with
+  a solid pill, so it never lies over a bubble's text (phone run 2 #2). The scroll button is
   round with a double chevron and an unread badge; it floats over older lines
   and the list keeps no room for it, so the last bubble sits 12 above the
   composer (phone run 2 #1).
@@ -7987,8 +7993,8 @@ Nothing in the chat re-renders React per frame or per sample any more:
   playback speed (`playedShare`, a frame callback while it plays); the played
   part is an accent copy of the bars clipped by two opposite translations, no
   layout per frame.
-- The typing dots (CSS animations) and the day pill's fade (layout
-  animations) already ran on the UI thread.
+- The typing dots (CSS animations) already ran on the UI thread; the day
+  pill's fade is a shared value the scroll arms (see «Days and scrolling»).
 
 ## The keyboard after a call (phone run 2 #11, 2026-10-27)
 

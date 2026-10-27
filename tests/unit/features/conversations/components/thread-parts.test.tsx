@@ -1,11 +1,13 @@
 import { describe, expect, mock, test } from 'bun:test';
 import { act, fireEvent, render, screen } from '@testing-library/react';
-import type { ReactNode } from 'react';
+import { createRef, type ReactNode } from 'react';
 import type { SharedValue } from 'react-native-reanimated';
 import type { IConversationMessageCacheRow } from '@/core/interfaces';
 import { createDateFormatter } from '@/shared/hooks/use-date-formatter/date';
 import { Text } from '@/shared/ui/text';
+import type { FloatingDayHandle } from '@/features/conversations/components/floating-day';
 import type { LiveLevels } from '@/features/conversations/model/live-wave';
+import type { ThreadItem } from '@/features/conversations/model/thread-list';
 import '../../../shared/ui/translation-stub';
 
 const calls: string[] = [];
@@ -111,6 +113,7 @@ const { BubbleMore: WebBubbleMore } =
   await import('@/features/conversations/components/bubble-more.web');
 const { ThreadSearch } = await import('@/features/conversations/components/thread-search');
 const { ArgusInfo } = await import('@/features/conversations/components/argus-info');
+const { FloatingDay } = await import('@/features/conversations/components/floating-day');
 
 const shared = <T,>(value: T): SharedValue<T> =>
   ({ get: () => value, set: () => undefined }) as unknown as SharedValue<T>;
@@ -124,7 +127,7 @@ const show = async (node: ReactNode) => {
 
 const VIEW = {
   bodies: new Map<string, string>(),
-  days: { startOfDay: () => 0, dayLabel: () => 'Hoy' },
+  days: { today: 0, startOfDay: () => 0, dayLabel: () => 'Hoy' },
   chat: { typing: false, marks: new Map(), typed: new Set<string>() },
   argus: null,
 };
@@ -310,5 +313,50 @@ describe('the thread parts', () => {
     expect(screen.getByText('Lo que hizo Argus')).toBeDefined();
     fireEvent.click(screen.getByRole('button', { name: 'Ver las conversaciones' }));
     expect(calls).toEqual(['close', 'list']);
+  });
+});
+
+describe('the floating day', () => {
+  const DAY = 86_400_000;
+  const TODAY = 20 * DAY;
+  const days = {
+    today: TODAY,
+    startOfDay: (at: number) => at - (at % DAY),
+    dayLabel: (day: number) => (day === TODAY ? 'Hoy' : day === TODAY - DAY ? 'Ayer' : 'Lunes'),
+  };
+  const line = (id: string, day: number): ThreadItem => ({
+    type: 'message',
+    key: id,
+    day,
+    message: row(id, { createdAt: day }),
+    groupStart: true,
+    groupEnd: true,
+  });
+  const separator = (day: number): ThreadItem => ({ type: 'day', key: `day:${day}`, day });
+
+  const floating = async (atEnd: boolean, viewable: readonly ThreadItem[]) => {
+    const ref = createRef<FloatingDayHandle>();
+    await show(<FloatingDay ref={ref} shown={shared(1)} days={days} atEnd={atEnd} ready />);
+    await act(async () => ref.current?.viewed(viewable));
+  };
+
+  test('scrolled up into an older day, the pill names that day', async () => {
+    await floating(false, [line('1', TODAY - DAY), separator(TODAY), line('2', TODAY)]);
+    expect(screen.getByText('Ayer')).toBeDefined();
+  });
+
+  test('reading today, no «Hoy» floats: today is implied', async () => {
+    await floating(false, [line('1', TODAY), line('2', TODAY)]);
+    expect(screen.queryByText('Hoy')).toBeNull();
+  });
+
+  test('when the day separator itself tops the list, the pill gives way to it', async () => {
+    await floating(false, [separator(TODAY - DAY), line('1', TODAY - DAY)]);
+    expect(screen.queryByText('Ayer')).toBeNull();
+  });
+
+  test('at the newest line nothing floats, whatever day is on screen', async () => {
+    await floating(true, [line('1', TODAY - 3 * DAY)]);
+    expect(screen.queryByText('Lunes')).toBeNull();
   });
 });

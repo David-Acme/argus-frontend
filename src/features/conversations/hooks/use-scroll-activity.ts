@@ -1,26 +1,33 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef } from 'react';
+import {
+  useSharedValue,
+  withSequence,
+  withTiming,
+  type SharedValue,
+} from 'react-native-reanimated';
+import { scrollArmOf } from '@/features/conversations/model/thread-list';
 
-export type ScrollActivity = { scrolling: boolean; touch: () => void };
+export type ScrollActivity = { shown: SharedValue<number>; touch: () => void };
 
-export function useScrollActivity(holdMs: number): ScrollActivity {
-  const [scrolling, setScrolling] = useState(false);
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+export type ScrollActivityInput = { holdMs: number; reduceMotion: boolean };
+
+export function useScrollActivity({ holdMs, reduceMotion }: ScrollActivityInput): ScrollActivity {
+  const shown = useSharedValue(0);
+  const armedAt = useRef(Number.NEGATIVE_INFINITY);
 
   const touch = () => {
-    if (timer.current) clearTimeout(timer.current);
-    setScrolling(true);
-    timer.current = setTimeout(() => {
-      timer.current = null;
-      setScrolling(false);
-    }, holdMs);
+    const at = performance.now();
+    const arm = scrollArmOf({ sinceArm: at - armedAt.current, holdMs, reduceMotion });
+    if (!arm) return;
+    armedAt.current = at;
+    shown.set(
+      withSequence(
+        withTiming(1, { duration: arm.enter }),
+        withTiming(1, { duration: arm.hold }),
+        withTiming(0, { duration: arm.leave })
+      )
+    );
   };
 
-  useEffect(
-    () => () => {
-      if (timer.current) clearTimeout(timer.current);
-    },
-    []
-  );
-
-  return { scrolling, touch };
+  return { shown, touch };
 }

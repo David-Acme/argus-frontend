@@ -638,7 +638,7 @@ describe('the pieces of a thread', () => {
           rows={[message('5', { body: 'Nada hasta las seis.' })]}
           bodies={new Map()}
           paging={thread([])}
-          days={{ startOfDay: () => 0, dayLabel: () => 'Hoy' }}
+          days={{ today: 0, startOfDay: () => 0, dayLabel: () => 'Hoy' }}
           chat={{ typing: true, marks: new Map(), typed: new Set() }}
           argus={null}
         />

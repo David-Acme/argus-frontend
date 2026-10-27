@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import type { IConversationMessageCacheRow } from '@/core/interfaces';
+import { motion } from '@/shared/theme/tokens';
 import {
   arrivedWhileAway,
   dayItemKey,
@@ -12,11 +13,13 @@ import {
   isMessageItem,
   keyboardOffsets,
   prewarmScopesOf,
+  scrollArmOf,
   THREAD_GROUP_GAP_MS,
   threadItems,
   TYPING_ITEM_KEY,
   type ThreadItem,
 } from '@/features/conversations/model/thread-list';
+import { DAY_PILL_HOLD_MS } from '@/features/conversations/constants/conversation.constant';
 
 const MINUTE = 60_000;
 const DAY = 86_400_000;
@@ -322,18 +325,70 @@ describe('the day pill and the size estimate', () => {
       typing: false,
     });
     const [firstDay, first, secondDay, second] = items as ThreadItem[];
-    expect(floatingDayOf([first as ThreadItem])).toBe(startOfDay(T0));
-    expect(floatingDayOf([first as ThreadItem, secondDay as ThreadItem])).toBe(startOfDay(T0));
-    expect(floatingDayOf([firstDay as ThreadItem, first as ThreadItem])).toBeNull();
-    expect(floatingDayOf([secondDay as ThreadItem, second as ThreadItem])).toBeNull();
-    expect(floatingDayOf([])).toBeNull();
+    const today = startOfDay(T0 + 2 * DAY);
+    const top = (viewable: readonly ThreadItem[]) => floatingDayOf({ viewable, today });
+    expect(top([first as ThreadItem])).toBe(startOfDay(T0));
+    expect(top([first as ThreadItem, secondDay as ThreadItem])).toBe(startOfDay(T0));
+    expect(top([firstDay as ThreadItem, first as ThreadItem])).toBeNull();
+    expect(top([secondDay as ThreadItem, second as ThreadItem])).toBeNull();
+    expect(top([])).toBeNull();
   });
 
-  test('the pill shows only while the user scrolls away from the newest line', () => {
-    expect(dayPillOf({ day: T0, scrolling: true, atEnd: false })).toBe(T0);
-    expect(dayPillOf({ day: T0, scrolling: false, atEnd: false })).toBeNull();
-    expect(dayPillOf({ day: T0, scrolling: true, atEnd: true })).toBeNull();
-    expect(dayPillOf({ day: null, scrolling: true, atEnd: false })).toBeNull();
+  test('today is implied: the pill never floats «Hoy», only the days before it', () => {
+    const items = threadItems({
+      rows: [message({ id: '1' }), message({ id: '2', createdAt: T0 + DAY })],
+      startOfDay,
+      typing: false,
+    });
+    const [, first, , second] = items as ThreadItem[];
+    const today = startOfDay(T0 + DAY);
+    expect(floatingDayOf({ viewable: [second as ThreadItem], today })).toBeNull();
+    expect(floatingDayOf({ viewable: [first as ThreadItem, second as ThreadItem], today })).toBe(
+      startOfDay(T0)
+    );
+  });
+
+  test('the pill shows only once the list is laid out and away from the newest line', () => {
+    expect(dayPillOf({ day: T0, atEnd: false, ready: true })).toBe(T0);
+    expect(dayPillOf({ day: T0, atEnd: true, ready: true })).toBeNull();
+    expect(dayPillOf({ day: T0, atEnd: false, ready: false })).toBeNull();
+    expect(dayPillOf({ day: null, atEnd: false, ready: true })).toBeNull();
+  });
+
+  test('a scroll fades the pill in, holds it for the hold after the last scroll and fades it out', () => {
+    const fresh = scrollArmOf({
+      sinceArm: Number.POSITIVE_INFINITY,
+      holdMs: DAY_PILL_HOLD_MS,
+      reduceMotion: false,
+    });
+    expect(fresh).toEqual({
+      enter: motion.duration.base,
+      hold: DAY_PILL_HOLD_MS,
+      leave: motion.duration.slow,
+    });
+    expect(scrollArmOf({ sinceArm: 16, holdMs: DAY_PILL_HOLD_MS, reduceMotion: false })).toBeNull();
+    expect(scrollArmOf({ sinceArm: 400, holdMs: DAY_PILL_HOLD_MS, reduceMotion: false })).toEqual({
+      enter: 0,
+      hold: DAY_PILL_HOLD_MS,
+      leave: motion.duration.slow,
+    });
+    expect(
+      scrollArmOf({
+        sinceArm: motion.duration.base + DAY_PILL_HOLD_MS + 50,
+        holdMs: DAY_PILL_HOLD_MS,
+        reduceMotion: false,
+      })?.enter
+    ).toBe(motion.duration.base);
+  });
+
+  test('with reduced motion the pill appears and leaves without a fade', () => {
+    expect(
+      scrollArmOf({
+        sinceArm: Number.POSITIVE_INFINITY,
+        holdMs: DAY_PILL_HOLD_MS,
+        reduceMotion: true,
+      })
+    ).toEqual({ enter: 0, hold: DAY_PILL_HOLD_MS, leave: 0 });
   });
 
   test('a long message is estimated taller than a short one, a note and a day at their fixed sizes', () => {
