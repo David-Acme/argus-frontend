@@ -140,7 +140,9 @@ export function CallSurface({
         </View>
       ) : null}
       {moment === 'ended' && onClose ? (
-        <Button label={t('screens.voice.stage.back')} onPress={onClose} block />
+        <View className="w-full">
+          <Button label={t('screens.voice.stage.back')} onPress={onClose} block />
+        </View>
       ) : null}
     </CallStage>
   );
