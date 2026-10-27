@@ -3,6 +3,7 @@ export const invitation = {
   lead: 'Scan the invitation the person who invited you shows you.',
   scan: 'Scan the invitation',
   'valid-title': 'You were invited to a home',
+  'valid-title-by': '{name} invited you to a home',
   role: {
     resident: 'You will join as a resident: you will see the home calendar, the cameras and can talk to Argus.',
     guard: 'You will join as a guard: you will see the cameras and the security alerts.',

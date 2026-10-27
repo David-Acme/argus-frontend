@@ -13,7 +13,12 @@ type State = {
   draft: PrivacyChoices | null;
   pairing: PairingFlow;
   scans: string[];
-  accept: { ok: boolean; status: number; info: { role: string } | null; errors: unknown };
+  accept: {
+    ok: boolean;
+    status: number;
+    info: { role: string; inviterName?: string | null } | null;
+    errors: unknown;
+  };
   decided: number;
   decideOk: boolean;
   callStarted: unknown[];
@@ -246,6 +251,21 @@ describe('the onboarding routes', () => {
     expect(state.replaced).toEqual([
       { pathname: '/welcome/privacy', params: { mode: 'invite-enroll' } },
     ]);
+  });
+
+  test('a valid invitation names who invited when the server knows', async () => {
+    state.accept = {
+      ok: true,
+      status: 200,
+      info: { role: 'guest', inviterName: 'Ana' },
+      errors: null,
+    };
+    render(<InvitationRoute />);
+    fireEvent.click(screen.getByRole('button', { name: 'Escanear la invitación' }));
+    await waitFor(() =>
+      expect(screen.getByRole('heading', { name: 'Ana te invitó a una casa' })).toBeDefined()
+    );
+    expect(screen.getByText(/Entrarás como invitado/)).toBeDefined();
   });
 
   test('an expired invitation says so', async () => {

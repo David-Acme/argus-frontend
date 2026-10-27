@@ -105,8 +105,14 @@ describe('approving on the phone', () => {
 
 describe('the invitation', () => {
   test('a valid one shows the role it brings', () => {
-    const valid = invitationOutcomeOf({ ok: true, status: 200, role: 'resident', errors: null });
-    expect(valid).toEqual({ phase: 'valid', role: 'resident', revoked: null });
+    const valid = invitationOutcomeOf({
+      ok: true,
+      status: 200,
+      role: 'resident',
+      inviter: null,
+      errors: null,
+    });
+    expect(valid).toEqual({ phase: 'valid', role: 'resident', revoked: null, inviter: null });
     expect(invitationCopyOf(valid)).toEqual({
       title: 'screens.invitation.valid-title',
       lead: 'screens.invitation.role.resident',
@@ -114,11 +120,37 @@ describe('the invitation', () => {
     });
   });
 
+  test('names who invited when the server says, and keeps the plain title when it does not', () => {
+    const named = invitationOutcomeOf({
+      ok: true,
+      status: 200,
+      role: 'guest',
+      inviter: 'Ana Ruiz',
+      errors: null,
+    });
+    expect(invitationCopyOf(named)).toEqual({
+      title: 'screens.invitation.valid-title-by',
+      lead: 'screens.invitation.role.guest',
+      action: 'accept',
+      name: 'Ana Ruiz',
+    });
+    const gone = invitationOutcomeOf({
+      ok: false,
+      status: 410,
+      role: null,
+      inviter: 'Ana Ruiz',
+      errors: { code: 'GONE', message: 'x' },
+    });
+    expect(gone.inviter).toBeNull();
+    expect(invitationCopyOf(gone).name).toBeUndefined();
+  });
+
   test('a used, expired or revoked one says it no longer works', () => {
     const gone = invitationOutcomeOf({
       ok: false,
       status: 410,
       role: null,
+      inviter: null,
       errors: { code: 'GONE', message: 'x' },
     });
     expect(gone.phase).toBe('expired');
@@ -127,6 +159,7 @@ describe('the invitation', () => {
       ok: false,
       status: 410,
       role: null,
+      inviter: null,
       errors: {
         code: 'INVITATION_MODULE_DISABLED',
         message: 'x',
@@ -137,6 +170,7 @@ describe('the invitation', () => {
       phase: 'expired',
       role: null,
       revoked: { moduleId: 'surveillance' },
+      inviter: null,
     });
   });
 
@@ -146,6 +180,7 @@ describe('the invitation', () => {
         ok: false,
         status: 200,
         role: null,
+        inviter: null,
         errors: { code: 'FINGERPRINT_MISMATCH', message: 'x' },
       }).phase
     ).toBe('mismatch');
@@ -154,10 +189,13 @@ describe('the invitation', () => {
         ok: false,
         status: 0,
         role: null,
+        inviter: null,
         errors: { code: 'NETWORK_ERROR', message: 'x' },
       }).phase
     ).toBe('unreachable');
-    expect(invitationCopyOf({ phase: 'idle', role: null, revoked: null }).action).toBe('scan');
+    expect(
+      invitationCopyOf({ phase: 'idle', role: null, revoked: null, inviter: null }).action
+    ).toBe('scan');
   });
 });
 

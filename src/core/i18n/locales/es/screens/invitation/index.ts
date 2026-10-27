@@ -3,6 +3,7 @@ export const invitation = {
   lead: 'Escanea la invitación que te muestra quien te invitó.',
   scan: 'Escanear la invitación',
   'valid-title': 'Te invitaron a una casa',
+  'valid-title-by': '{name} te invitó a una casa',
   role: {
     resident: 'Entrarás como residente: verás la agenda de casa, las cámaras y podrás hablarle a Argus.',
     guard: 'Entrarás como vigilante: verás las cámaras y los avisos de seguridad.',

@@ -72,7 +72,6 @@ src/core/services/http/http-envelope.ts
 src/core/services/http/http.service.ts
 src/core/services/http/refresh-response.ts
 src/core/services/instance-storage/instance-storage.web.ts
-src/core/services/invite/invitation-resolution.ts
 src/core/services/invite/invite.service.ts
 src/core/services/modules/index.ts
 src/core/services/modules/module-engine.ts

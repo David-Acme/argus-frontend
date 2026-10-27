@@ -7380,9 +7380,11 @@ v2). What was decided while building it:
   `expired` (`pollAnswerOutcome`, `settledPhaseOf`). The login screen stops
   polling, hides the code and reads «No se aprobó la entrada» with «Empezar de
   nuevo», which asks for a new challenge.
-- **Invitation**: the resolve answers the role, never the inviter's name or
-  the home's, so the valid view says «Te invitaron a una casa» and the role's
-  sentence.
+- **Invitation**: the resolve answers the role and, when the inviter still
+  exists and has a name, `inviterName` (trimmed by
+  `validateInvitationResolution`; empty or malformed is unknown). The valid view
+  says «Ana te invitó a una casa», or «Te invitaron a una casa» without the
+  name, and the role's sentence. The home's name is never answered.
 - **Data sources.** Pairing: discovery and the pinned pair call (no local
   data). Name: the session user, `PATCH /auth/me`, the `user` row through
   `/sync`. Consent: a local draft sent after the face. Module privacy:
