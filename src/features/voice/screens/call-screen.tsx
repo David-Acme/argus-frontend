@@ -15,9 +15,9 @@ import {
 import { useViewCacheRows } from '@/shared/hooks/use-cached-rows';
 import { useCapabilities } from '@/shared/hooks/use-capabilities';
 import { useTranslation } from '@/shared/hooks/use-translation';
-import { rememberAssistantMode } from '@/shared/libs/assistant-mode';
 import { ResponseCard } from '@/features/response';
 import { CallSurface } from '@/features/voice/components/call-surface';
+import { CallResults } from '@/features/voice/components/results/call-results';
 import { VoiceWebNotice } from '@/features/voice/components/voice-web-notice';
 import { useCall } from '@/features/voice/hooks/use-call';
 import { dispatchCallEnd, ENDED_HOLD_MS, showsMicConsent } from '@/features/voice/model/call-end';
@@ -52,6 +52,7 @@ function CallScreen() {
   }, [enteredFromOutside, params.callId]);
   const call = useCall(params.callId ? { callId: params.callId } : {});
   const [firstCall] = useState(() => storageService.getBoolean(VOICE_MIC_CONSENT_KEY) !== true);
+  const [startedAt] = useState(() => Date.now());
   const cameras = useViewCacheRows<ICameraCacheRow>(VIEW_CACHE_KEYS.cameraList);
   const liveCamera = cameras.find((camera) => camera.id === call.liveCameraId) ?? null;
   const [endedDurationMs, setEndedDurationMs] = useState<number | null>(null);
@@ -97,7 +98,6 @@ function CallScreen() {
   const chatAllowed = has(CAPABILITY.messagesRelay) && !params.callId && !enteredFromOutside;
   const switchToChat = useCallback(() => {
     voiceService.stop();
-    rememberAssistantMode('chat');
     traceEvent('route', 'left', 'to-chat');
     if (router.canDismiss()) router.dismissTo(ASSISTANT_THREAD_HREF);
     else router.replace(ASSISTANT_THREAD_HREF);
@@ -151,8 +151,8 @@ function CallScreen() {
       kind={callKindOf(call.callUrgency ?? undefined)}
       connectedAt={call.connectedAt}
       reason={call.callReason}
-      liveCameraId={call.liveCameraId}
       situation={call.responseId ? <ResponseCard responseId={call.responseId} compact /> : null}
+      results={<CallResults since={startedAt} />}
       waitingReason={call.waitingCall?.reason ?? null}
       onAnswerWaiting={answerWaiting}
       onDismissWaiting={dismissWaiting}

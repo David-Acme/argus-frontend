@@ -41,15 +41,6 @@ const silentMicrophone = (): void => {
   };
 };
 
-const selected = (page: Page, name: string): Promise<boolean[]> =>
-  page.evaluate(
-    (label) =>
-      [...document.querySelectorAll(`[role="radio"][aria-label="${label}"]`)]
-        .filter((node) => (node as HTMLElement).checkVisibility())
-        .map((node) => node.classList.contains('bg-interactive')),
-    name
-  );
-
 const composerOf = (page: Page) =>
   page.evaluate(() => {
     const field = document.querySelector('textarea[placeholder="Write to Argus"]');
@@ -60,7 +51,7 @@ const composerOf = (page: Page) =>
     return { holdsRows: (node.textContent ?? '').includes('Line 0'), top: box.top };
   });
 
-test('a draft typed to Argus survives a trip to the call and comes back in chat', async ({ app, second }) => {
+test('a draft typed to Argus survives a trip to the call and comes back in the thread', async ({ app, second }) => {
   const baseUrl = app.baseUrl ?? '';
   const page = second.page;
   await page.addInitScript(silentMicrophone);
@@ -72,7 +63,7 @@ test('a draft typed to Argus survives a trip to the call and comes back in chat'
   await field.waitFor({ timeout: 10000 });
   await field.fill(DRAFT);
 
-  await page.getByRole('radio', { name: 'Voice' }).click();
+  await page.getByRole('button', { name: 'Call Argus' }).click();
   await expect.poll(() => page.evaluate(() => location.pathname), { timeout: LIVE_MS }).toBe('/call');
 
   const toChat = page.getByRole('button', { name: 'Chat' }).first();
@@ -86,7 +77,6 @@ test('a draft typed to Argus survives a trip to the call and comes back in chat'
     )
     .toBe('/conversations/0');
 
-  await expect.poll(() => selected(page, 'Chat'), { timeout: LIVE_MS }).toEqual([true]);
   await expect
     .poll(() => page.getByPlaceholder('Write to Argus').inputValue({ timeout: 500 }).catch(() => null), { timeout: LIVE_MS })
     .toBe(DRAFT);

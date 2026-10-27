@@ -272,6 +272,12 @@
   --spacing-step-number: 28px;
   --spacing-login-qr: 200px;
   --spacing-language-switch: 112px;
+  --spacing-presence-eye-tile: 30px;
+  --spacing-presence-bubble: 28px;
+  --spacing-presence-thread-head: 36px;
+  --spacing-presence-thread-empty: 96px;
+  --spacing-column-context: 360px;
+  --spacing-thread-max: 760px;
   --text-hero: 36px;
   --text-hero--line-height: 39.6px;
   --text-hero--letter-spacing: -1.08px;

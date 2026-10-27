@@ -105,8 +105,6 @@ export type VoiceStartOptions = {
   socket?: boolean;
 };
 
-export type AssistantMode = 'voice' | 'chat';
-
 export type AssistantChatEntryStatus = 'sending' | 'waiting' | 'done' | 'failed';
 
 export type AssistantChatEntry = {

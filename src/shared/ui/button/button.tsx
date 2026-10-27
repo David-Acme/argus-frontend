@@ -33,6 +33,7 @@ export type IconButtonProps = {
   onPress: FlightAction;
   iconSize?: 'small' | 'default';
   filled?: boolean;
+  ink?: boolean;
   fab?: boolean;
   compact?: boolean;
   glass?: boolean;
@@ -77,8 +78,13 @@ function Trailing({ trailing, ink }: { trailing: ButtonTrailing; ink: Ink }) {
   );
 }
 
-function iconFrame({ compact, fab }: Pick<IconButtonProps, 'compact' | 'fab'>): string {
+function iconFrame({
+  compact,
+  fab,
+  ink,
+}: Pick<IconButtonProps, 'compact' | 'fab' | 'ink'>): string {
   if (fab) return 'size-fab rounded-button bg-ink';
+  if (ink) return 'size-target rounded-full bg-ink';
   return clsx(compact ? 'size-well-small' : 'size-target-min', 'rounded-full');
 }
 
@@ -96,6 +102,7 @@ function IconButton({
   iconSize = 'default',
   compact,
   filled,
+  ink,
   fab,
   glass,
   busy = false,
@@ -109,17 +116,21 @@ function IconButton({
     <PressableSurface
       a11y={{ label, role: 'button', busy: flight.busy }}
       onPress={flight.run}
-      pressed={{ scale: 'icon', fill: !fab }}
+      pressed={{ scale: 'icon', fill: !fab && !ink }}
       disabled={disabled || flight.busy}
       hitSlop={compact ? WELL_SLOP : ICON_SLOP}
       style={shadow ? { boxShadow: shadow } : undefined}
       className={clsx(
-        iconFrame({ compact, fab }),
+        iconFrame({ compact, fab, ink }),
         'items-center justify-center',
         filled && 'bg-fill',
         material && (material.solid ? 'bg-surface' : 'web:backdrop-blur-control bg-glass')
       )}>
-      <Icon name={icon} size={compact ? 'small' : iconSize} tone={fab ? 'on-ink' : undefined} />
+      <Icon
+        name={icon}
+        size={compact ? 'small' : iconSize}
+        tone={fab || ink ? 'on-ink' : undefined}
+      />
     </PressableSurface>
   );
 }

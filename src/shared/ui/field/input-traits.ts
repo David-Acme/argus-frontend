@@ -1,4 +1,5 @@
 import type { TextInputProps } from 'react-native';
+import { IS_WEB } from '@/shared/constants';
 
 export type TextContent =
   'plain' | 'name' | 'given' | 'family' | 'email' | 'url' | 'number' | 'code' | 'address';
@@ -66,5 +67,23 @@ export function submitTraits(submit: FieldSubmit | undefined): Partial<TextInput
     enterKeyHint: submit.key,
     submitBehavior: submit.key === 'next' ? 'submit' : 'blurAndSubmit',
     onSubmitEditing: submit.onSubmit,
+  };
+}
+
+type EnterKey = { key: string; shiftKey?: boolean; isComposing?: boolean };
+
+export function sendsOnEnter(web: boolean, key: EnterKey): boolean {
+  return web && key.key === 'Enter' && key.shiftKey !== true && key.isComposing !== true;
+}
+
+export function messageSubmitTraits(submit: FieldSubmit | undefined): Partial<TextInputProps> {
+  if (!submit) return {};
+  return {
+    enterKeyHint: 'send',
+    onKeyPress: (event) => {
+      if (!sendsOnEnter(IS_WEB, event.nativeEvent)) return;
+      event.preventDefault();
+      submit.onSubmit();
+    },
   };
 }

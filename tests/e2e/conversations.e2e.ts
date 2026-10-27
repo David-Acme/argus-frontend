@@ -60,19 +60,18 @@ const readAudit = {
 const requests = async (baseUrl: string): Promise<string[]> =>
   ((await (await fetch(new URL('/__e2e/requests', baseUrl))).json()) as { requests: string[] }).requests;
 
-test('the conversations list Argus first, then the household with its unread and delivery state', async ({ app, browser, screen }) => {
+test('on the desktop the conversations sit beside the Argus thread, Argus first, then the household with its unread and delivery state', async ({ app, browser, screen }) => {
   const baseUrl = app.baseUrl ?? '';
   await seedHousehold(baseUrl);
   const escapes = await openFirst(browser, app);
   await expect.poll(() => connected(baseUrl, 'A'), { timeout: 10000 }).toBe(1);
 
   await screen.getByRole('tab', 'Argus').first().click();
-  await screen.getByRole('button', 'Messages').first().click();
-  await expect(screen.getByText('Argus', { exact: true }).first()).toBeVisible({ timeout: 10000 });
+  await expect(screen.getByRole('button', /^Argus\. /)).toBeVisible({ timeout: 10000 });
   await expect(screen.getByText('Dinner is ready', { exact: true })).toBeVisible();
-  expect(await browser.evaluate(() => document.body.innerText.includes('You: Bring bread'))).toBe(true);
-  await expect(screen.getByText('I left the message', { exact: true })).toBeVisible();
-  await expect(screen.getByText('Nothing until six.', { exact: true })).toBeVisible();
+  expect(await browser.evaluate(() => document.body.innerText.includes('You: Bring bread · I left the message'))).toBe(true);
+  await expect(screen.getByText('What Argus did', { exact: true })).toBeVisible();
+  await expect(screen.getByText('Hold Space to talk', { exact: true })).toBeVisible();
 
   expect(escapes).toEqual([]);
 });
@@ -97,14 +96,11 @@ test('opening a thread reads it, shows where Argus turns were said, and clearing
   await expect.poll(() => connected(baseUrl, 'A'), { timeout: 10000 }).toBe(1);
 
   await screen.getByRole('tab', 'Argus').first().click();
-  await screen.getByRole('button', 'Messages').first().click();
-  await screen.getByRole('button', /^Argus\. /).click();
-  await expect(screen.getByText('From the laptop', { exact: true })).toBeVisible({ timeout: 10000 });
-  await expect(screen.getByText('Through the camera', { exact: true })).toBeVisible();
+  await expect(screen.getByText(/^From the laptop · /)).toBeVisible({ timeout: 10000 });
+  await expect(screen.getByText(/^Through the camera · /)).toBeVisible();
   await expect(screen.getByRole('heading', 'Today')).toBeVisible();
   expect(await requests(baseUrl)).not.toContain('PATCH /conversation/0/read @A');
 
-  await screen.getByRole('button', 'Back').first().click();
   await screen.getByText('Dinner is ready', { exact: true }).click();
   await expect(
     screen.getByText(
@@ -116,10 +112,9 @@ test('opening a thread reads it, shows where Argus turns were said, and clearing
   });
   await expect.poll(() => requests(baseUrl), { timeout: LIVE_MS }).toContain('PATCH /conversation/3/read @A');
 
-  await screen.getByRole('button', 'Conversation actions').click();
-  await screen.getByText('Clear the conversation', { exact: true }).click();
+  await screen.getByRole('button', 'Clear the conversation').click();
   await expect(screen.getByText('Clear the conversation with David?', { exact: true })).toBeVisible();
-  await screen.getByText('Clear', { exact: true }).click();
+  await screen.getByText('Clear', { exact: true }).last().click();
 
   await expect.poll(() => requests(baseUrl), { timeout: LIVE_MS }).toContain('DELETE /conversation/3 @A');
   await expect

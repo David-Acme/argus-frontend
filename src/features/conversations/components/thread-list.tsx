@@ -1,60 +1,75 @@
 import type { LegendListRenderItemProps } from '@legendapp/list/react-native';
-import { ActivityIndicator, Pressable, View, type ViewStyle } from 'react-native';
+import type { ReactNode } from 'react';
+import { View } from 'react-native';
 import { KeyboardStickyView } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { IConversationMessageCacheRow } from '@/core/interfaces';
-import { Icon } from '@/shared/components/ui/icon';
-import { Text } from '@/shared/components/ui/text';
 import { IS_WEB } from '@/shared/constants';
 import { useReduceMotion } from '@/shared/hooks/use-reduce-motion';
 import { useTranslation } from '@/shared/hooks/use-translation';
+import { Button } from '@/shared/ui/button';
+import { Text } from '@/shared/ui/text';
+import type { ArgusResult } from '@/features/voice';
 import { DaySeparator } from '@/features/conversations/components/day-separator';
 import { MessageBubble } from '@/features/conversations/components/message-bubble';
+import { ThreadScroller } from '@/features/conversations/components/thread-scroller';
 import { TypingIndicator } from '@/features/conversations/components/typing-indicator';
 import { useThreadList } from '@/features/conversations/hooks/use-thread-list';
 import type { ChatMark } from '@/features/conversations/model/assistant-chat-overlay';
 import { repliedBodyOf } from '@/features/conversations/model/conversation-thread';
-import {
-  keyboardOffsets,
-  type StickyOffset,
-  type ThreadItem,
-} from '@/features/conversations/model/thread-list';
-import { ThreadScroller } from './thread-scroller';
+import { keyboardOffsets } from '@/features/conversations/model/thread-list';
+import type { StickyOffset, ThreadItem } from '@/features/conversations/model/thread-list';
+import { bubblePresenceOf } from '@/features/conversations/model/thread-results';
+import type { AnchoredResults } from '@/features/conversations/model/thread-results';
 
-type ThreadListProps = {
-  rows: readonly IConversationMessageCacheRow[];
+export type ThreadPaging = {
   live: boolean;
   newest: IConversationMessageCacheRow | null;
   hasOlder: boolean;
   loadOlder: () => Promise<boolean>;
   loadNewer: () => Promise<boolean>;
   toLatest: () => void;
-  startOfDay: (at: number) => number;
-  dayLabel: (day: number) => string;
+};
+
+export type ThreadDays = { startOfDay: (at: number) => number; dayLabel: (day: number) => string };
+
+export type ThreadChat = {
   typing: boolean;
-  bodies: ReadonlyMap<string, string>;
   marks: ReadonlyMap<string, ChatMark>;
   onRetry?: (clientId: string) => void;
   onDismiss?: (clientId: string) => void;
 };
 
-type OlderLoaderProps = {
-  active: boolean;
+export type ThreadArgus = {
+  results: AnchoredResults;
+  newestIn: string | null;
+  renderResult: (result: ArgusResult) => ReactNode;
 };
 
-type LatestPillProps = {
-  unseen: number;
-  onPress: () => void;
-  offset: StickyOffset;
+export type ThreadListProps = {
+  rows: readonly IConversationMessageCacheRow[];
+  bodies: ReadonlyMap<string, string>;
+  paging: ThreadPaging;
+  days: ThreadDays;
+  chat: ThreadChat;
+  argus: ThreadArgus | null;
 };
 
-const PILL_FLOAT: ViewStyle = {
+type OlderLoaderProps = { active: boolean };
+
+type LatestPillProps = { unseen: number; onPress: () => void; offset: StickyOffset };
+
+const PILL_FLOAT = {
   position: 'absolute',
   left: 0,
   right: 0,
   bottom: 12,
   alignItems: 'center',
-};
+} as const;
+
+const LIST_FILL = { flexGrow: 1, flexShrink: 1, flexBasis: 0, minHeight: 0 } as const;
+
+const LIST_CONTENT = { paddingBottom: 12 } as const;
 
 const ESTIMATED_ROW = 72;
 
@@ -62,57 +77,87 @@ const EDGE_SCREENS = 2;
 
 const keyOf = (item: ThreadItem): string => item.key;
 
-const typeOf = (item: ThreadItem): ThreadItem['type'] => item.type;
+const typeOf = (item: ThreadItem): string =>
+  item.type === 'result' ? `result:${item.result.kind}` : item.type;
 
-export function ThreadList({
-  rows,
-  live,
-  newest,
-  hasOlder,
-  loadOlder,
-  loadNewer,
-  toLatest,
-  startOfDay,
-  dayLabel,
-  typing,
-  bodies,
-  marks,
-  onRetry,
-  onDismiss,
-}: ThreadListProps) {
+function OlderLoader({ active }: OlderLoaderProps) {
+  const { t } = useTranslation();
+  const label = t('screens.conversations.latest.loading-older');
+  if (!active) return null;
+  return (
+    <View pointerEvents="none" className="absolute inset-x-0 top-2 items-center">
+      <View
+        role="progressbar"
+        aria-label={label}
+        className="bg-surface border-line rounded-full border px-3 py-1">
+        <Text variant="caption" tone="2">
+          {label}
+        </Text>
+      </View>
+    </View>
+  );
+}
+
+function LatestPill({ unseen, onPress, offset }: LatestPillProps) {
+  const { t } = useTranslation();
+  const go = t('screens.conversations.latest.go');
+  const count =
+    unseen === 1
+      ? t('screens.conversations.latest.one')
+      : unseen > 1
+        ? t('screens.conversations.latest.many', { count: String(unseen) })
+        : null;
+  return (
+    <KeyboardStickyView offset={offset} pointerEvents="box-none" style={PILL_FLOAT}>
+      {count ? (
+        <Button
+          compact
+          glass
+          label={{ shown: count, spoken: `${count}. ${go}` }}
+          trailing={{ icon: 'chevd' }}
+          onPress={onPress}
+        />
+      ) : (
+        <Button iconOnly glass icon="chevd" label={go} onPress={onPress} />
+      )}
+    </KeyboardStickyView>
+  );
+}
+
+export function ThreadList({ rows, bodies, paging, days, chat, argus }: ThreadListProps) {
   const insets = useSafeAreaInsets();
   const reduceMotion = useReduceMotion();
   const offsets = keyboardOffsets(insets.bottom);
   const thread = useThreadList({
     rows,
-    startOfDay,
-    typing,
+    startOfDay: days.startOfDay,
+    typing: chat.typing,
+    results: argus?.results,
     reduceMotion,
-    live,
-    newest,
-    hasOlder,
-    loadOlder,
-    loadNewer,
-    toLatest,
+    ...paging,
   });
 
+  const presenceOf = (message: IConversationMessageCacheRow) => {
+    if (!argus || message.direction !== 'in') return null;
+    const results = argus.results.byRow.get(message.id);
+    return { state: bubblePresenceOf(results), live: message.id === argus.newestIn };
+  };
+
   const renderItem = ({ item }: LegendListRenderItemProps<ThreadItem>) => {
-    if (item.type === 'day') return <DaySeparator label={dayLabel(item.day)} />;
-    if (item.type === 'typing')
-      return (
-        <View className="pt-3">
-          <TypingIndicator />
-        </View>
-      );
+    if (item.type === 'day') return <DaySeparator label={days.dayLabel(item.day)} />;
+    if (item.type === 'typing') return <TypingIndicator />;
+    if (item.type === 'result')
+      return <View className="pt-2 pl-9">{argus?.renderResult(item.result)}</View>;
     return (
       <MessageBubble
         message={item.message}
         repliedBody={repliedBodyOf(item.message, bodies)}
-        mark={marks.get(item.key)}
+        mark={chat.marks.get(item.key)}
         groupStart={item.groupStart}
         groupEnd={item.groupEnd}
-        onRetry={onRetry}
-        onDismiss={onDismiss}
+        presence={presenceOf(item.message)}
+        onRetry={chat.onRetry}
+        onDismiss={chat.onDismiss}
       />
     );
   };
@@ -126,72 +171,25 @@ export function ThreadList({
         renderItem={renderItem}
         keyExtractor={keyOf}
         getItemType={typeOf}
-        extraData={[bodies, marks, dayLabel, onRetry, onDismiss]}
+        extraData={[bodies, chat, argus, days]}
         estimatedItemSize={ESTIMATED_ROW}
         recycleItems
         initialScrollAtEnd
         alignItemsAtEnd
-        maintainScrollAtEnd={live ? { animated: !reduceMotion } : false}
+        maintainScrollAtEnd={paging.live ? { animated: !reduceMotion } : false}
         maintainVisibleContentPosition
         onScroll={thread.onScroll}
         onStartReachedThreshold={EDGE_SCREENS}
         onEndReachedThreshold={EDGE_SCREENS}
-        contentContainerStyle={{ paddingBottom: 12 }}
+        contentContainerStyle={LIST_CONTENT}
         showsVerticalScrollIndicator={IS_WEB}
         keyboardShouldPersistTaps="handled"
-        style={{ flexGrow: 1, flexShrink: 1, flexBasis: 0, minHeight: 0 }}
+        style={LIST_FILL}
       />
       <OlderLoader active={thread.loadingOlder} />
-      {!thread.atEnd || !live ? (
+      {!thread.atEnd || !paging.live ? (
         <LatestPill unseen={thread.unseen} onPress={thread.goToLatest} offset={offsets.pill} />
       ) : null}
     </View>
-  );
-}
-
-function OlderLoader({ active }: OlderLoaderProps) {
-  const { t } = useTranslation();
-
-  if (!active) return null;
-  return (
-    <View pointerEvents="none" className="absolute inset-x-0 top-2 items-center">
-      <View
-        accessible
-        accessibilityRole="progressbar"
-        accessibilityLabel={t('screens.conversations.latest.loading-older')}
-        className="bg-card border-border rounded-full border p-1.5 shadow-sm shadow-black/10">
-        <ActivityIndicator size="small" />
-      </View>
-    </View>
-  );
-}
-
-function LatestPill({ unseen, onPress, offset }: LatestPillProps) {
-  const { t } = useTranslation();
-  const count =
-    unseen === 1
-      ? t('screens.conversations.latest.one')
-      : unseen > 1
-        ? t('screens.conversations.latest.many', { count: String(unseen) })
-        : null;
-  const go = t('screens.conversations.latest.go');
-
-  return (
-    <KeyboardStickyView offset={offset} pointerEvents="box-none" style={PILL_FLOAT}>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={count ? `${count}. ${go}` : go}
-        accessibilityLiveRegion={count ? 'polite' : 'none'}
-        onPress={onPress}
-        hitSlop={8}
-        className="bg-card border-border min-h-10 flex-row items-center gap-1.5 rounded-full border px-3.5 shadow-md shadow-black/10 active:opacity-80">
-        {count ? (
-          <Text variant="label" className="text-foreground">
-            {count}
-          </Text>
-        ) : null}
-        <Icon name="chevron-down" className="text-foreground size-5" />
-      </Pressable>
-    </KeyboardStickyView>
   );
 }

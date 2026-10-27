@@ -7,7 +7,6 @@ const { CallAvatar } = await import('@/features/voice/components/call-avatar');
 const { CallCaptions } = await import('@/features/voice/components/call-captions');
 const { EndedSummary, StageTop, WaitingCard } =
   await import('@/features/voice/components/call-notes');
-const { CallResultCard } = await import('@/features/voice/components/call-result-card');
 const { CallStage } = await import('@/features/voice/components/call-stage');
 const { RingControls } = await import('@/features/voice/components/ring-controls');
 const { RoundControl } = await import('@/features/voice/components/round-control');
@@ -90,20 +89,6 @@ describe('the call parts', () => {
     );
     expect(screen.queryByText('Uno.')).toBeNull();
     expect(screen.getByText('«Ya la pago.»')).toBeDefined();
-  });
-
-  test('the result card offers Ver only when it can open the camera', () => {
-    const view = mock(() => undefined);
-    const { rerender } = render(
-      <CallResultCard result={{ action: CAMERA, icon: 'cam', opensCamera: false }} onView={view} />
-    );
-    expect(screen.getByText('Cámara Patio trasero')).toBeDefined();
-    expect(screen.queryByRole('button', { name: 'Ver' })).toBeNull();
-    rerender(
-      <CallResultCard result={{ action: CAMERA, icon: 'cam', opensCamera: true }} onView={view} />
-    );
-    fireEvent.click(screen.getByRole('button', { name: 'Ver' }));
-    expect(view).toHaveBeenCalledTimes(1);
   });
 
   test('the top bar minimises on the left and switches to chat on the right', () => {

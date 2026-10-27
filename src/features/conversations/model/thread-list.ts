@@ -1,4 +1,6 @@
 import type { IConversationMessageCacheRow } from '@/core/interfaces';
+import type { ArgusResult } from '@/features/voice';
+import type { AnchoredResults } from '@/features/conversations/model/thread-results';
 
 export type ThreadDayItem = { type: 'day'; key: string; day: number };
 
@@ -12,12 +14,15 @@ export type ThreadMessageItem = {
 
 export type ThreadTypingItem = { type: 'typing'; key: string };
 
-export type ThreadItem = ThreadDayItem | ThreadMessageItem | ThreadTypingItem;
+export type ThreadResultItem = { type: 'result'; key: string; result: ArgusResult };
+
+export type ThreadItem = ThreadDayItem | ThreadMessageItem | ThreadResultItem | ThreadTypingItem;
 
 export type ThreadItemsInput = {
   rows: readonly IConversationMessageCacheRow[];
   startOfDay: (at: number) => number;
   typing: boolean;
+  results?: AnchoredResults;
   gapMs?: number;
 };
 
@@ -63,10 +68,22 @@ export function groupsWith(
   return gap >= 0 && gap <= gapMs;
 }
 
+const resultItem = (result: ArgusResult): ThreadResultItem => ({
+  type: 'result',
+  key: `result:${result.id}`,
+  result,
+});
+
+function pushResults(items: ThreadItem[], results: readonly ArgusResult[] | undefined): boolean {
+  for (const result of results ?? []) items.push(resultItem(result));
+  return (results?.length ?? 0) > 0;
+}
+
 export function threadItems({
   rows,
   startOfDay,
   typing,
+  results,
   gapMs = THREAD_GROUP_GAP_MS,
 }: ThreadItemsInput): ThreadItem[] {
   const items: ThreadItem[] = [];
@@ -88,7 +105,9 @@ export function threadItems({
     items.push(item);
     previous = item;
     previousDay = day;
+    if (pushResults(items, results?.byRow.get(message.id))) previous = null;
   }
+  pushResults(items, results?.trailing);
   if (typing) items.push({ type: 'typing', key: TYPING_ITEM_KEY });
   return items;
 }

@@ -36,6 +36,7 @@ type MediaContent = {
 export type MediaTileProps = MediaContent & {
   variant?: 'tile';
   fill?: boolean;
+  eye?: MediaEye;
   center?: ReactNode;
   reveal?: ReactNode;
   onPress?: () => void;
@@ -136,7 +137,7 @@ function tileFrame({ dormant, fill }: Pick<MediaTileProps, 'dormant' | 'fill'>) 
   return dormant ? DORMANT_FRAME : LIVE_FRAME;
 }
 
-function Tile({ center, reveal, onPress, fill, ...content }: MediaTileProps) {
+function Tile({ center, reveal, onPress, fill, eye, ...content }: MediaTileProps) {
   const [hovered, setHovered] = useState(false);
   const pointer = (shown: boolean) => (event: PointerEvent) => {
     if (event.nativeEvent.pointerType === 'mouse') setHovered(shown);
@@ -169,6 +170,7 @@ function Tile({ center, reveal, onPress, fill, ...content }: MediaTileProps) {
           {center}
         </View>
       ) : null}
+      {eye && !content.dormant ? <EyeCorner eye={eye} compact /> : null}
       {reveal && !content.dormant ? <Reveal shown={hovered}>{reveal}</Reveal> : null}
     </View>
   );

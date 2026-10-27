@@ -162,6 +162,12 @@ export const chromeSize = {
   stepNumber: 28,
   loginQr: 200,
   languageSwitch: 112,
+  presenceEyeTile: 30,
+  presenceBubble: 28,
+  presenceThreadHead: 36,
+  presenceThreadEmpty: 96,
+  columnContext: 360,
+  threadMax: 760,
 } as const;
 
 export const chromeElevation = {

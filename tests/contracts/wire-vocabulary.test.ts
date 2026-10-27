@@ -10,6 +10,8 @@ import { SYNC_OPERATION } from '@/shared/constants/sync.constant';
 const backend = backendRoot();
 const read = (path: string) => readFileSync(join(backend, path), 'utf8');
 
+const AWAITED_VOICE_TYPES: readonly string[] = ['voice:result'];
+
 describe('wire vocabulary matches the backend', () => {
   test('SyncOperation values', () => {
     const header = read('packages/contracts/sync/src/sync/sync-operation.hxx');
@@ -21,21 +23,27 @@ describe('wire vocabulary matches the backend', () => {
   });
 
   test('every synced table name exists in the backend TableName', () => {
-    const wire = [...read('packages/contracts/sync/src/sync/table-name.hxx').matchAll(/return "(\w+)";/g)].map(
-      ([, name]) => name
-    );
+    const wire = [
+      ...read('packages/contracts/sync/src/sync/table-name.hxx').matchAll(/return "(\w+)";/g),
+    ].map(([, name]) => name);
     expect(SYNC_TABLE_KEYS.filter((table) => !wire.includes(table))).toEqual([]);
   });
 
   test('voice frame types are the ones the sync relay sends and accepts', () => {
     const relay = read('services/sync/src/feature/transport/infra/voice-grpc-relay.cc');
-    const backendTypes = new Set([...relay.matchAll(/"(voice:[a-z_]+)"/g)].map(([, type = '']) => type));
+    const backendTypes = new Set(
+      [...relay.matchAll(/"(voice:[a-z_]+)"/g)].map(([, type = '']) => type)
+    );
     const appTypes = new Set(
       Object.entries(voice)
         .filter(([name, value]) => name.endsWith('_TYPE') && typeof value === 'string')
         .map(([, value]) => value as string)
     );
-    expect([...appTypes].sort()).toEqual([...backendTypes].sort());
+    const awaited = new Set(AWAITED_VOICE_TYPES);
+    expect([...awaited].filter((type) => backendTypes.has(type))).toEqual([]);
+    expect([...appTypes].filter((type) => !awaited.has(type)).sort()).toEqual(
+      [...backendTypes].sort()
+    );
   });
 
   test('default route ports match each service listener', () => {

@@ -3,7 +3,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 import type { VoiceActionRecord } from '@/core/types';
 import '../../shared/ui/translation-stub';
 
-const voice = { sttText: '', listeners: new Set<() => void>() };
+const voice = { sttText: '', listeners: new Set<() => void>(), path: '/' };
 
 const navigate = mock((_href: string) => undefined);
 
@@ -24,6 +24,7 @@ mock.module('expo-router', () => ({
   useLocalSearchParams: () => ({}),
   useIsFocused: () => true,
   useRouter: () => ({ navigate }),
+  usePathname: () => voice.path,
 }));
 
 const { ArgusListening } = await import('@/features/voice/components/argus-listening');
@@ -124,5 +125,14 @@ describe('ArgusListening', () => {
     expect(screen.getByRole('status').textContent).toBe(
       'Argus no pudo escucharte.Inténtalo de nuevo en un momento.'
     );
+  });
+
+  test('on the Argus thread the hold draws inline, so no floating card shows', () => {
+    voice.path = '/conversations/0';
+    voice.sttText = 'pon el modo noche';
+    act(() => useHoldTalkStore.setState({ hold: { ...HOLD_IDLE, stage: 'listening' } }));
+    render(<ArgusListening />);
+    expect(screen.queryByText('«pon el modo noche»')).toBeNull();
+    voice.path = '/';
   });
 });

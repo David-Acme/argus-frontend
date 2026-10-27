@@ -119,4 +119,21 @@ describe('Button', () => {
     fireEvent.click(button);
     expect(pressed).toEqual(['tap', 'hold']);
   });
+
+  test('an ink icon button is a round filled control named by its label', () => {
+    let pressed = 0;
+    render(
+      <Button
+        iconOnly
+        ink
+        icon="mic"
+        label="Hablar con Argus"
+        onPress={() => {
+          pressed += 1;
+        }}
+      />
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Hablar con Argus' }));
+    expect(pressed).toBe(1);
+  });
 });

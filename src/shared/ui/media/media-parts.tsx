@@ -21,7 +21,7 @@ type LiveChipProps = { label: string };
 
 type ControlsProps = { controls: readonly MediaControl[] };
 
-type EyeCornerProps = { eye: MediaEye };
+type EyeCornerProps = { eye: MediaEye; compact?: boolean };
 
 type DormantMarkProps = { dormant: MediaDormant };
 
@@ -122,10 +122,11 @@ export function Controls({ controls }: ControlsProps) {
   );
 }
 
-export function EyeCorner({ eye }: EyeCornerProps) {
+export function EyeCorner({ eye, compact = false }: EyeCornerProps) {
   const blur = useBlur();
   const { windowClass } = useWindowLayout();
-  const mark = windowClass === 'compact' ? size.presenceEye : size.presenceEyeWide;
+  const wide = windowClass === 'compact' ? size.presenceEye : size.presenceEyeWide;
+  const mark = compact ? size.presenceEyeTile : wide;
   return (
     <View
       role="status"

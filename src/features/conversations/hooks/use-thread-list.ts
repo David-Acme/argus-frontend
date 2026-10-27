@@ -1,12 +1,15 @@
 import type { LegendListRef } from '@legendapp/list/react-native';
 import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import type { IConversationMessageCacheRow } from '@/core/interfaces';
-import { arrivedWhileAway, followNewItems, threadItems, type ThreadItem } from '@/features/conversations/model/thread-list';
+import { arrivedWhileAway, followNewItems, threadItems } from '@/features/conversations/model/thread-list';
+import type { ThreadItem } from '@/features/conversations/model/thread-list';
+import type { AnchoredResults } from '@/features/conversations/model/thread-results';
 
 export type ThreadListInput = {
   rows: readonly IConversationMessageCacheRow[];
   startOfDay: (at: number) => number;
   typing: boolean;
+  results?: AnchoredResults;
   reduceMotion: boolean;
   live: boolean;
   newest: IConversationMessageCacheRow | null;
@@ -30,6 +33,7 @@ export function useThreadList({
   rows,
   startOfDay,
   typing,
+  results,
   reduceMotion,
   live,
   newest,
@@ -51,7 +55,10 @@ export function useThreadList({
   const olderInFlight = useRef(false);
   const ready = useRef(false);
   const startArmed = useRef(true);
-  const items = useMemo(() => threadItems({ rows, startOfDay, typing }), [rows, startOfDay, typing]);
+  const items = useMemo(
+    () => threadItems({ rows, startOfDay, typing, results }),
+    [rows, startOfDay, typing, results]
+  );
 
   const remember = useCallback((count: number) => {
     unseenRef.current = count;
