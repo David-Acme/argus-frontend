@@ -637,6 +637,7 @@ describe('the pieces of a thread', () => {
     );
     expect(screen.getByTestId('thread-snapshot')).toBeDefined();
     expect(screen.getAllByText('Nada hasta las seis.').length).toBe(2);
+    expect(screen.getByTestId('thread-snapshot').style.paddingBottom).toBe('12px');
     expect(screen.getByText('Redactor')).toBeDefined();
   });
 

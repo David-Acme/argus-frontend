@@ -6,7 +6,7 @@ import type { IConversationMessageCacheRow } from '@/core/interfaces';
 import { IS_WEB } from '@/shared/constants';
 import { useReduceMotion } from '@/shared/hooks/use-reduce-motion';
 import { useTranslation } from '@/shared/hooks/use-translation';
-import { size, space, useWindowHeight, useWindowWidth } from '@/shared/theme';
+import { space, useWindowHeight, useWindowWidth } from '@/shared/theme';
 import { Text } from '@/shared/ui/text';
 import { DaySeparator } from '@/features/conversations/components/day-separator';
 import { ScrollDown } from '@/features/conversations/components/scroll-down';
@@ -58,7 +58,7 @@ type Viewable = { viewableItems: ViewToken<ThreadItem>[] };
 
 const LIST_FILL = { flexGrow: 1, flexShrink: 1, flexBasis: 0, minHeight: 0 } as const;
 
-const LIST_BOTTOM = size.target + space[3];
+const LIST_BOTTOM = space[3];
 
 const LIST_CONTENT = { paddingBottom: LIST_BOTTOM } as const;
 
