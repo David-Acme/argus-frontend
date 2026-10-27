@@ -59,8 +59,17 @@ internal fun ongoingCallActions(copy: OngoingCallCopy, controls: CallControlStat
     }
 }
 
-internal fun ongoingActionsTrace(actions: List<OngoingActionSpec>, style: OngoingCallStyle): String =
-    "actions-${actions.size}-own-icons-${style.name.lowercase()}-style-default-color"
+internal fun ongoingActionTint(action: OngoingCallAction, style: OngoingCallStyle, palette: CallPalette = CallPalette.STAGE): Int? =
+    when {
+        action == OngoingCallAction.HangUp -> palette.decline
+        style == OngoingCallStyle.Call -> palette.control
+        else -> null
+    }
+
+internal fun ongoingActionsTrace(actions: List<OngoingActionSpec>, style: OngoingCallStyle): String {
+    val tinted = actions.count { ongoingActionTint(it.action, style) != null }
+    return "actions-${actions.size}-own-icons-${style.name.lowercase()}-style-tinted-$tinted"
+}
 
 internal fun ongoingCallRoute(): OngoingCallRoute = OngoingCallRoute.ForegroundService
 

@@ -16,6 +16,9 @@ import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
+import android.text.SpannableString
+import android.text.Spanned
+import android.text.style.ForegroundColorSpan
 import com.margelo.nitro.push.R
 
 internal data class OngoingCallState(
@@ -190,17 +193,24 @@ internal class OngoingCallService : Service() {
                 builder.setFullScreenIntent(open, false)
                     .setStyle(Notification.CallStyle.forOngoingCall(person, hangUp))
             }
-            actions.forEach { spec -> builder.addAction(action(context, spec, state.callId)) }
+            actions.forEach { spec -> builder.addAction(action(context, spec, style, state.callId)) }
             NativeTrace.record("ongoing", "shown", ongoingActionsTrace(actions, style))
             return builder.build()
         }
 
-        private fun action(context: Context, spec: OngoingActionSpec, callId: String): Notification.Action =
+        private fun action(context: Context, spec: OngoingActionSpec, style: OngoingCallStyle, callId: String): Notification.Action =
             Notification.Action.Builder(
                 Icon.createWithResource(context, ACTION_ICONS.getValue(spec.icon)),
-                spec.label,
+                tinted(spec.label, ongoingActionTint(spec.action, style)),
                 broadcast(context, ACTION_REQUESTS.getValue(spec.action), ACTION_INTENTS.getValue(spec.action), callId),
             ).build()
+
+        private fun tinted(label: String, tint: Int?): CharSequence =
+            if (tint == null) {
+                label
+            } else {
+                SpannableString(label).apply { setSpan(ForegroundColorSpan(tint), 0, length, Spanned.SPAN_INCLUSIVE_EXCLUSIVE) }
+            }
 
         private fun broadcast(context: Context, requestCode: Int, action: String, callId: String): PendingIntent =
             PendingIntent.getBroadcast(

@@ -7252,7 +7252,22 @@ The owner-approved prototype is `uiux-map/redesign/later-phases/owner-2026-10-26
   light pills with light labels. Each action now carries its own monochrome vector
   (`res/drawable/argus_ic_*`), the colour is gone so the system CallStyle defaults apply, and the
   action list is a pure function (`ongoingCallActions`) with a NativeTrace line
-  (`actions-<n>-own-icons-<style>-style-default-color`).
+  (`actions-<n>-own-icons-<style>-style-tinted-<k>`).
+- **One UI still painted white on white (phone run 2 #5).** Expanded on a
+  S21 FE, «Silenciar» and «Auricular» were white words on white pills while
+  «Colgar» read. CallStyle draws its actions as emphasized pills and takes a
+  pill's fill from a full-length colour span on its title, which is how the
+  system's own «Colgar» gets its red; an action without one falls back to the
+  theme's secondary accent, which One UI renders white under white text.
+  Every CallStyle action now carries that span, the pattern CallStyle uses for
+  its own buttons (`ongoingActionTint`): Mute and Speaker in
+  `CallPalette.control` (#57524E), Hang up in `decline`. The colour holds
+  either way an OEM reads it: as the fill under white words (7.9:1) or as the
+  words on a white pill (7.9:1), and it stays apart from a dark card. The
+  plain notification (no Telecom call) leaves Mute and Speaker to the system
+  and keeps Colgar red. Verified by `OngoingCallTest` (17, in
+  `:argus-push:testDebugUnitTest`, 122 pass) and a review of the builder; the
+  phone confirms it on the next run.
 - **Short screens.** The stage holds at 320×568, 360×640 and in phone landscape: `callScaleOf(height)`
   (`shared/theme/call-scale.ts`, tested) steps the avatar (168, 136, 104, 64), the gap above it, the ring
   and panel buttons (never below 48) and the caption lines (two, then one). `CallActivity` reads the same
