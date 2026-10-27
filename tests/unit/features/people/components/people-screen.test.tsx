@@ -301,6 +301,16 @@ beforeEach(() => {
         revokedAt: null,
         createdAt: seconds(NOW),
       },
+      {
+        id: 52,
+        role: 'resident',
+        maxRedemptions: 1,
+        redemptionCount: 0,
+        expiresAt: seconds(NOW),
+        createdBy: 1,
+        revokedAt: seconds(NOW),
+        createdAt: seconds(NOW),
+      },
     ],
     presence: {
       people: [
@@ -344,6 +354,9 @@ describe('Personas for the owner on a phone', () => {
     expect(screen.getByText('Invitaciones')).toBeDefined();
     expect(screen.getByText('Pendiente · vale hasta las 14:30')).toBeDefined();
     expect(screen.getByText(/^Usada · creada el/)).toBeDefined();
+    expect(screen.queryByTestId('invitation-row-52')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Ver anteriores (1)' }));
+    expect(screen.getByTestId('invitation-row-52')).toBeDefined();
     expect(
       screen.queryByRole('button', { name: 'Revocar la invitación para Invitado' })
     ).toBeNull();

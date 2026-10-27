@@ -19,6 +19,7 @@ export const users = {
   'invitation-title': 'Invitación · {role}',
   'qr-label': 'Código QR de la invitación para {role}',
   'invite-someone': 'Invitar a alguien',
+  'earlier-invitations': 'Ver anteriores ({count})',
   'invite-hint': 'Un QR de un solo uso para un residente, guardia o invitado.',
   'roles-off': 'Algunos roles necesitan un módulo apagado.',
   'no-people': 'Aún no hay personas',
