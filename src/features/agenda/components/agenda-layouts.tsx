@@ -12,7 +12,6 @@ import type { AgendaScreenState } from '@/features/agenda/hooks/use-agenda-scree
 import { useCalendarCells, useMonthShift } from '@/features/agenda/hooks/use-calendar-cells';
 import { useDayNames } from '@/features/agenda/hooks/use-day-names';
 import { dayGroup, dayRange, nextDays, restOfDay } from '@/features/agenda/model/agenda-days';
-import { kindWords } from '@/features/agenda/model/agenda-lines';
 import { calendarEntryRecordId } from '@/features/agenda/model/calendar-entry-actions';
 import { asideBlocks } from '@/features/agenda/components/agenda-aside';
 import { AgendaBody, AgendaHead } from '@/features/agenda/components/agenda-body';
@@ -53,7 +52,6 @@ function useDetail({ state, item, titled }: DetailProps): ReactNode[] {
   return detailBlocks({
     item,
     rest: restOfDay(visible, item, date),
-    upcoming: nextDays({ items: visible, from: item.startsAt, now: context.now }, date),
     context,
     handlers: state.handlersFor(item),
     titled,
@@ -86,7 +84,7 @@ function Overlays({ state }: AgendaLayoutProps) {
 }
 
 export function PhoneAgenda({ state }: AgendaLayoutProps) {
-  const { context, chosen } = state;
+  const { chosen } = state;
   const detail = useDetail({ state, item: chosen, titled: false });
   return (
     <View className="flex-1">
@@ -98,7 +96,7 @@ export function PhoneAgenda({ state }: AgendaLayoutProps) {
       <Sheet
         open={chosen !== null}
         onClose={state.close}
-        title={chosen ? kindWords(chosen, context) : ''}
+        title={chosen?.title ?? ''}
         variant="detail">
         <View>{detail}</View>
       </Sheet>

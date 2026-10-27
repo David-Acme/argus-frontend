@@ -219,9 +219,10 @@ describe('Agenda on a phone', () => {
     if (!row) throw new Error('no line');
     fireEvent.click(row);
     await flush();
-    const sheet = screen.getByRole('dialog', { name: 'Evento' });
+    const sheet = screen.getByRole('dialog', { name: 'Llamar al técnico' });
     expect(within(sheet).getByText('Lugar')).toBeDefined();
     expect(within(sheet).getByRole('button', { name: 'Editar' })).toBeDefined();
+    expect(within(sheet).queryByText('Próximos días')).toBeNull();
   });
 
   test('the + opens one Nuevo sheet, an event by default, that refuses an empty name and saves', async () => {
@@ -264,7 +265,7 @@ describe('Agenda on a phone', () => {
     fireEvent.click(row);
     await flush();
     fireEvent.click(
-      within(screen.getByRole('dialog', { name: 'Evento' })).getByRole('button', {
+      within(screen.getByRole('dialog', { name: 'Daily' })).getByRole('button', {
         name: 'Editar',
       })
     );
