@@ -124,7 +124,13 @@ const { pairingStateOf } = await import('@/features/auth/model/pairing-state');
 type Form = Parameters<typeof PairingCodeView>[0]['form'];
 
 const form = (patch: Partial<Form> = {}): Form => ({
-  state: pairingStateOf({ search: 'found', error: null, manual: false, paired: false }),
+  state: pairingStateOf({
+    search: 'found',
+    error: null,
+    manual: false,
+    paired: false,
+    homeName: null,
+  }),
   code: '',
   address: '',
   busy: false,
@@ -184,12 +190,25 @@ describe('Vincular', () => {
     );
   });
 
+  test('once paired, a named Argus is greeted by its home name', () => {
+    const named = pairingStateOf({
+      search: 'found',
+      error: null,
+      manual: false,
+      paired: true,
+      homeName: 'Casa Acme',
+    });
+    within(<PairingCodeView form={form({ state: named })} />);
+    expect(screen.getByText('Listo. Encontré a Casa Acme.')).toBeDefined();
+  });
+
   test('a wrong code is said under the code', () => {
     const wrong = pairingStateOf({
       search: 'found',
       error: 'INVALID_PAIRING_CODE',
       manual: false,
       paired: false,
+      homeName: null,
     });
     within(<PairingCodeView form={form({ state: wrong })} />);
     expect(screen.getByRole('alert').textContent).toContain('Ese código no es de este Argus');
@@ -201,6 +220,7 @@ describe('Vincular', () => {
       error: null,
       manual: false,
       paired: false,
+      homeName: null,
     });
     within(<PairingAddressView form={form({ state: missing })} />);
     expect(screen.getByRole('heading', { name: 'No encuentro a Argus en tu red' })).toBeDefined();

@@ -1,17 +1,24 @@
+import type { IServerStatus } from '@/core/interfaces';
 import type { NetErrorCode, TranslationKey } from '@/core/types';
+import { NAMED_PAUSE_MS, PAIRED_PAUSE_MS } from '@/features/auth/constants/pairing.constant';
 import type { InfoRow } from '@/features/auth/model/info-row';
 
 export type PairingSearch = 'searching' | 'found' | 'missing';
 
 export type PairingView = 'code' | 'address' | 'mismatch';
 
-export type PairingNote = { tone: 'info' | 'ok' | 'alert'; key: TranslationKey };
+export type PairingNote = {
+  tone: 'info' | 'ok' | 'alert';
+  key: TranslationKey;
+  name?: string;
+};
 
 export type PairingStateInput = {
   search: PairingSearch;
   error: NetErrorCode | null;
   manual: boolean;
   paired: boolean;
+  homeName: string | null;
 };
 
 export type PairingState = {
@@ -36,7 +43,9 @@ function viewOf({ search, error, manual }: PairingStateInput): PairingView {
 }
 
 function noteOf(input: PairingStateInput, view: PairingView): PairingNote | null {
-  const { error, search, paired } = input;
+  const { error, search, paired, homeName } = input;
+  if (paired && homeName)
+    return { tone: 'ok', key: 'screens.pairing.paired-named', name: homeName };
   if (paired) return { tone: 'ok', key: 'screens.pairing.paired' };
   if (error && !QUIET.has(error) && !(view === 'address' && error === 'HOST_NOT_ALLOWED'))
     return { tone: 'alert', key: NOTE_ERROR[error] ?? 'screens.pairing.errors.network' };
@@ -58,6 +67,14 @@ export function pairingStateOf(input: PairingStateInput): PairingState {
         : null,
   };
 }
+
+export function homeNameOf(status: IServerStatus | null | undefined): string | null {
+  const name = typeof status?.homeName === 'string' ? status.homeName.trim() : '';
+  return name.length > 0 ? name : null;
+}
+
+export const pairedPauseOf = (homeName: string | null): number =>
+  homeName ? NAMED_PAUSE_MS : PAIRED_PAUSE_MS;
 
 export const notFoundRowsOf = (native: boolean): readonly InfoRow[] => [
   {

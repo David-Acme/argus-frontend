@@ -1,11 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { NetDiscovery, NetError, NetErrorCode } from '@/core/types';
+import { authService } from '@/core/services/auth.service';
 import { netService } from '@/core/services/net';
 import { pairWithQr } from '@/core/services/net/net-pairing';
 import { routePortsOf } from '@/core/services/net/net-routes';
 import { ARGUS_HOST } from '@/shared/constants';
 import { isPairingCode, normalizePairingCode, parsePairingQr } from '@/shared/libs/pairing-qr';
+import { HOME_NAME_WAIT_MS } from '@/features/auth/constants/pairing.constant';
 import { parseAddress } from '@/features/auth/model/pairing-address';
+import { homeNameOf } from '@/features/auth/model/pairing-state';
 import type { PairingSearch } from '@/features/auth/model/pairing-state';
 
 export type PairingRequest = { code: string; address: string };
@@ -14,6 +17,7 @@ export type PairingFlow = {
   search: PairingSearch;
   error: NetErrorCode | null;
   paired: boolean;
+  homeName: string | null;
   busy: boolean;
   connect: (request: PairingRequest) => Promise<void>;
   scanned: (value: string) => Promise<void>;
@@ -52,6 +56,19 @@ async function pairWithCode(request: PairingRequest, found: NetDiscovery | null)
   });
 }
 
+function readHomeName(): Promise<string | null> {
+  return new Promise((resolve) => {
+    const timer = setTimeout(() => resolve(null), HOME_NAME_WAIT_MS);
+    authService
+      .serverStatus()
+      .then(
+        (status) => resolve(homeNameOf(status.ok ? status.info : null)),
+        () => resolve(null)
+      )
+      .finally(() => clearTimeout(timer));
+  });
+}
+
 const codeOf = (reason: unknown): NetErrorCode =>
   (reason as NetError | null)?.code ?? 'NETWORK_ERROR';
 
@@ -60,6 +77,7 @@ export function usePairingFlow(): PairingFlow {
   const [found, setFound] = useState<NetDiscovery | null>(null);
   const [error, setError] = useState<NetErrorCode | null>(null);
   const [paired, setPaired] = useState(false);
+  const [homeName, setHomeName] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const round = useRef(0);
 
@@ -82,6 +100,7 @@ export function usePairingFlow(): PairingFlow {
     setBusy(true);
     try {
       await job();
+      setHomeName(await readHomeName());
       setPaired(true);
     } catch (reason) {
       setError(codeOf(reason));
@@ -110,5 +129,5 @@ export function usePairingFlow(): PairingFlow {
     void findArgus().then((next) => settle(next, at));
   }, [settle]);
 
-  return { search, error, paired, busy, connect, scanned, searchAgain };
+  return { search, error, paired, homeName, busy, connect, scanned, searchAgain };
 }

@@ -53,6 +53,17 @@ export const settings = {
     'reset-confirm': 'Reset {name}',
     'reset-none': '{name} is already as it came',
   },
+  household: {
+    title: 'Home',
+    name: 'Home name',
+    hint: 'How Argus introduces itself when a phone or a computer finds it on your network.',
+    placeholder: 'Acme Home',
+    unset: 'No name',
+    errors: {
+      invalid: 'Use letters, numbers and punctuation, with no line breaks or control characters.',
+      long: 'It can be up to 40 characters long.',
+    },
+  },
   device: {
     title: 'This device',
     haptics: 'Vibrate to confirm',
@@ -190,6 +201,7 @@ export const settings = {
       name: 'Notifications',
       hint: 'How many notifications you get and when they stay quiet.',
     },
+    identity: { name: 'Home', hint: 'The name Argus introduces itself with.' },
   },
   groups: {
     voice: 'Voice',
@@ -228,6 +240,7 @@ export const settings = {
     privacy: 'Privacy',
     recording: 'Recording',
     ptz: 'Camera movement',
+    household: 'Home',
   },
   choices: {
     pocket: 'Pocket (fast)',
@@ -275,6 +288,12 @@ export const settings = {
     tamper: advancedKeys.tamper,
     ptz: advancedKeys.ptz,
     look: advancedKeys.look,
+    identity: {
+      home_name: {
+        label: 'Home name',
+        hint: 'How Argus introduces itself when a phone or a computer finds it on your network.',
+      },
+    },
     tts: {
       engine_es: {
         label: 'Spanish voice engine',

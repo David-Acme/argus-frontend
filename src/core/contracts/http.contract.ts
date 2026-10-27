@@ -40,6 +40,7 @@ import type {
   IDeviceLoginStatusResponse,
   IInvitationRecord,
   IResponseStatusDto,
+  IServerStatus,
   IUserManagementRecord,
 } from '@/core/interfaces';
 import type {
@@ -76,6 +77,12 @@ export const authStatusSchema = z.object({
   role: userRole,
   isActive: z.boolean(),
 }) satisfies z.ZodType<IResponseStatusDto>;
+
+export const serverStatusSchema = z.object({
+  paired: z.boolean(),
+  hasOwner: z.boolean(),
+  homeName: z.string().optional(),
+}) satisfies z.ZodType<IServerStatus>;
 
 export const deviceLoginCreatedSchema = z.object({
   challengeId: z.string(),
@@ -315,6 +322,7 @@ const settingsOwnerName = z.enum([
   'guard',
   'camera',
   'notification',
+  'identity',
 ]);
 const choiceAvailability = z.enum(['installed', 'installable', 'installing', 'hostOnly', 'failed']);
 const settingApply = z.enum(['live', 'nextSession', 'restart']);
@@ -494,6 +502,7 @@ export const invitationRecordSchema = z.object({
 
 export const HTTP_CONTRACTS: Readonly<Record<string, z.ZodType>> = {
   'GET /auth/status': authStatusSchema,
+  'GET /pairing/status': serverStatusSchema,
   'POST /auth/device-login': deviceLoginCreatedSchema,
   'GET /auth/device-login/{1}': deviceLoginStatusSchema,
   'GET /auth/device-login/{1}/details': deviceLoginDetailsSchema,

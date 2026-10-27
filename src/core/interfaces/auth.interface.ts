@@ -21,6 +21,7 @@ export interface IResponseStatusDto {
 export interface IServerStatus {
   paired: boolean;
   hasOwner: boolean;
+  homeName?: string;
 }
 
 export interface IRegisterInput {

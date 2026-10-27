@@ -1,9 +1,21 @@
 import { describe, expect, test } from 'bun:test';
 import { parseAddress } from '@/features/auth/model/pairing-address';
-import { notFoundRowsOf, pairingStateOf } from '@/features/auth/model/pairing-state';
+import {
+  homeNameOf,
+  notFoundRowsOf,
+  pairedPauseOf,
+  pairingStateOf,
+} from '@/features/auth/model/pairing-state';
 
 const state = (patch: Partial<Parameters<typeof pairingStateOf>[0]>) =>
-  pairingStateOf({ search: 'searching', error: null, manual: false, paired: false, ...patch });
+  pairingStateOf({
+    search: 'searching',
+    error: null,
+    manual: false,
+    paired: false,
+    homeName: null,
+    ...patch,
+  });
 
 describe('the pairing screen states', () => {
   test('discovery is stated as a fact while the code is typed', () => {
@@ -48,6 +60,28 @@ describe('the pairing screen states', () => {
       tone: 'ok',
       key: 'screens.pairing.paired',
     });
+  });
+
+  test('pairing names the home when Argus has a name, and keeps the plain words when it has none', () => {
+    expect(state({ search: 'found', homeName: 'Casa Acme' }).note).toEqual({
+      tone: 'ok',
+      key: 'screens.pairing.found',
+    });
+    expect(state({ search: 'found', paired: true, homeName: 'Casa Acme' }).note).toEqual({
+      tone: 'ok',
+      key: 'screens.pairing.paired-named',
+      name: 'Casa Acme',
+    });
+    expect(pairedPauseOf('Casa Acme')).toBeGreaterThan(pairedPauseOf(null));
+  });
+
+  test('the home name is read from the pairing status only when it is a non-empty string', () => {
+    expect(homeNameOf({ paired: true, hasOwner: true, homeName: '  Casa Acme ' })).toBe(
+      'Casa Acme'
+    );
+    expect(homeNameOf({ paired: true, hasOwner: true, homeName: '   ' })).toBeNull();
+    expect(homeNameOf({ paired: true, hasOwner: true })).toBeNull();
+    expect(homeNameOf(null)).toBeNull();
   });
 
   test('the not-found help speaks to the device in hand', () => {

@@ -12,6 +12,7 @@ import { Screen, ScreenColumn, ScreenColumns } from '@/shared/ui/screen';
 import { Section } from '@/shared/ui/section';
 import { ModulesSwitchSection } from '@/features/modules';
 import { DeviceSection } from '@/features/settings/components/device-section';
+import { HouseholdSection } from '@/features/settings/components/household-section';
 import { HowCard } from '@/features/settings/components/how-card';
 import { ServiceDetail } from '@/features/settings/components/service-detail';
 import { SearchResults, ServicesSection } from '@/features/settings/components/services-section';
@@ -56,7 +57,10 @@ function Hub({ hub, selected, onOpen }: HubProps) {
           onOpen={onOpen}
         />
       ) : (
-        <HowCard profiles={hub.profiles} />
+        <>
+          <HouseholdSection setting={hub.household} onCatalog={hub.settings.replaceCatalogs} />
+          <HowCard profiles={hub.profiles} />
+        </>
       )}
       <ResourceView
         resource={resource}

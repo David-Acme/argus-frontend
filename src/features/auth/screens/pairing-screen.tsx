@@ -4,10 +4,9 @@ import { isPairingCode } from '@/shared/libs/pairing-qr';
 import { MismatchView } from '@/features/auth/components/mismatch-view';
 import { PairingAddressView, PairingCodeView } from '@/features/auth/components/pairing-views';
 import type { PairingForm } from '@/features/auth/components/pairing-views';
-import { PAIRED_PAUSE_MS } from '@/features/auth/constants/pairing.constant';
 import { usePairingFlow } from '@/features/auth/hooks/use-pairing-flow';
 import { useQrScan } from '@/features/auth/hooks/use-qr-scan';
-import { pairingStateOf } from '@/features/auth/model/pairing-state';
+import { pairedPauseOf, pairingStateOf } from '@/features/auth/model/pairing-state';
 
 export default function PairingScreen() {
   const router = useRouter();
@@ -39,9 +38,9 @@ export default function PairingScreen() {
 
   useEffect(() => {
     if (!flow.paired) return;
-    const timer = setTimeout(() => router.replace('/'), PAIRED_PAUSE_MS);
+    const timer = setTimeout(() => router.replace('/'), pairedPauseOf(flow.homeName));
     return () => clearTimeout(timer);
-  }, [flow.paired, router]);
+  }, [flow.paired, flow.homeName, router]);
 
   if (state.view === 'mismatch') return <MismatchView onBack={form.back} onRestart={searchAgain} />;
   if (state.view === 'address') return <PairingAddressView form={form} />;

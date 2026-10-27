@@ -43,6 +43,7 @@ const pairing = (patch: Partial<PairingFlow> = {}): PairingFlow => ({
   search: 'found',
   error: null,
   paired: false,
+  homeName: null,
   busy: false,
   connect: async () => undefined,
   scanned: async () => undefined,
