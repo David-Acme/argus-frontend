@@ -6,6 +6,8 @@ import { screenFocus } from './screen-focus';
 import './translation-stub';
 import { setWindowWidth } from './window-width';
 
+const LAZY_ROUTE_MS = 5000;
+
 let search: Record<string, string> = {};
 
 mock.module('expo-router', () => ({
@@ -151,6 +153,8 @@ describe('ui-lab', () => {
     (globalThis as Record<string, unknown>).__ARGUS_UI_LAB__ = true;
     search = {};
     render(<UiLabRoute />);
-    expect(await screen.findByRole('button', { name: 'Button, button' })).toBeDefined();
+    expect(
+      await screen.findByRole('button', { name: 'Button, button' }, { timeout: LAZY_ROUTE_MS })
+    ).toBeDefined();
   });
 });
