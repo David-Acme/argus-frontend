@@ -235,8 +235,8 @@ describe('the thread parts', () => {
       <VoiceNoteBubble
         note={{ id: '', mime: 'audio/mp4', durationMs: 4000, peaks: [10, 50] }}
         transcript=""
-        expanded={false}
-        onExpand={() => undefined}
+        view="hidden"
+        onView={() => undefined}
       />
     );
     expect(screen.getByText('0:04')).toBeDefined();

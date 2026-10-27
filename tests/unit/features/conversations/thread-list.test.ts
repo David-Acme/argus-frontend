@@ -10,6 +10,7 @@ import {
   followNewItems,
   groupsWith,
   isMessageItem,
+  KEYBOARD_GAP,
   keyboardOffsets,
   prewarmScopesOf,
   THREAD_GROUP_GAP_MS,
@@ -305,12 +306,19 @@ describe('keyboardOffsets', () => {
     expect(offsets.pill).toEqual(offsets.sticky);
   });
 
-  test('a negative inset reads as none', () => {
+  test('a negative inset reads as none, and the composer still keeps its gap above the keyboard', () => {
     expect(keyboardOffsets(-5)).toEqual({
-      list: 0,
-      sticky: { closed: 0, opened: 0 },
-      pill: { closed: 0, opened: 0 },
+      list: -KEYBOARD_GAP,
+      sticky: { closed: 0, opened: -KEYBOARD_GAP },
+      pill: { closed: 0, opened: -KEYBOARD_GAP },
     });
+  });
+
+  test('with the keyboard open the composer sits a gap above it, over the bottom inset', () => {
+    const keyboard = 300;
+    const inset = 34;
+    const travel = keyboard - keyboardOffsets(inset).sticky.opened;
+    expect(travel).toBe(keyboard - inset + KEYBOARD_GAP);
   });
 });
 

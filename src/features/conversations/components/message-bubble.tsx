@@ -1,5 +1,4 @@
 import { clsx } from 'clsx';
-import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { View } from 'react-native';
 import type { IConversationMessageCacheRow } from '@/core/interfaces';
@@ -12,6 +11,7 @@ import { BubbleMeta } from '@/features/conversations/components/bubble-meta';
 import { BubbleTail } from '@/features/conversations/components/bubble-tail';
 import { VoiceNoteBubble } from '@/features/conversations/components/voice-note-bubble';
 import { useBubbleActions } from '@/features/conversations/hooks/use-bubble-actions';
+import { useTranscriptView } from '@/features/conversations/hooks/use-transcript-view';
 import { chatErrorMessage } from '@/features/conversations/model/assistant-chat-errors';
 import type { ChatMark } from '@/features/conversations/model/assistant-chat-overlay';
 import {
@@ -102,7 +102,7 @@ export function MessageBubble({
 }: MessageBubbleProps) {
   const { t } = useTranslation();
   const date = useDateFormatter();
-  const [expanded, setExpanded] = useState(false);
+  const transcript = useTranscriptView(message.body);
   const mine = message.direction === 'out';
   const failed = status === 'failed' && mark ? mark : null;
   const note = bubbleNoteOf(message, t);
@@ -113,7 +113,7 @@ export function MessageBubble({
   const items = useBubbleActions({
     message,
     failedId: failed?.clientId ?? null,
-    transcript: voiceNote ? { expanded, toggle: () => setExpanded((open) => !open) } : null,
+    transcript: voiceNote ? transcript.action : null,
     onRetry,
     onDismiss,
   });
@@ -149,8 +149,8 @@ export function MessageBubble({
                 <VoiceNoteBubble
                   note={voiceNote}
                   transcript={message.body}
-                  expanded={expanded}
-                  onExpand={setExpanded}
+                  view={transcript.view}
+                  onView={transcript.setView}
                 />
               ) : null}
               {voiceNote ? (

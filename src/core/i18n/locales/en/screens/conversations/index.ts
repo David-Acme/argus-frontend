@@ -66,7 +66,6 @@ export const conversations = {
     'show-transcript': 'Show transcript',
     'hide-transcript': 'Hide transcript',
     more: 'See more',
-    less: 'See less',
     hold: 'Hold to record a voice note',
     record: 'Record a voice note',
     recording: 'Recording, {clock}',

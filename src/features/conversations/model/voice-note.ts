@@ -98,3 +98,10 @@ export const TRANSCRIPT_LINE_CHARS = 26;
 
 export const transcriptFolds = (transcript: string): boolean =>
   transcript.trim().length > TRANSCRIPT_LINES * TRANSCRIPT_LINE_CHARS;
+
+export type TranscriptView = 'hidden' | 'folded' | 'whole';
+
+export function nextTranscriptView(view: TranscriptView, transcript: string): TranscriptView {
+  if (view === 'hidden') return transcriptFolds(transcript) ? 'folded' : 'whole';
+  return view === 'folded' ? 'whole' : 'hidden';
+}

@@ -5,6 +5,7 @@ import {
   keepsNote,
   levelOfDecibels,
   nextSpeed,
+  nextTranscriptView,
   noteClock,
   noteFileOf,
   noteMimeOf,
@@ -75,6 +76,14 @@ describe('holding the microphone', () => {
 });
 
 describe('a voice note bubble', () => {
+  test('a transcript opens from hidden, folded when long, whole, then hidden again', () => {
+    const long = 'Hola, Argus, quería saber qué tengo pendiente para mañana.';
+    expect(nextTranscriptView('hidden', long)).toBe('folded');
+    expect(nextTranscriptView('folded', long)).toBe('whole');
+    expect(nextTranscriptView('whole', long)).toBe('hidden');
+    expect(nextTranscriptView('hidden', 'Compra pan')).toBe('whole');
+  });
+
   test('a transcript longer than two lines folds behind «Ver más»', () => {
     expect(transcriptFolds('Compra pan')).toBe(false);
     expect(transcriptFolds('Hola, Argus, quería saber qué tengo pendiente para mañana.')).toBe(

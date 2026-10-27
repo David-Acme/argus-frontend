@@ -157,12 +157,13 @@ describe('Menu', () => {
     expect(log).toEqual(['edit']);
   });
 
-  test('on a phone a header «⋯» opens a text-only dropdown under the button, never a sheet', async () => {
+  test('on a phone a header «⋯» opens a dropdown with an icon on every row, never a sheet', async () => {
     const log: string[] = [];
-    render(<Menu label="Opciones" items={items(log)} />);
+    const listed = items(log);
+    render(<Menu label="Opciones" items={listed} />);
     fireEvent.keyDown(screen.getByRole('button', { name: 'Opciones' }), { key: 'Enter' });
     const menu = await screen.findByRole('menu');
-    expect(menu.querySelectorAll('svg')).toHaveLength(0);
+    expect(menu.querySelectorAll('svg')).toHaveLength(listed.length);
     expect(screen.getByRole('separator')).toBeDefined();
     fireEvent.click(screen.getByRole('menuitem', { name: 'Editar' }));
     expect(log).toEqual(['edit']);
@@ -308,19 +309,12 @@ describe('Menu parts', () => {
     expect(screen.queryByRole('menu')).toBeNull();
   });
 
-  test('the anchored button in its plain look shows text rows only', async () => {
-    render(
-      <AnchoredButton
-        label="Más"
-        icon="more"
-        items={items([])}
-        look="plain"
-        onRun={() => undefined}
-      />
-    );
+  test('the anchored button lists every action with its icon well', async () => {
+    const listed = items([]);
+    render(<AnchoredButton label="Más" icon="more" items={listed} onRun={() => undefined} />);
     fireEvent.keyDown(screen.getByRole('button', { name: 'Más' }), { key: 'Enter' });
     const menu = await screen.findByRole('menu');
-    expect(menu.querySelectorAll('svg')).toHaveLength(0);
+    expect(menu.querySelectorAll('svg')).toHaveLength(listed.length);
   });
 
   test('the runner runs an action at once and holds a destructive one for its dialog', async () => {
