@@ -1,9 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import {
-  conversationListSchema,
-  conversationMessageSchema,
-  conversationReadResultSchema,
-} from '@/core/contracts/conversation.contract';
+import { conversationMessageSchema, conversationReadResultSchema } from '@/core/contracts/conversation.contract';
 
 const message = {
   id: 41,
@@ -39,10 +35,7 @@ describe('the conversation contract', () => {
     expect(conversationMessageSchema.safeParse({ ...message, direction: 'up' }).success).toBe(false);
   });
 
-  test('reads the thread list and the read answer', () => {
-    expect(
-      conversationListSchema.safeParse([{ counterpartId: 3, counterpartName: 'David', unread: 2, last: message }]).success
-    ).toBe(true);
+  test('reads the read answer', () => {
     expect(conversationReadResultSchema.safeParse({ updated: 2 }).success).toBe(true);
     expect(conversationReadResultSchema.safeParse({}).success).toBe(false);
   });

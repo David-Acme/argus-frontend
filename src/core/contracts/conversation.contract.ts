@@ -6,7 +6,6 @@ import {
   CONVERSATION_STATES,
   type ConversationMessage,
   type ConversationReadResult,
-  type ConversationSummary,
 } from '@/core/types';
 
 const unixSeconds = z.number().int().nonnegative();
@@ -30,15 +29,6 @@ export const conversationMessageSchema = z.object({
   updatedAt: unixSeconds.nullable(),
   deletedAt: unixSeconds.nullable(),
 }) satisfies z.ZodType<ConversationMessage>;
-
-export const conversationSummarySchema = z.object({
-  counterpartId: counterpart,
-  counterpartName: z.string(),
-  unread: z.number().int().nonnegative(),
-  last: conversationMessageSchema,
-}) satisfies z.ZodType<ConversationSummary>;
-
-export const conversationListSchema = z.array(conversationSummarySchema);
 
 export const conversationReadResultSchema = z.object({
   updated: z.number().int().nonnegative(),

@@ -6,7 +6,6 @@ import type {
   IInviteAcceptResult,
   IInviteCreateInput,
   IInviteCreated,
-  IInvitationRecord,
   IServiceResponse,
 } from '@/core/interfaces';
 import type { InvitationQrPayload } from '@/core/types';
@@ -16,10 +15,6 @@ const INVITATION_PATH = '/invitation';
 class InviteService {
   create(input: IInviteCreateInput): Promise<IServiceResponse<IInviteCreated>> {
     return httpService.post<IInviteCreated>(INVITATION_PATH, input);
-  }
-
-  list(): Promise<IServiceResponse<IInvitationRecord[]>> {
-    return httpService.get<IInvitationRecord[]>(INVITATION_PATH);
   }
 
   revoke(id: number): Promise<IServiceResponse<null>> {

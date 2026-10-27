@@ -67,7 +67,7 @@
   },
   "src/core/services/conversation.service.ts": {
     "argus/no-http-type-argument": {
-      "count": 4
+      "count": 3
     }
   },
   "src/core/services/conversation/thread-window.ts": {
@@ -115,7 +115,7 @@
   },
   "src/core/services/invite/invite.service.ts": {
     "argus/no-http-type-argument": {
-      "count": 3
+      "count": 2
     }
   },
   "src/core/services/modules/modules.service.ts": {
@@ -556,7 +556,7 @@
   },
   "src/features/people/services/user-management.service.ts": {
     "argus/no-http-type-argument": {
-      "count": 4
+      "count": 3
     }
   },
   "src/features/people/services/voiceprint.service.ts": {

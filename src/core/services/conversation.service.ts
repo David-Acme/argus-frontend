@@ -2,18 +2,13 @@ import { Q } from '@nozbe/watermelondb';
 import type { Clause } from '@nozbe/watermelondb/QueryDescription';
 import { auditTime, combineLatest, from, map, of, startWith, switchMap, type Observable } from 'rxjs';
 import type { z } from 'zod';
-import {
-  conversationListSchema,
-  conversationMessageSchema,
-  conversationReadResultSchema,
-} from '@/core/contracts/conversation.contract';
+import { conversationMessageSchema, conversationReadResultSchema } from '@/core/contracts/conversation.contract';
 import type { ConversationMessageModel } from '@/core/database';
 import type { IServiceResponse } from '@/core/interfaces';
-import type { ConversationMessage, ConversationReadResult, ConversationSummary } from '@/core/types';
+import type { ConversationMessage, ConversationReadResult } from '@/core/types';
 import { httpService } from '@/core/services/http';
 import { errorResponse } from '@/core/services/http/http-envelope';
 import {
-  CONVERSATION_PATH,
   conversationMessagePath,
   conversationReadPath,
   conversationThreadPath,
@@ -89,10 +84,6 @@ class ConversationService extends DatabaseService<'conversation_message'> {
 
   initialThread(): ThreadWindow {
     return INITIAL_THREAD_WINDOW;
-  }
-
-  async list(): Promise<IServiceResponse<ConversationSummary[]>> {
-    return parsed(await httpService.get<unknown>(CONVERSATION_PATH), conversationListSchema);
   }
 
   async markRead(counterpartId: number): Promise<IServiceResponse<ConversationReadResult>> {
