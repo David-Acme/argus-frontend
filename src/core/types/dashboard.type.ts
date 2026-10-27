@@ -14,5 +14,6 @@ export type DashboardSummary = {
   camerasTotal: number;
   camerasOnline: number;
   projectsActive: number;
+  projectsTotal: number;
   tasksOpen: number;
 };

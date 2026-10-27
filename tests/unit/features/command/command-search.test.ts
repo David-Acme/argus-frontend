@@ -1,90 +1,53 @@
 import { describe, expect, test } from 'bun:test';
+import { foldText } from '@/shared/libs/text-search';
 import {
   actionMatches,
   filterLabeled,
   foldedScore,
-  foldText,
-  rankEntries,
-  searchMatches,
-  SEARCH_GROUP_LIMIT,
+  groupEntries,
+  scopeKinds,
+  searchGroups,
   type SearchEntry,
   type SearchKind,
 } from '@/features/command/model/command-search';
 
-const NOW = Date.UTC(2026, 9, 26, 12);
-const HOUR = 3_600_000;
+const entry = (kind: SearchKind, id: string): SearchEntry => ({ kind, id, title: id, at: null });
 
-const entry = (
-  kind: SearchKind,
-  id: string,
-  title: string,
-  at: number | null = null
-): SearchEntry => ({
-  kind,
-  id,
-  title,
-  folded: foldText(title),
-  at,
-});
+const ALL: ReadonlySet<SearchKind> = new Set(['event', 'task', 'project', 'person', 'camera']);
 
 describe('command search', () => {
-  test('folding drops accents and case so «cámara» finds «Cámara del patio»', () => {
-    expect(foldText('  Cámara del PATIO ')).toBe('camara del patio');
-    expect(foldedScore(foldText('Cámara del patio'), foldText('camara'))).toBe(3);
-  });
-
   test('a prefix beats a word start, which beats a match inside a word', () => {
-    expect(foldedScore('pagar la luz', 'pag')).toBe(3);
-    expect(foldedScore('ir a pagar', 'pag')).toBe(2);
-    expect(foldedScore('repagar', 'pag')).toBe(1);
-    expect(foldedScore('luz', 'pag')).toBe(0);
-    expect(foldedScore('luz', '')).toBe(0);
+    const needle = foldText('pat');
+    expect(foldedScore(foldText('Patio'), needle)).toBe(3);
+    expect(foldedScore(foldText('Cámara del patio'), needle)).toBe(2);
+    expect(foldedScore(foldText('Espátula'), needle)).toBe(1);
+    expect(foldedScore(foldText('Sala'), needle)).toBe(0);
   });
 
-  test('among equal matches the next upcoming comes first, then the most recent past, then undated', () => {
-    const ranked = rankEntries({
-      entries: [
-        entry('event', 'old', 'Pagar el gas', NOW - 48 * HOUR),
-        entry('event', 'none', 'Pagar algo'),
-        entry('event', 'later', 'Pagar el agua', NOW + 24 * HOUR),
-        entry('event', 'soon', 'Pagar la luz', NOW + 5 * HOUR),
-        entry('event', 'recent', 'Pagar el cable', NOW - HOUR),
-      ],
-      needle: 'pagar',
-      now: NOW,
-    });
-    expect(ranked.map((item) => item.id)).toEqual(['soon', 'later', 'recent', 'old', 'none']);
+  test('a scope keeps the kinds of its group that the role may search', () => {
+    expect(scopeKinds('all', ALL)).toEqual(['event', 'task', 'project', 'person', 'camera']);
+    expect(scopeKinds('agenda', ALL)).toEqual(['event', 'task']);
+    expect(scopeKinds('agenda', new Set<SearchKind>(['task', 'camera']))).toEqual(['task']);
+    expect(scopeKinds('people', new Set<SearchKind>(['camera']))).toEqual([]);
   });
 
-  test('each group keeps at most its limit', () => {
-    const many = Array.from({ length: SEARCH_GROUP_LIMIT + 3 }, (_, at) =>
-      entry('camera', String(at), `Cámara ${at}`)
-    );
-    expect(rankEntries({ entries: many, needle: 'camara', now: NOW })).toHaveLength(
-      SEARCH_GROUP_LIMIT
-    );
+  test('the chips name only the groups the role may search, in their order', () => {
+    expect(searchGroups(ALL)).toEqual(['agenda', 'projects', 'people', 'cameras']);
+    expect(searchGroups(new Set<SearchKind>(['camera', 'task']))).toEqual(['agenda', 'cameras']);
   });
 
-  test('results are grouped agenda, projects, people, cameras and empty groups vanish', () => {
-    const groups = searchMatches(
-      [
-        entry('camera', 'c', 'Patio trasero'),
-        entry('task', 't', 'Pintar el patio', NOW + HOUR),
-        entry('person', 'p', 'Luis'),
-        entry('project', 'j', 'Patio nuevo'),
-      ],
-      'patio',
-      NOW
-    );
-    expect(groups.map(({ group, entries }) => [group, entries.map((item) => item.id)])).toEqual([
-      ['agenda', ['t']],
-      ['projects', ['j']],
-      ['cameras', ['c']],
+  test('a page of hits is grouped as it comes, events and tasks together under the agenda', () => {
+    const grouped = groupEntries([
+      entry('event', 'e1'),
+      entry('task', 't1'),
+      entry('event', 'e2'),
+      entry('project', 'p1'),
+      entry('camera', 'c1'),
     ]);
-  });
-
-  test('an empty query searches nothing', () => {
-    expect(searchMatches([entry('person', 'p', 'Luis')], '   ', NOW)).toEqual([]);
+    expect(
+      grouped.map(({ group, entries }) => `${group}:${entries.map((item) => item.id).join(',')}`)
+    ).toEqual(['agenda:e1,t1,e2', 'projects:p1', 'cameras:c1']);
+    expect(groupEntries([])).toEqual([]);
   });
 
   test('labelled items are filtered by the same folding, and an empty query keeps them all', () => {

@@ -1,13 +1,12 @@
 import { describe, expect, test } from 'bun:test';
 import { accessView } from '@/shared/libs/capabilities';
 import { commandAccess, createHref, entryHref } from '@/features/command/model/command-access';
-import { foldText, type SearchEntry } from '@/features/command/model/command-search';
+import type { SearchEntry } from '@/features/command/model/command-search';
 import { accessFor, viewFor } from '@tests/support/access-fixtures';
 
 const entry = (patch: Partial<SearchEntry> & Pick<SearchEntry, 'kind'>): SearchEntry => ({
   id: '7',
   title: 'Algo',
-  folded: foldText('Algo'),
   at: null,
   ...patch,
 });

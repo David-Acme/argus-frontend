@@ -14,7 +14,6 @@ import {
   projectCameras,
   type CameraSource,
 } from '@/core/services/view-cache/camera.projection';
-import { projectEventList } from '@/core/services/view-cache/event.projection';
 import { projectNotificationFeed } from '@/core/services/view-cache/notification.projection';
 import { projectPeople } from '@/core/services/view-cache/people.projection';
 import { projectProjects } from '@/core/services/view-cache/project.projection';
@@ -288,28 +287,6 @@ describe('project projection', () => {
   });
 });
 
-describe('event list projection', () => {
-  test('every event is one searchable row in milliseconds, an empty rule read as none', () => {
-    const writes = projectEventList({
-      events: [
-        {
-          id: 'e1',
-          title: 'Cena',
-          startsAt: new Date(5000),
-          isAllDay: false,
-          recurrenceRule: 'FREQ=WEEKLY',
-        },
-        { id: 'e2', title: 'Viaje', startsAt: new Date(9000), isAllDay: true, recurrenceRule: '' },
-      ],
-    });
-    expect(writes).toHaveLength(1);
-    expect(rowsOf(writes, 'event.list')).toEqual([
-      { id: 'e1', title: 'Cena', startsAt: 5000, isAllDay: false, recurrenceRule: 'FREQ=WEEKLY' },
-      { id: 'e2', title: 'Viaje', startsAt: 9000, isAllDay: true, recurrenceRule: null },
-    ]);
-  });
-});
-
 describe('people projection', () => {
   const user = (id: string, name: string, lastName: string, role: 'owner' | 'guard' | 'guest') => ({
     id,
@@ -448,6 +425,7 @@ describe('summary projection', () => {
       camerasTotal: 2,
       camerasOnline: 1,
       projectsActive: 1,
+      projectsTotal: 5,
       tasksOpen: 1,
     });
   });

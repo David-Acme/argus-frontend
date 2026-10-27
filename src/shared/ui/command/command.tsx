@@ -3,18 +3,19 @@ import { useEffect, useEffectEvent } from 'react';
 import { Pressable } from 'react-native';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { paletteTopOf, useHeightLayout } from '@/shared/theme';
-import { CommandPalette } from './command-palette';
+import { CommandPalette, usePaletteHeight } from './command-palette';
 import { CommandPanel } from './command-panel';
 import type { CommandIntent, CommandProps } from './command-types';
 import { useCommand } from './use-command';
 
 type BodyProps = Omit<CommandProps, 'open'>;
 
-function Body({ onClose, source, onAsk, initialQuery }: BodyProps) {
-  const state = useCommand({ source, onAsk, onClose, initialQuery });
+function Body({ onClose, source, onAsk, onQueryChange, initialQuery }: BodyProps) {
+  const state = useCommand({ source, onAsk, onQueryChange, onClose, initialQuery });
+  const room = usePaletteHeight();
   return (
     <CommandPalette>
-      <CommandPanel state={state} hints />
+      <CommandPanel state={state} hints room={room} />
     </CommandPalette>
   );
 }

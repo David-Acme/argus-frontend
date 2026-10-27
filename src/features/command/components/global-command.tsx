@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Command, useCommandHotkey, type CommandIntent } from '@/shared/ui/command';
 import { useOpenedOnce } from '@/shared/ui/sheet';
 import { useCommandSource } from '@/features/command/hooks/use-command-source';
@@ -12,9 +13,17 @@ type CommandHostProps = {
 };
 
 function CommandHost({ open, intent, query, openedAt, onClose }: CommandHostProps) {
-  const { source, onAsk } = useCommandSource({ intent, openedAt });
+  const [typed, setTyped] = useState(query.trim());
+  const { source, onAsk } = useCommandSource({ intent, openedAt, query: typed });
   return (
-    <Command open={open} onClose={onClose} source={source} onAsk={onAsk} initialQuery={query} />
+    <Command
+      open={open}
+      onClose={onClose}
+      source={source}
+      onAsk={onAsk}
+      onQueryChange={setTyped}
+      initialQuery={query}
+    />
   );
 }
 
@@ -33,6 +42,13 @@ export function GlobalCommand() {
 
   if (!mounted) return null;
   return (
-    <CommandHost open={open} intent={intent} query={query} openedAt={openedAt} onClose={close} />
+    <CommandHost
+      key={openedAt}
+      open={open}
+      intent={intent}
+      query={query}
+      openedAt={openedAt}
+      onClose={close}
+    />
   );
 }

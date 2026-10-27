@@ -1,11 +1,14 @@
 import { afterEach, describe, expect, mock, setSystemTime, test } from 'bun:test';
 import { act, fireEvent, render, screen } from '@testing-library/react';
+import type { ISearchHitCacheRow } from '@/core/interfaces';
 import type { AccessView } from '@/shared/libs/capabilities';
 import { createDateFormatter } from '@/shared/hooks/use-date-formatter/date';
 import { VIEW_CACHE_KEYS } from '@/shared/constants/cache.constant';
+import { matchesWords, parseSearchScope } from '@/shared/libs/text-search';
 import { screenFocus } from '../../../shared/ui/screen-focus';
 import '../../../shared/ui/translation-stub';
 import { accessFor, viewFor } from '@tests/support/access-fixtures';
+import { InfiniteListStub } from '@tests/support/infinite-list-stub';
 import { accessView } from '@/shared/libs/capabilities';
 
 type Calls = string[];
@@ -17,13 +20,42 @@ setSystemTime(today);
 const at = (days: number, hours: number) =>
   new Date(today.getFullYear(), today.getMonth(), today.getDate() + days, hours).getTime();
 
-const ROWS: Readonly<Record<string, readonly unknown[]>> = {
-  [VIEW_CACHE_KEYS.eventList]: [
-    { id: '1', title: 'Pagar la luz', startsAt: at(0, 23), isAllDay: false, recurrenceRule: null },
-    { id: '2', title: 'Pagar el agua', startsAt: at(1, 9), isAllDay: false, recurrenceRule: null },
-  ],
-  [VIEW_CACHE_KEYS.cameraList]: [{ id: '5', name: 'Cámara del patio' }],
-};
+const hit = (
+  fields: Pick<ISearchHitCacheRow, 'kind' | 'id' | 'title' | 'at'>
+): ISearchHitCacheRow => ({
+  allDay: false,
+  parentId: null,
+  recurrenceRule: null,
+  ...fields,
+});
+
+const HITS: readonly ISearchHitCacheRow[] = [
+  hit({ kind: 'event', id: '1', title: 'Pagar la luz', at: at(0, 23) }),
+  hit({ kind: 'event', id: '2', title: 'Pagar el agua', at: at(1, 9) }),
+  hit({ kind: 'person', id: '7', title: 'José Pérez', at: null }),
+  hit({ kind: 'camera', id: '5', title: 'Cámara del patio', at: null }),
+];
+
+const watched: string[] = [];
+const extended: string[] = [];
+let moreAfter = false;
+
+function pagedView(_key: string, scope: string, enabled: boolean) {
+  if (enabled) watched.push(scope);
+  const parsed = enabled ? parseSearchScope(scope) : null;
+  const rows = parsed
+    ? HITS.filter((row) => parsed.kinds.includes(row.kind) && matchesWords(row.title, parsed.words))
+    : [];
+  return {
+    snapshot: parsed ? { rows, hasMore: moreAfter } : null,
+    rows,
+    hasMore: moreAfter,
+    loadMore: () => {
+      extended.push(scope);
+      return Promise.resolve(true);
+    },
+  };
+}
 
 let view: AccessView = viewFor('owner');
 let sendAnswer = 'sent';
@@ -49,8 +81,25 @@ mock.module('@/features/voice', () => ({
 }));
 mock.module('@/shared/hooks/use-capabilities', () => ({ useAccessView: () => view }));
 mock.module('@/shared/hooks/use-cached-rows', () => ({
-  useViewCacheRows: (key: string) => ROWS[key] ?? [],
+  useViewCacheValue: (key: string) =>
+    key === VIEW_CACHE_KEYS.dashboardSummary ? { projectsTotal: 0 } : null,
 }));
+mock.module('@/shared/hooks/use-infinite-list', () => ({
+  usePagedView: pagedView,
+  useInfiniteList: ({
+    hasMore,
+    loadMore,
+  }: {
+    hasMore: boolean;
+    loadMore?: () => Promise<boolean>;
+  }) => ({
+    footer: hasMore ? 'loading' : 'none',
+    loading: false,
+    onEndReached: () => void loadMore?.(),
+    retry: () => undefined,
+  }),
+}));
+mock.module('@/shared/components/ui/infinite-list', () => ({ InfiniteList: InfiniteListStub }));
 mock.module('@/shared/hooks/use-date-formatter', () => ({
   useDateFormatter: () =>
     createDateFormatter('es', {
@@ -74,7 +123,11 @@ const press = (key: string, init: KeyboardEventInit = {}) =>
 const type = (text: string) => fireEvent.change(input(), { target: { value: text } });
 const options = () =>
   screen.queryAllByRole('option').map((node) => node.getAttribute('aria-label'));
-const groups = () => screen.queryAllByRole('group').map((node) => node.getAttribute('aria-label'));
+const groups = () => screen.queryAllByTestId('command-group').map((node) => node.textContent);
+const settle = () =>
+  act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 200));
+  });
 
 type LauncherProps = { query?: string };
 
@@ -95,6 +148,9 @@ function Launcher({ query }: LauncherProps) {
 afterEach(() => {
   act(() => useCommandStore.getState().close());
   calls.length = 0;
+  watched.length = 0;
+  extended.length = 0;
+  moreAfter = false;
   view = viewFor('owner');
   sendAnswer = 'sent';
 });
@@ -110,7 +166,7 @@ describe('GlobalCommand', () => {
     render(<GlobalCommand />);
     press('k', { ctrlKey: true });
     expect(screen.getByRole('dialog', { name: 'Buscar o pedir a Argus' })).toBeDefined();
-    expect(groups()).toEqual(['Acciones', 'Ir a']);
+    expect(groups()).toEqual(['ACCIONES', 'IR A']);
     expect(options()).toEqual([
       'Pedirle a Argus que me recuerde…',
       'Nuevo evento',
@@ -123,24 +179,55 @@ describe('GlobalCommand', () => {
     ]);
     expect(screen.getByText('N')).toBeDefined();
     expect(screen.getByText('5')).toBeDefined();
+    expect(watched).toEqual([]);
   });
 
-  test('typing filters local results into groups, «pregúntale a Argus» first, and Enter sends the text to Argus', () => {
+  test('typing searches the database once it settles, «pregúntale a Argus» first, and Enter sends the text', async () => {
     render(<GlobalCommand />);
     press('k', { metaKey: true });
     type('pagar');
-    expect(groups()).toEqual(['Pedir a Argus', 'Agenda', 'Acciones']);
+    await settle();
+    expect(groups()).toEqual(['PEDIR A ARGUS', 'ACCIONES', 'AGENDA']);
     expect(options()).toEqual([
       '«pagar…» — pregúntale a Argus',
+      'Pedirle a Argus que me recuerde «pagar…»',
       'Pagar la luz',
       'Pagar el agua',
-      'Pedirle a Argus que me recuerde «pagar…»',
     ]);
-    expect(screen.getByText('· hoy 23:00')).toBeDefined();
-    expect(screen.getByText('· mañana 09:00')).toBeDefined();
+    expect(screen.getByText('Evento · hoy 23:00')).toBeDefined();
+    expect(screen.getByText('Evento · mañana 09:00')).toBeDefined();
+    expect(parseSearchScope(watched[watched.length - 1] ?? '')).toEqual({
+      kinds: ['event', 'task', 'project', 'person', 'camera'],
+      words: ['pagar'],
+      since: new Date(2026, 9, 26).getTime(),
+    });
     fireEvent.keyDown(input(), { key: 'Enter' });
     expect(calls).toEqual(['send pagar', 'push "/conversations/0"']);
     expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  test('accents and case do not matter, and the scope chips narrow the search', async () => {
+    render(<GlobalCommand />);
+    press('/');
+    type('JOSE');
+    await settle();
+    expect(options()).toContain('José Pérez');
+    fireEvent.click(screen.getByRole('tab', { name: 'Cámaras' }));
+    await settle();
+    expect(options()).not.toContain('José Pérez');
+    expect(parseSearchScope(watched[watched.length - 1] ?? '')?.kinds).toEqual(['camera']);
+    expect(screen.getByRole('status').textContent).toContain('Nada coincide con «JOSE»');
+  });
+
+  test('reaching the end of the results asks the database for the next page', async () => {
+    moreAfter = true;
+    render(<GlobalCommand />);
+    press('/');
+    type('patio');
+    await settle();
+    expect(screen.getByTestId('infinite-list').getAttribute('data-footer')).toBe('loading');
+    fireEvent.click(screen.getByRole('button', { name: 'end-reached' }));
+    expect(extended.length).toBe(1);
   });
 
   test('a busy Argus keeps the text as a draft in the thread instead of losing it', () => {
@@ -152,10 +239,11 @@ describe('GlobalCommand', () => {
     expect(calls).toEqual(['send pagar', 'draft pagar', 'push "/conversations/0"']);
   });
 
-  test('a result opens its screen and a new reminder starts a draft to Argus', () => {
+  test('a result opens its screen and a new reminder starts a draft to Argus', async () => {
     render(<GlobalCommand />);
     press('/');
     type('patio');
+    await settle();
     fireEvent.click(screen.getByRole('option', { name: 'Cámara del patio' }));
     expect(calls).toEqual(['push {"pathname":"/cameras/[id]","params":{"id":"5"}}']);
     calls.length = 0;
@@ -167,12 +255,14 @@ describe('GlobalCommand', () => {
     expect(calls).toEqual(['draft Recuérdame pagar', 'push "/conversations/0"']);
   });
 
-  test('N opens only the new-item actions and never asks Argus', () => {
+  test('N opens only the new-item actions, never searches and never asks Argus', async () => {
     render(<GlobalCommand />);
     press('n');
-    expect(groups()).toEqual(['Acciones']);
+    expect(groups()).toEqual(['ACCIONES']);
     type('evento');
+    await settle();
     expect(options()).toEqual(['Nuevo evento', 'Pedirle a Argus que me recuerde «evento…»']);
+    expect(watched).toEqual([]);
     fireEvent.keyDown(input(), { key: 'Enter' });
     expect(calls).toEqual(['push {"pathname":"/agenda","params":{"new":"event"}}']);
   });
@@ -206,10 +296,10 @@ describe('GlobalCommand', () => {
     expect(options()).toContain('Cámara del patio');
     fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' });
     fireEvent.click(screen.getByText('nuevo'));
-    expect(groups()).toEqual(['Acciones']);
+    expect(groups()).toEqual(['ACCIONES']);
   });
 
-  test('a role this build does not know gets no Argus entry and no results', () => {
+  test('a role this build does not know gets no Argus entry, no search and only the empty message', async () => {
     view = accessView(
       { ...accessFor('guest'), role: null, roleActive: false, capabilities: [] },
       'guest'
@@ -217,8 +307,11 @@ describe('GlobalCommand', () => {
     render(<GlobalCommand />);
     press('k', { ctrlKey: true });
     type('pagar');
+    await settle();
     expect(groups()).toEqual([]);
     expect(options()).toEqual([]);
+    expect(watched).toEqual([]);
     expect(screen.queryByText('Pedir a Argus')).toBeNull();
+    expect(screen.getByRole('status').textContent).toContain('Nada coincide con «pagar»');
   });
 });
