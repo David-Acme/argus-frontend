@@ -1,7 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { cancelProgress, holdDecision } from '@/features/conversations/model/hold-record';
 import {
-  barToneOf,
   bucketPeaks,
   keepsNote,
   levelOfDecibels,
@@ -11,7 +10,6 @@ import {
   noteMimeOf,
   progressOf,
   transcriptFolds,
-  withLevel,
 } from '@/features/conversations/model/voice-note';
 
 describe('a recorded voice note', () => {
@@ -46,11 +44,10 @@ describe('a recorded voice note', () => {
     expect(keepsNote(300, 300)).toBe(true);
   });
 
-  test('the live level comes from decibels and the live wave keeps the newest bars', () => {
+  test('the live level comes from decibels', () => {
     expect(levelOfDecibels(-60)).toBe(0);
     expect(levelOfDecibels(0)).toBe(1);
     expect(levelOfDecibels(undefined)).toBe(0);
-    expect(withLevel([0.1, 0.2, 0.3], 0.4, 3)).toEqual([0.2, 0.3, 0.4]);
   });
 });
 
@@ -78,12 +75,6 @@ describe('holding the microphone', () => {
 });
 
 describe('a voice note bubble', () => {
-  test('the played part takes the accent only while the note plays', () => {
-    expect(barToneOf(3, 10, true)).toBe('played');
-    expect(barToneOf(12, 10, true)).toBe('rest');
-    expect(barToneOf(3, 10, false)).toBe('rest');
-  });
-
   test('a transcript longer than two lines folds behind «Ver más»', () => {
     expect(transcriptFolds('Compra pan')).toBe(false);
     expect(transcriptFolds('Hola, Argus, quería saber qué tengo pendiente para mañana.')).toBe(

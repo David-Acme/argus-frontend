@@ -1,12 +1,15 @@
 import { useRef, useState } from 'react';
+import { useSharedValue } from 'react-native-reanimated';
 import { VOICE_NOTE_MAX_MS, VOICE_NOTE_MIN_MS } from '@/core/services/conversation';
 import {
   bucketPeaks,
   keepsNote,
   noteMimeOf,
+  LIVE_LEVELS,
   RECORDER_TICK_MS,
-  withLevel,
 } from '@/features/conversations/model/voice-note';
+import { LIVE_EMPTY, pushLevel, wholeSecondsOf } from '@/features/conversations/model/live-wave';
+import type { LiveLevels } from '@/features/conversations/model/live-wave';
 import type {
   NoteRecorder,
   NoteRecorderPhase,
@@ -80,7 +83,7 @@ function close(take: Take): void {
 export function useNoteRecorder(): NoteRecorder {
   const [phase, setPhase] = useState<NoteRecorderPhase>('idle');
   const [elapsedMs, setElapsedMs] = useState(0);
-  const [levels, setLevels] = useState<readonly number[]>([]);
+  const live = useSharedValue<LiveLevels>(LIVE_EMPTY);
   const take = useRef<Take | null>(null);
   const all = useRef<number[]>([]);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -106,7 +109,7 @@ export function useNoteRecorder(): NoteRecorder {
     }
     const samples = new Uint8Array(take.current.analyser.fftSize);
     all.current = [];
-    setLevels([]);
+    live.set(LIVE_EMPTY);
     setElapsedMs(0);
     setPhase('recording');
     timer.current = setInterval(() => {
@@ -114,8 +117,8 @@ export function useNoteRecorder(): NoteRecorder {
       if (!current) return;
       const level = levelOf(current.analyser, samples);
       all.current.push(level);
-      setElapsedMs(Date.now() - current.startedAt);
-      setLevels((previous) => withLevel(previous, level));
+      setElapsedMs((shown) => wholeSecondsOf(shown, Date.now() - current.startedAt));
+      live.set(pushLevel(live.get(), level, LIVE_LEVELS));
       if (Date.now() - current.startedAt >= VOICE_NOTE_MAX_MS) onLimit();
     }, RECORDER_TICK_MS);
     return true;
@@ -136,5 +139,5 @@ export function useNoteRecorder(): NoteRecorder {
 
   const cancel = () => void halt();
 
-  return { supported: supported(), phase, elapsedMs, levels, start, finish, cancel };
+  return { supported: supported(), phase, elapsedMs, live, start, finish, cancel };
 }

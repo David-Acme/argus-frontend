@@ -1,11 +1,13 @@
+import type { SharedValue } from 'react-native-reanimated';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { Button } from '@/shared/ui/button';
-import type { HoldDecision } from '@/features/conversations/model/hold-record';
+import type { HoldVerdict } from '@/features/conversations/model/hold-record';
 
 export type MicHoldProps = {
   holding: boolean;
   onStart: () => void;
-  onDrag: (decision: HoldDecision, dx: number) => void;
+  drag: SharedValue<number>;
+  onDecide: (verdict: HoldVerdict) => void;
   onRelease: () => void;
   onActivate: () => void;
 };

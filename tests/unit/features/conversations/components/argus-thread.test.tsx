@@ -200,7 +200,7 @@ mock.module('@/features/conversations/hooks/use-note-recorder', () => ({
     supported: true,
     phase: 'idle',
     elapsedMs: 0,
-    levels: [],
+    live: { get: () => ({ seq: 0, values: [] }), set: () => undefined },
     start: () => {
       calls.push('record start');
       return Promise.resolve(true);

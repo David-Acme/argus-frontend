@@ -1,4 +1,6 @@
+import type { SharedValue } from 'react-native-reanimated';
 import type { NetHttpFile, VoiceNoteMime } from '@/core/types';
+import type { LiveLevels } from '@/features/conversations/model/live-wave';
 
 export type RecordedNote = {
   uri: string;
@@ -68,23 +70,15 @@ export type NoteRecorder = {
   supported: boolean;
   phase: NoteRecorderPhase;
   elapsedMs: number;
-  levels: readonly number[];
+  live: SharedValue<LiveLevels>;
   start: (onLimit: () => void) => Promise<boolean>;
   finish: () => Promise<RecordedNote | null>;
   cancel: () => void;
 };
 
-export const LIVE_LEVELS = 40;
+export const LIVE_LEVELS = 96;
 
 export const RECORDER_TICK_MS = 100;
-
-export function withLevel(
-  levels: readonly number[],
-  level: number,
-  kept: number = LIVE_LEVELS
-): number[] {
-  return [...levels, level].slice(-kept);
-}
 
 export function noteMimeOf(type: string): VoiceNoteMime | null {
   const base = type.split(';')[0]?.trim().toLowerCase() ?? '';
@@ -97,11 +91,6 @@ export function noteMimeOf(type: string): VoiceNoteMime | null {
 export function keepsNote(durationMs: number, minMs: number): boolean {
   return Number.isFinite(durationMs) && durationMs >= minMs;
 }
-
-export type BarTone = 'played' | 'rest';
-
-export const barToneOf = (index: number, played: number, active: boolean): BarTone =>
-  active && index < played ? 'played' : 'rest';
 
 export const TRANSCRIPT_LINES = 2;
 

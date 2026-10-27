@@ -7929,6 +7929,36 @@ suggestion chips over the field and the microphone as tap-to-talk.
   sends both on `/rtc/token` and `voice:start`. Any other missed call keeps
   the plain call.
 
+## The chat's motion runs on the UI thread (phone run 2 #14, 2026-10-27)
+
+Owner: «más fluido… a 120 FPS, depende del dispositivo… súper optimizado».
+Nothing in the chat re-renders React per frame or per sample any more:
+
+- **The live recording wave** is one canvas: Skia on the phones
+  (`live-wave.tsx`, one `Path` built by `usePathValue`, stroked 2 px with
+  round caps every 4 px, `size.liveBar`, `size.livePitch`) and one 2D canvas
+  on the web and the desktop (`live-wave.web.tsx` through
+  `services/wave-painter`, `requestAnimationFrame`). The recorder writes each
+  level into a shared value (`live`, `pushLevel`, `seq` + the newest 96)
+  from its 100 ms tick; the frame callback (`useFrameCallback`, the same
+  display-rate pacing Estela's canvas uses: `timeSincePreviousFrame`) slides
+  the bars in from the right by the frame time since the last sample
+  (`scrollShare`) and eases the newest bar toward its level by frame time
+  (`easeToward`, τ 70 ms), so 60, 90 and 120 Hz show the same motion. The
+  bars are the accent, the played colour of a note. With reduced motion the
+  wave is a still line in `text-3`. The recording clock re-renders once a
+  second (`wholeSecondsOf`).
+- **The slide to cancel and the lock** run as worklets: the pan writes its
+  `translationX` into a shared value (`useNoteCapture().drag`), the hint
+  fades with `useAnimatedStyle`, and only the verdict (cancel or lock) crosses
+  to JavaScript, once (`HoldVerdict`).
+- **Playback progress** runs on between the player's position reports at the
+  playback speed (`playedShare`, a frame callback while it plays); the played
+  part is an accent copy of the bars clipped by two opposite translations, no
+  layout per frame.
+- The typing dots (CSS animations) and the day pill's fade (layout
+  animations) already ran on the UI thread.
+
 ## The keyboard after a call (phone run 2 #11, 2026-10-27)
 
 With the Argus thread's keyboard up, an incoming call's activity (or its

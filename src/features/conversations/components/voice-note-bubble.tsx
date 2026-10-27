@@ -9,7 +9,6 @@ import { NOTE_WAVE_WIDTH, NoteWave } from '@/features/conversations/components/n
 import { useNotePlayback } from '@/features/conversations/hooks/use-note-playback';
 import {
   noteClock,
-  progressOf,
   TRANSCRIPT_LINES,
   transcriptFolds,
 } from '@/features/conversations/model/voice-note';
@@ -58,7 +57,6 @@ export function VoiceNoteBubble({ note, transcript, expanded, onExpand }: VoiceN
   const { t } = useTranslation();
   const playback = useNotePlayback(note.id);
   const stored = note.id.length > 0;
-  const progress = progressOf(playback.positionMs, note.durationMs);
   const clock = noteClock(
     playback.active && playback.positionMs > 0 ? playback.positionMs : note.durationMs
   );
@@ -76,7 +74,13 @@ export function VoiceNoteBubble({ note, transcript, expanded, onExpand }: VoiceN
           disabled={!stored}
         />
         <View className="gap-1">
-          <NoteWave peaks={note.peaks} progress={progress} active={playback.active} />
+          <NoteWave
+            peaks={note.peaks}
+            positionMs={playback.positionMs}
+            durationMs={note.durationMs}
+            playing={playback.playing}
+            speed={playback.speed}
+          />
           <View className="flex-row items-center justify-between">
             <Text variant="caption" tone={playback.failed ? 'alert' : '2'}>
               {playback.failed ? t('screens.conversations.note.failed') : clock}

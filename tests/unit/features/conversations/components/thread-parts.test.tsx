@@ -1,6 +1,7 @@
 import { describe, expect, mock, test } from 'bun:test';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
+import type { SharedValue } from 'react-native-reanimated';
 import type { IConversationMessageCacheRow } from '@/core/interfaces';
 import { createDateFormatter } from '@/shared/hooks/use-date-formatter/date';
 import { Text } from '@/shared/ui/text';
@@ -76,7 +77,7 @@ mock.module('@/features/conversations/hooks/use-note-recorder', () => ({
     supported: true,
     phase: 'idle',
     elapsedMs: 0,
-    levels: [],
+    live: { get: () => ({ seq: 0, values: [] }), set: () => undefined },
     start: () => {
       calls.push('record start');
       return Promise.resolve(true);
@@ -94,6 +95,9 @@ mock.module('@/features/conversations/components/context-panel', () => ({
 }));
 
 const { ThreadComposer } = await import('@/features/conversations/components/thread-composer');
+const shared = <T,>(value: T): SharedValue<T> =>
+  ({ get: () => value, set: () => undefined }) as unknown as SharedValue<T>;
+
 const { MicHold } = await import('@/features/conversations/components/mic-hold');
 const { MicHold: WebMicHold } = await import('@/features/conversations/components/mic-hold.web');
 const { RecordingBar } = await import('@/features/conversations/components/recording-bar');
@@ -156,7 +160,16 @@ describe('the composer parts', () => {
 
   test('the phone microphone is held, and shows the lock above it while held', async () => {
     const noop = () => undefined;
-    await show(<MicHold holding onStart={noop} onDrag={noop} onRelease={noop} onActivate={noop} />);
+    await show(
+      <MicHold
+        holding
+        drag={shared(0)}
+        onStart={noop}
+        onDecide={noop}
+        onRelease={noop}
+        onActivate={noop}
+      />
+    );
     expect(
       screen.getByRole('button', { name: 'Mantén pulsado para grabar una nota de voz' })
     ).toBeDefined();
@@ -167,8 +180,9 @@ describe('the composer parts', () => {
     await show(
       <WebMicHold
         holding={false}
+        drag={shared(0)}
         onStart={noop}
-        onDrag={noop}
+        onDecide={noop}
         onRelease={noop}
         onActivate={() => calls.push('activate')}
       />
@@ -182,8 +196,8 @@ describe('the composer parts', () => {
       <RecordingBar
         mode="holding"
         elapsedMs={3200}
-        levels={[]}
-        dragDx={-20}
+        live={shared({ seq: 0, values: [] })}
+        drag={shared(-20)}
         onCancel={() => undefined}
       />
     );
@@ -193,8 +207,8 @@ describe('the composer parts', () => {
       <RecordingBar
         mode="locked"
         elapsedMs={1000}
-        levels={[0.2, 0.8]}
-        dragDx={0}
+        live={shared({ seq: 2, values: [0.2, 0.8] })}
+        drag={shared(0)}
         onCancel={() => calls.push('discard')}
       />
     );

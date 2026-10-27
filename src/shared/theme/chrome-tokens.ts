@@ -174,6 +174,8 @@ export const chromeSize = {
   typingDot: 6,
   noteWave: 28,
   noteBar: 3,
+  liveBar: 2,
+  livePitch: 4,
   noteWidth: 232,
   scrollDown: 40,
   unreadBadge: 20,

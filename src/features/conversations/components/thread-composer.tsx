@@ -44,7 +44,8 @@ function ComposerAction({ capture, mic, sendLabel, canSend, onSend }: ActionProp
         <MicHold
           holding={capture.mode === 'holding'}
           onStart={capture.start}
-          onDrag={capture.drag}
+          drag={capture.drag}
+          onDecide={capture.decide}
           onRelease={capture.release}
           onActivate={capture.toggle}
         />
@@ -102,8 +103,8 @@ export function ThreadComposer({
           <RecordingBar
             mode={capture.mode === 'locked' ? 'locked' : 'holding'}
             elapsedMs={capture.recorder.elapsedMs}
-            levels={capture.recorder.levels}
-            dragDx={capture.dragDx}
+            live={capture.recorder.live}
+            drag={capture.drag}
             onCancel={capture.cancel}
           />
         ) : (
