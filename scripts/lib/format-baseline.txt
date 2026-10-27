@@ -19,7 +19,6 @@ src/core/database/tables/camera.table.ts
 src/core/database/tables/index.ts
 src/core/database/tables/project-task.table.ts
 src/core/i18n/locales/en/screens/approve/index.ts
-src/core/i18n/locales/en/screens/conversations/index.ts
 src/core/i18n/locales/en/screens/face/index.ts
 src/core/i18n/locales/en/screens/invitation/index.ts
 src/core/i18n/locales/en/screens/pairing/index.ts
@@ -31,7 +30,6 @@ src/core/i18n/locales/en/screens/security/index.ts
 src/core/i18n/locales/en/screens/watch/index.ts
 src/core/i18n/locales/en/screens/welcome/index.ts
 src/core/i18n/locales/es/screens/approve/index.ts
-src/core/i18n/locales/es/screens/conversations/index.ts
 src/core/i18n/locales/es/screens/face/index.ts
 src/core/i18n/locales/es/screens/invitation/index.ts
 src/core/i18n/locales/es/screens/pairing/index.ts
@@ -53,7 +51,6 @@ src/core/services/calendar-event.service.ts
 src/core/services/camera.service.ts
 src/core/services/context/context-state.ts
 src/core/services/context/index.ts
-src/core/services/conversation.service.ts
 src/core/services/conversation/conversation-paths.ts
 src/core/services/conversation/thread-window.ts
 src/core/services/crypto-random/secure-random.native.ts
@@ -121,7 +118,6 @@ src/core/services/view-cache/camera.projection.ts
 src/core/services/view-cache/conversation.projection.ts
 src/core/services/view-cache/module-source-gate.ts
 src/core/services/view-cache/notification.projection.ts
-src/core/services/view-cache/paged-view.ts
 src/core/services/view-cache/project.projection.ts
 src/core/services/view-cache/projection.ts
 src/core/services/view-cache/summary.projection.ts
@@ -203,12 +199,7 @@ src/features/cameras/services/media-access-renewal.ts
 src/features/cameras/services/tamper-evidence.service.ts
 src/features/cameras/services/window-fullscreen.native.ts
 src/features/conversations/components/conversation-row.tsx
-src/features/conversations/components/message-composer.tsx
-src/features/conversations/hooks/use-conversation-thread.ts
 src/features/conversations/hooks/use-thread-list.ts
-src/features/conversations/model/conversation-optimistic.ts
-src/features/conversations/model/conversation-thread.ts
-src/features/conversations/model/thread-list.ts
 src/features/in-app-alert/components/in-app-alert-banner.tsx
 src/features/modules/components/disable-dialog.tsx
 src/features/modules/components/impact-summary.tsx
@@ -389,7 +380,6 @@ src/shared/hooks/use-service-action.ts
 src/shared/hooks/use-translation.ts
 src/shared/libs/capabilities.ts
 src/shared/libs/invitation-qr.ts
-src/shared/libs/optimistic-action.ts
 src/shared/libs/optimistic.ts
 src/shared/libs/pairing-qr.ts
 src/shared/libs/permission-prompt.ts
@@ -422,11 +412,7 @@ tests/e2e/retest-r4.e2e.ts
 tests/e2e/startup-race.e2e.ts
 tests/e2e/support/accessibility.ts
 tests/e2e/support/chromium.ts
-tests/e2e/support/fake-argus.ts
-tests/e2e/support/harness.ts
 tests/e2e/support/screens.ts
-tests/e2e/support/serve.ts
-tests/e2e/support/tauri-shim.ts
 tests/e2e/wording.e2e.ts
 tests/setup.ts
 tests/support/access-fixtures.ts
@@ -505,8 +491,6 @@ tests/unit/features/cameras/camera-talk-access.test.ts
 tests/unit/features/cameras/clip-model.test.ts
 tests/unit/features/cameras/ptz-hold.test.ts
 tests/unit/features/cameras/tamper-evidence.test.ts
-tests/unit/features/conversations/conversation-thread.test.ts
-tests/unit/features/conversations/thread-list.test.ts
 tests/unit/features/modules/module-impact.test.ts
 tests/unit/features/modules/module-request.test.ts
 tests/unit/features/modules/module-selection.test.ts
@@ -555,7 +539,6 @@ tests/unit/shared/components/ui/morph-icon/morph-icon-driver.test.ts
 tests/unit/shared/hooks/date-formatter.test.ts
 tests/unit/shared/hooks/use-device-permissions/device-permissions.test.ts
 tests/unit/shared/libs/offline-transition.test.ts
-tests/unit/shared/libs/optimistic-action.test.ts
 tests/unit/shared/libs/permission-prompt.test.ts
 tests/unit/shared/libs/qr-parsers.test.ts
 tests/unit/shared/libs/recurrence.test.ts

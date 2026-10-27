@@ -2,24 +2,12 @@ import type { ICameraCacheRow } from '@/core/interfaces';
 import { CAPABILITY, VIEW_CACHE_KEYS } from '@/shared/constants';
 import { useViewCacheRows } from '@/shared/hooks/use-cached-rows';
 import { useCapabilities } from '@/shared/hooks/use-capabilities';
-import {
-  asksYesNo,
-  cameraToSuggest,
-  suggestionsOf,
-} from '@/features/conversations/model/suggestions';
+import { cameraToSuggest, suggestionsOf } from '@/features/conversations/model/suggestions';
 import type { Suggestion } from '@/features/conversations/model/suggestions';
 
-export type SuggestionContext = {
-  now: number;
-  shownCamera: string | null;
-  lastReply: string | null;
-};
+export type SuggestionContext = { now: number; shownCamera: string | null };
 
-export function useArgusSuggestions({
-  now,
-  shownCamera,
-  lastReply,
-}: SuggestionContext): Suggestion[] {
+export function useArgusSuggestions({ now, shownCamera }: SuggestionContext): Suggestion[] {
   const { has, cameraActions, guard } = useCapabilities();
   const cameras = useViewCacheRows<ICameraCacheRow>(VIEW_CACHE_KEYS.cameraList);
   const names = cameraActions.watch
@@ -31,6 +19,5 @@ export function useArgusSuggestions({
     setsMode: guard.setMode,
     readsAgenda: has(CAPABILITY.agendaRead),
     hour: new Date(now).getHours(),
-    asking: asksYesNo(lastReply),
   });
 }

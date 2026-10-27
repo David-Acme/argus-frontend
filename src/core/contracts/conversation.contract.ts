@@ -62,3 +62,31 @@ export const voiceNoteContentSchema = z.object({
   durationMs: z.number().int().nonnegative(),
   base64: z.string().min(1),
 }) satisfies z.ZodType<VoiceNoteContent>;
+
+export const TYPING_TTL_MAX_MS = 30_000;
+
+export const typingFrameSchema = z.object({
+  counterpartId: counterpart,
+  active: z.boolean().catch(true),
+  ttlMs: z.number().int().nonnegative().catch(0),
+  clientId: z.string().min(1).nullable().optional().catch(null),
+});
+
+export type TypingFrame = {
+  counterpartId: number;
+  active: boolean;
+  ttlMs: number;
+  clientId: string | null;
+};
+
+export function readTypingFrame(info: unknown): TypingFrame | null {
+  const parsed = typingFrameSchema.safeParse(info);
+  if (!parsed.success) return null;
+  const { counterpartId, active, ttlMs, clientId } = parsed.data;
+  return {
+    counterpartId,
+    active,
+    ttlMs: Math.min(ttlMs, TYPING_TTL_MAX_MS),
+    clientId: clientId ?? null,
+  };
+}

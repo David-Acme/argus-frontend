@@ -4,8 +4,6 @@ import type { ArgusResult } from '@/features/voice';
 import { threadResultsOf } from '@/features/voice/model/result-merge';
 import {
   anchorResults,
-  bubblePresenceOf,
-  lastReplyOf,
   newestIncomingId,
   resultRowsOf,
   shownCameraOf,
@@ -117,29 +115,8 @@ describe('where a result card sits in the thread', () => {
   });
 });
 
-describe('the Estela beside a reply', () => {
-  test('thinks while a tool runs, looks at a camera, is happy when something was made', () => {
-    expect(bubblePresenceOf(undefined)).toBe('idle');
-    expect(bubblePresenceOf([camera('a', 1, 'pending')])).toBe('think');
-    expect(bubblePresenceOf([camera('a', 1)])).toBe('look');
-    expect(bubblePresenceOf([camera('a', 1, 'failed')])).toBe('error');
-    expect(
-      bubblePresenceOf([
-        {
-          id: 'm',
-          at: 1,
-          status: 'done',
-          kind: 'guard-mode',
-          mode: 'night',
-          previousMode: 'home',
-          environmentId: null,
-          environmentName: null,
-        },
-      ])
-    ).toBe('happy');
-  });
-
-  test('only the newest reply carries a live Estela', () => {
+describe('the newest reply', () => {
+  test('is the last incoming line', () => {
     expect(newestIncomingId(ROWS)).toBe('4');
     expect(newestIncomingId([row('1', 'out', 1)])).toBeNull();
   });
@@ -164,10 +141,8 @@ describe('which camera card streams', () => {
 });
 
 describe('what the suggestions read from the thread', () => {
-  test('the camera Argus showed last, and the last words when they are Argus’s', () => {
+  test('the camera Argus showed last', () => {
     expect(shownCameraOf([camera('a', 1), camera('b', 2, 'failed')])).toBe('Cocina');
     expect(shownCameraOf([])).toBeNull();
-    expect(lastReplyOf([{ direction: 'out', body: 'hola' }])).toBeNull();
-    expect(lastReplyOf([{ direction: 'in', body: '¿Lo cancelo?' }])).toBe('¿Lo cancelo?');
   });
 });

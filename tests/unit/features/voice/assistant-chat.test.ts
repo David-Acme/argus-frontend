@@ -115,6 +115,18 @@ describe('the frames a typed turn sends', () => {
     expect(chat.snapshot.open).toBe(true);
   });
 
+  test('a voice note asks for its turn by note id, with no text, and resends the same note', async () => {
+    const noteId = 'b'.repeat(32);
+    expect(chat.sendNote(noteId, 'compra pan')).toBe('sent');
+    await settle();
+    expect(transport.sent.at(-1)).toEqual({
+      type: 'voice:text',
+      payload: { clientId: 'client-1', noteId },
+    });
+    expect(entry().noteId).toBe(noteId);
+    expect(chat.sendNote('not-a-note', '')).toBe('invalid');
+  });
+
   test('an open session is reused for the next message once the first is answered', async () => {
     chat.send('hola');
     await settle();

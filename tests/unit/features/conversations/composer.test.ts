@@ -23,13 +23,13 @@ const SPACE = {
 
 describe('the button beside the field', () => {
   test('the microphone when nothing is typed, send once there are words, stop while listening', () => {
-    expect(composerButtonOf({ typed: false, listening: false, canListen: true })).toBe('mic');
-    expect(composerButtonOf({ typed: true, listening: false, canListen: true })).toBe('send');
-    expect(composerButtonOf({ typed: false, listening: true, canListen: true })).toBe('stop');
+    expect(composerButtonOf({ typed: false, listening: false, canRecord: true })).toBe('mic');
+    expect(composerButtonOf({ typed: true, listening: false, canRecord: true })).toBe('send');
+    expect(composerButtonOf({ typed: false, listening: true, canRecord: true })).toBe('stop');
   });
 
   test('without a voice path the button is send', () => {
-    expect(composerButtonOf({ typed: false, listening: false, canListen: false })).toBe('send');
+    expect(composerButtonOf({ typed: false, listening: false, canRecord: false })).toBe('send');
   });
 });
 

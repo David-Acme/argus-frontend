@@ -115,6 +115,7 @@ export type AssistantChatEntry = {
   reply: string;
   turnId: string | null;
   error: string | null;
+  noteId?: string | null;
 };
 
 export type AssistantChatSnapshot = {

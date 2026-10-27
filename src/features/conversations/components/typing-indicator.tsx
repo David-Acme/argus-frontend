@@ -26,7 +26,7 @@ export function TypingIndicator() {
       accessibilityLabel={t('screens.conversations.chat.typing')}
       className="flex-row items-end gap-2 pt-3">
       <Presence state="think" size={size.presenceBubble} />
-      <View className="bg-surface border-line rounded-media rounded-bl-key flex-row gap-1 border px-4 py-3">
+      <View className="bg-surface rounded-control flex-row gap-1 px-4 py-3">
         {DOT_DELAYS.map((delay) => (
           <Animated.View
             key={delay}

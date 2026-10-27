@@ -7,6 +7,7 @@ export type ThreadDayItem = { type: 'day'; key: string; day: number };
 export type ThreadMessageItem = {
   type: 'message';
   key: string;
+  day: number;
   message: IConversationMessageCacheRow;
   groupStart: boolean;
   groupEnd: boolean;
@@ -98,6 +99,7 @@ export function threadItems({
     const item: ThreadMessageItem = {
       type: 'message',
       key: message.id,
+      day,
       message,
       groupStart: !joins,
       groupEnd: true,
@@ -112,7 +114,13 @@ export function threadItems({
   return items;
 }
 
-export function followNewItems({ live, items, lastKey, unseen, atEnd }: FollowInput): FollowDecision {
+export function followNewItems({
+  live,
+  items,
+  lastKey,
+  unseen,
+  atEnd,
+}: FollowInput): FollowDecision {
   const messages = items.filter(isMessageItem);
   const newest = messages[messages.length - 1]?.key ?? null;
   if (!live) return { jump: false, unseen, lastKey: newest };
@@ -155,4 +163,57 @@ export function stickyKeyboardStep(
   if (event === 'show') return true;
   if (event === 'leave') return false;
   return enabled && keyboardShown;
+}
+
+export function floatingDayOf(viewable: readonly ThreadItem[]): number | null {
+  const first = viewable.find((item) => item.type === 'message' || item.type === 'day');
+  if (!first || first.type === 'day' || first.type !== 'message') return null;
+  return viewable.some((item) => item.type === 'day' && item.day === first.day) ? null : first.day;
+}
+
+export type EstimateInput = { items: readonly ThreadItem[]; width: number };
+
+export const ESTIMATE = {
+  line: 22,
+  bubblePad: 20,
+  groupGap: 12,
+  day: 40,
+  typing: 52,
+  result: 168,
+  note: 76,
+  charWidth: 7.6,
+  bubbleShare: 0.82,
+  bubbleInset: 24,
+  fallback: 72,
+} as const;
+
+export function estimatedHeightOf(item: ThreadItem, width: number): number {
+  if (item.type === 'day') return ESTIMATE.day;
+  if (item.type === 'typing') return ESTIMATE.typing;
+  if (item.type === 'result') return ESTIMATE.result;
+  const gap = item.groupStart ? ESTIMATE.groupGap : ESTIMATE.groupGap / 3;
+  if (item.message.voiceNote) return ESTIMATE.note + gap;
+  const usable = Math.max(1, width * ESTIMATE.bubbleShare - ESTIMATE.bubbleInset);
+  const perLine = Math.max(1, Math.floor(usable / ESTIMATE.charWidth));
+  const lines = item.message.body
+    .split('\n')
+    .reduce((count, line) => count + Math.max(1, Math.ceil(line.length / perLine)), 0);
+  return lines * ESTIMATE.line + ESTIMATE.bubblePad + gap;
+}
+
+export function estimatedItemSizeOf({ items, width }: EstimateInput): number {
+  if (items.length === 0 || width <= 0) return ESTIMATE.fallback;
+  const total = items.reduce((sum, item) => sum + estimatedHeightOf(item, width), 0);
+  return Math.round(total / items.length);
+}
+
+export const THREAD_TAIL = 30;
+
+export const PREWARMED_THREADS = 6;
+
+export function prewarmScopesOf(
+  counterpartIds: readonly number[],
+  kept: number = PREWARMED_THREADS
+): string[] {
+  return [...new Set([0, ...counterpartIds])].slice(0, kept).map(String);
 }

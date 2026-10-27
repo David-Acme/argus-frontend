@@ -46,7 +46,7 @@ describe('the conversation contract', () => {
   });
 
   test('reads the receipt and the voice note, and an older row without them reads as none', () => {
-    const note = { id: 'c'.repeat(32), mime: 'audio/webm', durationMs: 3100, peaks: [10, 90] };
+    const note = { id: 'c'.repeat(32), mime: 'audio/webm' as const, durationMs: 3100, peaks: [10, 90] };
     const parsed = conversationMessageSchema.parse({ ...message, receipt: 'read', voiceNote: note });
     expect(parsed.receipt).toBe('read');
     expect(parsed.voiceNote).toEqual(note);

@@ -13,7 +13,6 @@ const ALL: Omit<SuggestionInput, 'hour'> = {
   readsPresence: true,
   setsMode: true,
   readsAgenda: true,
-  asking: false,
 };
 
 const ids = (hour: number, patch: Partial<typeof ALL> = {}) =>
@@ -36,7 +35,6 @@ describe('the suggestions above the composer', () => {
       setsMode: false,
       readsAgenda: false,
       hour: 9,
-      asking: false,
     });
     expect(remind).toEqual({ id: 'remind', camera: null, send: false });
   });
@@ -60,10 +58,6 @@ describe('the Estela of an empty thread', () => {
 });
 
 describe('suggestions that follow the conversation', () => {
-  test('while Argus waits for a yes or a no, the chips are Sí and No', () => {
-    expect(ids(15, { asking: true })).toEqual(['yes', 'no']);
-  });
-
   test('a closed question asks for yes or no, an open one does not', () => {
     expect(asksYesNo('¿Cancelo el recordatorio «Abrir la ventana»?')).toBe(true);
     expect(asksYesNo('Recordatorio guardado. ¿Te lo recuerdo mañana a las 9:30?')).toBe(true);

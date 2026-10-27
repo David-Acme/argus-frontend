@@ -11,7 +11,12 @@ export type PagedViewSpec<W> = {
   keep?: boolean;
   initial: (scope: string, ctx: ProjectionContext) => W;
   open: (scope: string, window: W, ctx: ProjectionContext) => Subscription;
-  extend: (scope: string, window: W, ctx: ProjectionContext, direction: PageDirection) => Promise<W>;
+  extend: (
+    scope: string,
+    window: W,
+    ctx: ProjectionContext,
+    direction: PageDirection
+  ) => Promise<W>;
   same: (left: W, right: W) => boolean;
 };
 
@@ -25,6 +30,7 @@ type PagedEntry<W> = {
 
 export interface IPagedView {
   watch(scope: string): void;
+  prewarm(scopes: readonly string[]): void;
   release(scope: string): void;
   extend(scope: string, direction?: PageDirection): Promise<boolean>;
   reset(scope: string): void;
@@ -45,6 +51,14 @@ export class PagedView<W> implements IPagedView {
   watch(scope: string): void {
     const entry = this.ensure(scope);
     entry.holders += 1;
+    viewCacheService.retainScopes(this.spec.key, new Set(this.entries.keys()));
+  }
+
+  prewarm(scopes: readonly string[]): void {
+    if (!this.spec.keep) return;
+    const fresh = scopes.filter((scope) => !this.entries.has(scope));
+    if (fresh.length === 0) return;
+    for (const scope of fresh) this.ensure(scope);
     viewCacheService.retainScopes(this.spec.key, new Set(this.entries.keys()));
   }
 
@@ -70,7 +84,11 @@ export class PagedView<W> implements IPagedView {
       .extend(scope, entry.window, this.ctx, direction)
       .then((window) => {
         const current = this.entries.get(scope);
-        if (current === entry && entry.generation === generation && !this.spec.same(window, entry.window))
+        if (
+          current === entry &&
+          entry.generation === generation &&
+          !this.spec.same(window, entry.window)
+        )
           this.reopen(scope, entry, window);
         return true;
       })

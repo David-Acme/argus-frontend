@@ -1,9 +1,13 @@
 import type { IConversationMessageCacheRow } from '@/core/interfaces';
-import type { ConversationDeliveryState, ConversationLeg } from '@/core/types';
+import type { ConversationDeliveryState } from '@/core/types';
 
 type MessageFacts = Pick<IConversationMessageCacheRow, 'direction' | 'kind' | 'state'>;
 
-export type DayKind = 'today' | 'yesterday' | 'date';
+export type DayKind = 'today' | 'yesterday' | 'weekday' | 'date';
+
+export const WEEKDAY_SPAN_DAYS = 6;
+
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 const DELIVERY_STATES: ReadonlySet<string> = new Set<ConversationDeliveryState>([
   'sent',
@@ -13,7 +17,8 @@ const DELIVERY_STATES: ReadonlySet<string> = new Set<ConversationDeliveryState>(
   'expired',
 ]);
 
-const isDeliveryState = (state: string): state is ConversationDeliveryState => DELIVERY_STATES.has(state);
+const isDeliveryState = (state: string): state is ConversationDeliveryState =>
+  DELIVERY_STATES.has(state);
 
 export function deliveryStateOf(message: MessageFacts): ConversationDeliveryState | null {
   if (message.direction !== 'out') return null;
@@ -21,17 +26,16 @@ export function deliveryStateOf(message: MessageFacts): ConversationDeliveryStat
   return isDeliveryState(message.state) ? message.state : null;
 }
 
-export function legOf(message: Pick<IConversationMessageCacheRow, 'kind' | 'leg'>): ConversationLeg | null {
-  return message.kind === 'turn' ? message.leg : null;
-}
-
 export function dayKindOf(day: number, today: number, yesterday: number): DayKind {
   if (day === today) return 'today';
   if (day === yesterday) return 'yesterday';
+  if (day < today && today - day <= WEEKDAY_SPAN_DAYS * DAY_MS) return 'weekday';
   return 'date';
 }
 
-export function replyBodies(messages: readonly IConversationMessageCacheRow[]): ReadonlyMap<string, string> {
+export function replyBodies(
+  messages: readonly IConversationMessageCacheRow[]
+): ReadonlyMap<string, string> {
   return new Map(
     messages
       .filter((message) => message.messageKey.length > 0)
@@ -50,7 +54,9 @@ export function repliedBodyOf(
 export function unreadIncomingIds(
   messages: readonly Pick<IConversationMessageCacheRow, 'id' | 'direction' | 'isRead'>[]
 ): string[] {
-  return messages.filter((message) => message.direction === 'in' && !message.isRead).map((message) => message.id);
+  return messages
+    .filter((message) => message.direction === 'in' && !message.isRead)
+    .map((message) => message.id);
 }
 
 export const REPLY_QUOTE_MAX = 60;

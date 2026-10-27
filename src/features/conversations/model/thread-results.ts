@@ -1,5 +1,4 @@
 import type { IConversationMessageCacheRow } from '@/core/interfaces';
-import type { PresenceState } from '@/shared/ui/presence';
 import type { ArgusResult, ResultRow, ThreadResults } from '@/features/voice';
 
 export type AnchoredResults = {
@@ -47,15 +46,6 @@ export function anchorResults(
   return { byRow, trailing };
 }
 
-export function bubblePresenceOf(results: readonly ArgusResult[] | undefined): PresenceState {
-  const last = results?.at(-1);
-  if (!last) return 'idle';
-  if (last.status === 'pending') return last.kind === 'reminder' ? 'idle' : 'think';
-  if (last.status === 'failed') return 'error';
-  if (last.kind === 'camera') return 'look';
-  return last.kind === 'agenda-day' || last.kind === 'screen' ? 'idle' : 'happy';
-}
-
 export function newestIncomingId(rows: readonly ThreadRow[]): string | null {
   return rows.findLast((row) => row.direction === 'in')?.id ?? null;
 }
@@ -74,11 +64,4 @@ export function streamingResultId(
 export function shownCameraOf(results: readonly ArgusResult[]): string | null {
   const shown = results.findLast((result) => result.kind === 'camera' && result.status === 'done');
   return shown?.kind === 'camera' ? shown.name : null;
-}
-
-export function lastReplyOf(
-  rows: readonly Pick<IConversationMessageCacheRow, 'direction' | 'body'>[]
-): string | null {
-  const last = rows.at(-1);
-  return last?.direction === 'in' ? last.body : null;
 }

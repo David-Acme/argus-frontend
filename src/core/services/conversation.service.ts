@@ -1,6 +1,15 @@
 import { Q } from '@nozbe/watermelondb';
 import type { Clause } from '@nozbe/watermelondb/QueryDescription';
-import { auditTime, combineLatest, from, map, of, startWith, switchMap, type Observable } from 'rxjs';
+import {
+  auditTime,
+  combineLatest,
+  from,
+  map,
+  of,
+  startWith,
+  switchMap,
+  type Observable,
+} from 'rxjs';
 import type { z } from 'zod';
 import {
   conversationMessageSchema,
@@ -9,7 +18,7 @@ import {
   voiceNotePlayGrantSchema,
 } from '@/core/contracts/conversation.contract';
 import type { ConversationMessageModel } from '@/core/database';
-import type { IServiceResponse } from '@/core/interfaces';
+import type { IConversationMessageCacheRow, IServiceResponse } from '@/core/interfaces';
 import type {
   ConversationMessage,
   ConversationReadResult,
@@ -39,7 +48,11 @@ import {
   voiceNotePlayPath,
 } from './conversation';
 import { DatabaseService } from './database.service';
-import type { ConversationSummaryFacts, ConversationThreadInput } from './view-cache/conversation.projection';
+import { toConversationRow } from './view-cache/conversation.projection';
+import type {
+  ConversationSummaryFacts,
+  ConversationThreadInput,
+} from './view-cache/conversation.projection';
 
 const THREAD_COLUMNS = [
   'counterpart_name',
@@ -56,6 +69,8 @@ const SUMMARY_REFRESH_MS = 120;
 
 const MAX_COUNTERPARTS = 200;
 
+const SEARCH_LIMIT = 50;
+
 const upTo = (upToId: number | null): Record<string, number> => (upToId === null ? {} : { upToId });
 
 const NEWEST_FIRST: Clause[] = [Q.sortBy('created_at', Q.desc), Q.sortBy('id', Q.desc)];
@@ -66,7 +81,11 @@ function parsed<T>(response: IServiceResponse<unknown>, schema: z.ZodType<T>): I
   if (!response.ok) return { ...response, info: null };
   const result = schema.safeParse(response.info);
   if (!result.success) {
-    return errorResponse(response.status, 'INVALID_RESPONSE', 'The conversation answer is not in the expected shape');
+    return errorResponse(
+      response.status,
+      'INVALID_RESPONSE',
+      'The conversation answer is not in the expected shape'
+    );
   }
   return { ...response, info: result.data };
 }
@@ -84,17 +103,33 @@ class ConversationService extends DatabaseService<'conversation_message'> {
     );
   }
 
-  observeThreadWindow(userId: string, counterpartId: string, window: ThreadWindow): Observable<ConversationThreadInput> {
+  observeThreadWindow(
+    userId: string,
+    counterpartId: string,
+    window: ThreadWindow
+  ): Observable<ConversationThreadInput> {
     const thread = this.threadClauses(userId, counterpartId);
     const live = isLiveWindow(window);
     if (isHeadWindow(window)) {
-      return this.observeManyWithColumns(THREAD_COLUMNS, [...thread, ...NEWEST_FIRST, Q.take(THREAD_PAGE + 1)]).pipe(
-        map((rows) => ({ rows: rows.slice(0, THREAD_PAGE), older: rows.length > THREAD_PAGE, live }))
+      return this.observeManyWithColumns(THREAD_COLUMNS, [
+        ...thread,
+        ...NEWEST_FIRST,
+        Q.take(THREAD_PAGE + 1),
+      ]).pipe(
+        map((rows) => ({
+          rows: rows.slice(0, THREAD_PAGE),
+          older: rows.length > THREAD_PAGE,
+          live,
+        }))
       );
     }
     const olderClause = olderThanWindow(window);
     return combineLatest([
-      this.observeManyWithColumns(THREAD_COLUMNS, [...thread, ...threadWindowClauses(window), ...NEWEST_FIRST]),
+      this.observeManyWithColumns(THREAD_COLUMNS, [
+        ...thread,
+        ...threadWindowClauses(window),
+        ...NEWEST_FIRST,
+      ]),
       olderClause ? this.observeMany([...thread, olderClause, ...NEWEST_FIRST, Q.take(1)]) : of([]),
     ]).pipe(map(([rows, beyond]) => ({ rows, older: beyond.length > 0, live })));
   }
@@ -111,37 +146,49 @@ class ConversationService extends DatabaseService<'conversation_message'> {
     return INITIAL_THREAD_WINDOW;
   }
 
-  async markRead(counterpartId: number, upToId: number | null = null): Promise<IServiceResponse<ConversationReadResult>> {
+  async markRead(
+    counterpartId: number,
+    upToId: number | null = null
+  ): Promise<IServiceResponse<ConversationReadResult>> {
     return parsed(
-      await httpService.patch<unknown>(conversationReadPath(counterpartId), upTo(upToId)),
+      await httpService.patch(conversationReadPath(counterpartId), upTo(upToId)),
       conversationReadResultSchema
     );
   }
 
-  async markDelivered(counterpartId: number, upToId: number): Promise<IServiceResponse<ConversationReadResult>> {
+  async markDelivered(
+    counterpartId: number,
+    upToId: number
+  ): Promise<IServiceResponse<ConversationReadResult>> {
     return parsed(
-      await httpService.patch<unknown>(conversationDeliveredPath(counterpartId), upTo(upToId)),
+      await httpService.patch(conversationDeliveredPath(counterpartId), upTo(upToId)),
       conversationReadResultSchema
     );
   }
 
-  async sendVoiceNote(counterpartId: number, file: NetHttpFile): Promise<IServiceResponse<ConversationMessage>> {
+  async sendVoiceNote(
+    counterpartId: number,
+    file: NetHttpFile
+  ): Promise<IServiceResponse<ConversationMessage>> {
     return parsed(
-      await httpService.postMultipart<unknown>(conversationVoiceNotePath(counterpartId), file),
+      await httpService.postMultipart(conversationVoiceNotePath(counterpartId), file),
       conversationMessageSchema
     );
   }
 
   async voiceNoteGrant(noteId: string): Promise<IServiceResponse<VoiceNotePlayGrant>> {
-    return parsed(await httpService.get<unknown>(voiceNotePlayPath(noteId)), voiceNotePlayGrantSchema);
+    return parsed(await httpService.get(voiceNotePlayPath(noteId)), voiceNotePlayGrantSchema);
   }
 
   async voiceNoteContent(token: string): Promise<IServiceResponse<VoiceNoteContent>> {
-    return parsed(await httpService.get<unknown>(voiceNoteContentPath(token)), voiceNoteContentSchema);
+    return parsed(await httpService.get(voiceNoteContentPath(token)), voiceNoteContentSchema);
   }
 
   async send(counterpartId: number, body: string): Promise<IServiceResponse<ConversationMessage>> {
-    return parsed(await httpService.post<unknown>(conversationMessagePath(counterpartId), { body }), conversationMessageSchema);
+    return parsed(
+      await httpService.post(conversationMessagePath(counterpartId), { body }),
+      conversationMessageSchema
+    );
   }
 
   async clearThread(userId: string, counterpartId: number): Promise<IServiceResponse<null>> {
@@ -151,6 +198,30 @@ class ConversationService extends DatabaseService<'conversation_message'> {
     return { ...response, info: null };
   }
 
+  async searchThread(
+    userId: string,
+    counterpartId: string,
+    text: string
+  ): Promise<IConversationMessageCacheRow[]> {
+    const words = text.trim();
+    if (words.length === 0) return [];
+    const rows = await this.fetchMany([
+      ...this.threadClauses(userId, counterpartId),
+      Q.where('body', Q.like(`%${Q.sanitizeLikeString(words)}%`)),
+      ...NEWEST_FIRST,
+      Q.take(SEARCH_LIMIT),
+    ]);
+    return rows.map(toConversationRow);
+  }
+
+  async forgetMessage(id: string): Promise<void> {
+    const rows = await this.fetchMany([Q.where('id', id)]);
+    if (rows.length === 0) return;
+    await this.write(() =>
+      this.collection.database.batch(rows.map((row) => row.prepareDestroyPermanently()))
+    );
+  }
+
   private threadClauses(userId: string, counterpartId: string): Clause[] {
     return [Q.where('user_id', userId), Q.where('counterpart_id', counterpartId)];
   }
@@ -158,7 +229,12 @@ class ConversationService extends DatabaseService<'conversation_message'> {
   private threadFetch(userId: string, counterpartId: string): ThreadFetch {
     const thread = this.threadClauses(userId, counterpartId);
     return ({ where, order, take }) =>
-      this.fetchMany([...thread, ...where, ...(order === 'desc' ? NEWEST_FIRST : OLDEST_FIRST), Q.take(take)]);
+      this.fetchMany([
+        ...thread,
+        ...where,
+        ...(order === 'desc' ? NEWEST_FIRST : OLDEST_FIRST),
+        Q.take(take),
+      ]);
   }
 
   private async newest(clauses: Clause[]): Promise<ConversationMessageModel | null> {
@@ -171,13 +247,20 @@ class ConversationService extends DatabaseService<'conversation_message'> {
     const seen: string[] = [];
     const facts: ConversationSummaryFacts[] = [];
     while (seen.length < MAX_COUNTERPARTS) {
-      const last = await this.newest([mine, ...(seen.length > 0 ? [Q.where('counterpart_id', Q.notIn([...seen]))] : [])]);
+      const last = await this.newest([
+        mine,
+        ...(seen.length > 0 ? [Q.where('counterpart_id', Q.notIn([...seen]))] : []),
+      ]);
       if (!last) break;
       const counterpartId = last.counterpartId;
       seen.push(counterpartId);
       const thread = [mine, Q.where('counterpart_id', counterpartId)];
       const [lastSent, lastNamed, unread] = await Promise.all([
-        this.newest([...thread, Q.where('direction', 'out'), Q.where('kind', Q.oneOf(['relay', 'reply']))]),
+        this.newest([
+          ...thread,
+          Q.where('direction', 'out'),
+          Q.where('kind', Q.oneOf(['relay', 'reply'])),
+        ]),
         this.newest([...thread, Q.where('counterpart_name', Q.notEq(''))]),
         this.fetchTotal([...thread, Q.where('direction', 'in'), Q.where('is_read', false)]),
       ]);
@@ -192,7 +275,9 @@ class ConversationService extends DatabaseService<'conversation_message'> {
       Q.where('counterpart_id', String(counterpartId)),
     ]);
     if (rows.length === 0) return;
-    await this.write(() => this.collection.database.batch(rows.map((row) => row.prepareDestroyPermanently())));
+    await this.write(() =>
+      this.collection.database.batch(rows.map((row) => row.prepareDestroyPermanently()))
+    );
   }
 }
 

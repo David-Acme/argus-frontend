@@ -9,6 +9,7 @@ import { useBeaconController } from '@/features/proximity';
 import { useTamperEvidenceKeeper } from '@/features/cameras';
 import { useNotificationPermission, usePushRegistration } from '@/features/notification';
 import { AppNavigation } from '@/features/navigation';
+import { useConversationRuntime } from '@/features/conversations';
 import { NAV_FADE_MS } from '@/shared/constants';
 import { BG_COLORS } from '@/shared/components/layout/navigation-theme';
 
@@ -26,6 +27,7 @@ export default function AppLayout() {
   useCallPush();
   useBeaconController();
   useTamperEvidenceKeeper();
+  useConversationRuntime();
   const { voice, listening } = useArgusVoice();
 
   return (
