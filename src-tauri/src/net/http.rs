@@ -151,15 +151,33 @@ fn multipart_fields(form: reqwest::multipart::Form, body: &str) -> reqwest::mult
   }
 }
 
+fn inline_bytes(uri: &str) -> Option<Result<Vec<u8>, String>> {
+  use base64::Engine as _;
+  let rest = uri.strip_prefix("data:")?;
+  let (_, payload) = rest.split_once(";base64,")?;
+  Some(
+    base64::engine::general_purpose::STANDARD
+      .decode(payload)
+      .map_err(|_| "STORAGE_ERROR|The attached file cannot be read".to_string()),
+  )
+}
+
+async fn file_bytes(uri: &str) -> Result<Vec<u8>, String> {
+  if let Some(bytes) = inline_bytes(uri) {
+    return bytes;
+  }
+  tokio::fs::read(uri)
+    .await
+    .map_err(|_| "STORAGE_ERROR|The attached file cannot be read".to_string())
+}
+
 async fn multipart_form(request: &HttpRequest) -> Result<reqwest::multipart::Form, String> {
   let mut form = reqwest::multipart::Form::new();
   if !request.body.is_empty() {
     form = multipart_fields(form, &request.body);
   }
   for file in &request.files {
-    let bytes = tokio::fs::read(&file.uri)
-      .await
-      .map_err(|_| "STORAGE_ERROR|The attached file cannot be read".to_string())?;
+    let bytes = file_bytes(&file.uri).await?;
     let part = reqwest::multipart::Part::bytes(bytes)
       .file_name(file.filename.clone())
       .mime_str(&file.content_type)
@@ -226,9 +244,17 @@ mod tests {
   use super::super::relay::RemoteProfile;
   use super::super::test_tls::{credential_free, serve, Behaviour, Vectors};
   use super::super::trust::Trust;
-  use super::{ensure_allowed_host, request, request_error, HttpRequest, PinnedResolver};
+  use super::{ensure_allowed_host, inline_bytes, request, request_error, HttpRequest, PinnedResolver};
 
   const HOME: &str = "0123456789abcdef0123456789abcdef";
+
+  #[test]
+  fn a_recorded_note_travels_inline_as_a_data_uri() {
+    let bytes = inline_bytes("data:audio/webm;codecs=opus;base64,T2dnUw==").expect("a data uri");
+    assert_eq!(bytes.expect("decoded"), b"OggS".to_vec());
+    assert!(inline_bytes("data:audio/webm;base64,***").expect("a data uri").is_err());
+    assert!(inline_bytes("/tmp/note.m4a").is_none());
+  }
 
   fn url_of(listener: &TcpListener) -> String {
     format!("http://{}/", listener.local_addr().expect("a bound address"))
