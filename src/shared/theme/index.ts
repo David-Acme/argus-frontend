@@ -31,6 +31,7 @@ export { useEffects, useEffectsOverrides, type Effects, type PerfTier } from './
 export { CALL_SCALE_STEPS, callScaleOf, type CallScale } from './call-scale';
 export { feedback } from './feedback';
 export { feedbackEnabled, setFeedbackEnabled } from './feedback-switch';
+export { hasFinePointer } from './pointer';
 export { usePressScale, type PressScaleKind } from './press-scale';
 export { themeTokensOf, useThemeTokens, type ThemeTokens } from './use-theme-tokens';
 export {
@@ -41,6 +42,7 @@ export {
   paletteTopOf,
   paneSplitOf,
   phoneLandscape,
+  pickerLayoutOf,
   sheetBodyCapOf,
   sheetCeilingOf,
   sheetChromeOf,
@@ -51,10 +53,12 @@ export {
   useHeightLayout,
   useNavBarLayout,
   usePaneSplit,
+  usePickerLayout,
   type HeightClass,
   type HeightLayout,
   type NavBarLayout,
   type NavOffsets,
+  type PickerLayout,
   type SheetChrome,
   type SheetChromeRoom,
   type SheetRoom,

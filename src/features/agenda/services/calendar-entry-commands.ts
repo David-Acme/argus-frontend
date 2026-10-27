@@ -4,8 +4,9 @@ import type { CalendarEntry, TranslateFn } from '@/core/types';
 import { runOptimistic } from '@/shared/libs/optimistic-action';
 import {
   calendarEntryRecordId,
+  deleteConfirmOf,
   isOccurrence,
-  seriesDeleteConfirm,
+  type DeleteConfirm,
 } from '@/features/agenda/model/calendar-entry-actions';
 
 export type EntryCommand = {
@@ -31,11 +32,6 @@ export function removeEntry({ entry, t }: EntryCommand) {
   const isEvent = entry.source === 'event';
   const series = isOccurrence(entry);
   return runOptimistic({
-    confirm: seriesDeleteConfirm(entry, {
-      title: t('screens.agenda.delete-event-title', { name: entry.title }),
-      description: t('screens.agenda.delete-series-body'),
-      confirmLabel: t('screens.agenda.delete-series'),
-    }),
     intents: [{ table: isEvent ? 'calendar_event' : 'project_task', kind: 'delete', recordId }],
     call: () =>
       isEvent ? calendarEventService.remove(recordId) : projectTaskService.remove(recordId),
@@ -43,5 +39,18 @@ export function removeEntry({ entry, t }: EntryCommand) {
       title: series ? t('screens.agenda.deleted-series') : t('screens.agenda.deleted'),
       description: entry.title,
     },
+  });
+}
+
+export function removeConfirm({ entry, t }: EntryCommand): DeleteConfirm {
+  return deleteConfirmOf(entry, {
+    title: t('screens.agenda.delete-event-title', { name: entry.title }),
+    body: {
+      event: t('screens.agenda.delete-event-body'),
+      task: t('screens.agenda.delete-task-body'),
+    },
+    seriesBody: t('screens.agenda.delete-series-body'),
+    confirmLabel: t('screens.agenda.detail.delete'),
+    seriesLabel: t('screens.agenda.delete-series'),
   });
 }

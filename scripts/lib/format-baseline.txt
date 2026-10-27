@@ -148,7 +148,6 @@ src/core/types/visitor.type.ts
 src/core/types/watch.type.ts
 src/core/types/watchdog.type.ts
 src/features/access/screens/inactive-role-screen.tsx
-src/features/activity/components/activity-filters.tsx
 src/features/activity/model/activity-filter.ts
 src/features/activity/model/activity-text.ts
 src/features/activity/screens/activity-screen.tsx
@@ -295,7 +294,6 @@ src/features/security/model/maintenance.ts
 src/features/security/model/mode-change.ts
 src/features/security/model/response-recipients.ts
 src/features/security/model/tamper-notice.ts
-src/features/security/screens/environment-screen.tsx
 src/features/sessions/services/sessions.service.ts
 src/features/settings/hooks/use-settings.ts
 src/features/visitors/components/visitor-card.tsx
@@ -307,7 +305,6 @@ src/features/visitors/components/visitor-visits-panel.tsx
 src/features/visitors/hooks/use-visitor-crop.ts
 src/features/visitors/model/visitor-label.ts
 src/features/visitors/model/visitor.ts
-src/features/visitors/screens/visitor-detail-screen.tsx
 src/features/visitors/services/visitor.service.ts
 src/features/voice/components/call-settings-dialog.tsx
 src/features/voice/hooks/use-call-audio.ts
@@ -350,7 +347,6 @@ src/shared/components/layout/edge-fade.tsx
 src/shared/components/layout/offline-transition.ts
 src/shared/components/sharing/share-members-dialog.tsx
 src/shared/components/ui/adaptive-dialog.tsx
-src/shared/components/ui/adaptive-menu.tsx
 src/shared/components/ui/adaptive-select.tsx
 src/shared/components/ui/blur-reveal.tsx
 src/shared/components/ui/brand-mark.tsx
@@ -385,7 +381,6 @@ src/shared/constants/recurrence.constant.ts
 src/shared/constants/resource.constant.ts
 src/shared/hooks/use-cached-rows.ts
 src/shared/hooks/use-capabilities.ts
-src/shared/hooks/use-date-formatter/date.ts
 src/shared/hooks/use-device-permissions/device-permissions.ts
 src/shared/hooks/use-device-permissions/index.ts
 src/shared/hooks/use-infinite-list.ts

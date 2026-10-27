@@ -104,6 +104,10 @@ export const copy = {
   markDone: 'Marcar como hecho',
   snooze: 'Posponer 1 hora',
   erase: 'Borrar',
+  eraseTitle: '¿Borrar Pagar la luz?',
+  eraseBody: 'El recordatorio se borra de tu agenda.',
+  share: 'Compartir',
+  edit: 'Editar',
   reminderOptions: 'Opciones de Pagar la luz',
   agendaGroup: 'Agenda',
   actionsGroup: 'Acciones',
@@ -271,4 +275,9 @@ export const presenceCopy = {
   states: 'Estados',
   events: 'Eventos',
   stage: 'Escenario',
+} as const;
+
+export const pickerCopy = {
+  starts: 'Empieza',
+  ends: 'Termina',
 } as const;

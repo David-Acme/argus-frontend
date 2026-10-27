@@ -11,6 +11,8 @@ export const projects = {
   'edit-project': 'Edit project',
   'edit-task': 'Edit task',
   'remove-task': 'Delete task',
+  'delete-task-title': 'Delete {title}?',
+  'delete-task-body': 'The task is removed from this project.',
   'delete-project': 'Delete project',
   'delete-project-title': 'Delete {name}?',
   'delete-project-body': 'Its tasks are deleted too. This cannot be undone.',

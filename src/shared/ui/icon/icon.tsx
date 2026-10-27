@@ -16,6 +16,8 @@ export type IconTone = Extract<
   | 'on-ink'
   | 'on-media'
   | 'ev1-text'
+  | 'ev2-text'
+  | 'ev3-text'
 >;
 
 export type IconProps = {

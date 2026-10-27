@@ -458,6 +458,7 @@ A new variant needs a design review and a `ui-lab` baseline (rule F19).
 | 16 | `Field` | `text`, `multiline`, `secret`, `code`; label, hint, error; Return key action | `input`, `textarea`, `form-text-field`, the field halves of 9 feature forms |
 | 17 | `Choice` | renders a segmented control when ≤ 4 short options fit, and otherwise a row that opens a list in a `Sheet` | `segmented-control`, `select`, `adaptive-select` (243), the truncating call-preference segments (W3) |
 | 18 | `Switch` | one variant; always inside a `Row` | `switch.tsx`, raw `Switch`es |
+| 18b | `DateField`, `TimeField` (owner, 2026-10-27) | one model, three presentations by input and window: phone inline (month calendar, quick chips, snapping wheels), tablet popover (calendar and wheels side by side), pointer desktop (typeable locale segments, dropdown calendar with grid keys and Hoy, a 15-minute time list) | the agenda `DayField`, `DayPickerField`, typed time fields |
 
 ### 4.4 Overlays and states
 
@@ -465,7 +466,7 @@ A new variant needs a design review and a `ui-lab` baseline (rule F19).
 |---|---|---|---|
 | 19 | `Sheet` | `form` / `list` / `detail`; slots: `title` (with ✕), body, pinned `footer` (one primary + at most one icon secondary); detents `auto`, `large`. Phone: native sheet. Medium and up: centred dialog (form, list) or side sheet (detail) | `sheet.tsx` (250), `adaptive-dialog` (139), `dialog` (176), `overlay-body` (110), 26 feature dialogs reduced to content |
 | 20 | `Confirm` | `default` / `destructive`; names the object | `confirm-dialog`, ad-hoc confirm sheets (W7) |
-| 21 | `Menu` | dropdown on pointer, sheet list on touch, context menu on long press and right click | `adaptive-menu`, `context-menu` (294), `popover`, single-item menus (W38) |
+| 21 | `Menu` | a header «⋯» is a text-only dropdown under its button everywhere; row and item actions are a sheet list on phones and a context menu at the pointer on tablet, desktop and web; rows carry a flat icon well by action family, destructive last behind a hairline and confirmed by `Confirm` (2026-10-27) | `adaptive-menu`, `context-menu` (294), `popover`, single-item menus (W38) |
 | 22 | `Toast` | `info`, `success`, `error` with Retry, `undo` | `toaster`, `toast-card` |
 | 23 | `ResourceView` | renders `loading` (its `Skeleton`), `ready`, `empty` (its `Empty`), `stale` (`Notice`), `failed` and `refused` from a `Resource<T>`; failures use the error surfaces of §5.8 | `empty-state`, `infinite-list` states, the 42 `EmptyState` uses, spinners in lists |
 
@@ -1192,7 +1193,7 @@ window class, never by a screen.
 
 **Desktop (Tauri and web, expanded and wide):**
 
-- **Glass sidebar.** Labels, the ⌘K field at its top, the Argus mark, and
+- **Solid sidebar** (opaque `surface`, owner 2026-10-27). Labels, the ⌘K field at its top, the Argus mark, and
   shortcut hints (1–5) that show on hover.
 - **⌘K / Ctrl+K: `Command`.** One bar for commands, search and "pedir a
   Argus". Results are grouped, actions show their shortcut (as Raycast
@@ -1224,7 +1225,7 @@ window class, never by a screen.
   - Primary actions sit in the lower half: the status actions, hold-to-talk,
     the sheet's Guardar (also the Return key).
   - The top bar holds only navigation and secondary actions.
-  - The floating glass bar keeps the five destinations at the thumb.
+  - The floating bar, an opaque surface with a hairline top edge (owner 2026-10-27), keeps the five destinations at the thumb.
 - **Native sheets and gestures.**
   - Swipe back (iOS) and predictive Back (Android).
   - Drag sheets to dismiss.

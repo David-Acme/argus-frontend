@@ -44,7 +44,7 @@ mock.module('react-native-gesture-handler', async () => {
     GestureDetector: ({ children }: { children: ReactNode }) => children,
   };
 });
-for (const primitive of ['alert-dialog', 'dialog', 'dropdown-menu', 'context-menu']) {
+for (const primitive of ['alert-dialog', 'dialog', 'dropdown-menu', 'context-menu', 'popover']) {
   mock.module(
     `@rn-primitives/${primitive}`,
     () => import(`../../../../node_modules/@rn-primitives/${primitive}/dist/${primitive}.web.mjs`)
@@ -110,6 +110,7 @@ mock.module('react-native-reanimated', async () => {
     Easing: { bezier: () => () => 0, linear: (progress: number) => progress },
     FadeIn: chain(),
     FadeOut: chain(),
+    LinearTransition: chain(),
     SlideInUp: chain(),
     SlideOutUp: chain(),
   };

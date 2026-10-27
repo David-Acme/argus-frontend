@@ -59,6 +59,11 @@ mock.module('@/features/agenda', async () => ({
   ...(await import('@/features/agenda/model/agenda-items')),
   ...(await import('@/features/agenda/model/agenda-actions')),
   ...(await import('@/features/agenda/model/agenda-timeline')),
+  removeConfirm: ({ entry }: { entry: { title: string } }) => ({
+    title: `¿Eliminar ${entry.title}?`,
+    body: 'El evento se borra de la agenda.',
+    confirmLabel: 'Eliminar',
+  }),
 }));
 mock.module('@/shared/hooks/use-capabilities', () => ({
   useCapabilities: () => ({ has: (capability: string) => state.caps.has(capability) }),
@@ -127,12 +132,16 @@ describe('Ahora', () => {
     expect(calls.opened).toEqual(['Pagar la luz', 'Reunión con el arquitecto']);
   });
 
-  test('a right click on an event opens its menu with Editar and Borrar', async () => {
+  test('a right click on an event opens its menu with Editar and Borrar, and Borrar asks first', async () => {
     render(<NowSection />);
     fireEvent.contextMenu(screen.getByText('Reunión con el arquitecto'));
     const named = (name: string) => screen.findByRole('menuitem', { name, hidden: true });
     expect(await named('Editar')).toBeDefined();
     fireEvent.click(await named('Borrar'));
+    expect(calls.ran).toEqual([]);
+    const dialog = await screen.findByRole('alertdialog');
+    expect(dialog.textContent).toContain('¿Eliminar Reunión con el arquitecto?');
+    fireEvent.click(screen.getByRole('button', { name: 'Eliminar' }));
     expect(calls.ran).toEqual(['delete:Reunión con el arquitecto']);
   });
 

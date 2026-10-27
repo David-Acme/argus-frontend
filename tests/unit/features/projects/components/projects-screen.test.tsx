@@ -91,7 +91,6 @@ mock.module('@/shared/libs/capabilities', () => ({
 }));
 mock.module('@/features/agenda', async () => ({
   ...(await import('@/features/agenda/components/day-empty')),
-  ...(await import('@/features/agenda/components/day-field')),
   ...(await import('@/features/agenda/hooks/use-argus-draft')),
 }));
 mock.module('@/features/voice', () => ({

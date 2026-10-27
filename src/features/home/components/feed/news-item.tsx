@@ -6,6 +6,8 @@ import { useTranslation } from '@/shared/hooks/use-translation';
 import { Avatar } from '@/shared/ui/avatar';
 import { Button } from '@/shared/ui/button';
 import { FeedItem } from '@/shared/ui/feed-item';
+import { hasMenuItems, Menu } from '@/shared/ui/menu';
+import type { MenuItem } from '@/shared/ui/menu';
 import { ModuleEnableAction } from '@/features/modules';
 import { notificationHrefOf } from '@/features/notification';
 import { SightNoticeActions, useSightNotice } from '@/features/security';
@@ -106,6 +108,46 @@ function NewsActions({ thread, action, sight, onRead, onOpen, onRemove }: NewsAc
   );
 }
 
+type NewsMenuInput = {
+  thread: NotificationThread;
+  onOpen: (() => void) | null;
+  onRead: () => void;
+  onRemove?: () => void;
+};
+
+function useNewsMenu({ thread, onOpen, onRead, onRemove }: NewsMenuInput): MenuItem[] {
+  const { t } = useTranslation();
+  const title = thread.latest.title;
+  const items: MenuItem[] = [];
+  if (onOpen)
+    items.push({
+      label: t('screens.home.news.review'),
+      icon: 'eye',
+      family: 'view',
+      onPress: onOpen,
+    });
+  if (!isThreadRead(thread))
+    items.push({
+      label: t('screens.home.thread.mark-read'),
+      icon: 'check',
+      family: 'state',
+      onPress: onRead,
+    });
+  if (onRemove)
+    items.push({
+      label: t('screens.home.thread.delete-short'),
+      icon: 'trash',
+      destructive: true,
+      confirm: {
+        title: t('screens.home.thread.delete-title'),
+        body: t('screens.home.thread.delete-body', { title }),
+        confirmLabel: t('common.confirm-delete'),
+      },
+      onPress: onRemove,
+    });
+  return items;
+}
+
 export function NewsItem({ thread, now, onRead, onRemove, threadLine }: NewsItemProps) {
   const { t } = useTranslation();
   const router = useRouter();
@@ -128,7 +170,13 @@ export function NewsItem({ thread, now, onRead, onRemove, threadLine }: NewsItem
     if (target !== null) router.push(target);
   };
 
-  return (
+  const menu = useNewsMenu({
+    thread,
+    onOpen: target !== null ? open : null,
+    onRead: read,
+    onRemove: onRemove ? () => onRemove(thread) : undefined,
+  });
+  const item = (
     <FeedItem
       leading={
         <Avatar
@@ -157,5 +205,14 @@ export function NewsItem({ thread, now, onRead, onRemove, threadLine }: NewsItem
       }
       onPress={newsPressable(thread, target) ? open : undefined}
     />
+  );
+  if (!hasMenuItems(menu)) return item;
+  return (
+    <Menu
+      context
+      label={t('screens.home.thread.actions', { title: thread.latest.title })}
+      items={menu}>
+      {item}
+    </Menu>
   );
 }

@@ -1,6 +1,7 @@
 import { describe, expect, mock, test } from 'bun:test';
 import { render, screen } from '@testing-library/react';
 import type { ComponentType } from 'react';
+import { createDateFormatter } from '@/shared/hooks/use-date-formatter/date';
 import { screenFocus } from './screen-focus';
 import './translation-stub';
 import { setWindowWidth } from './window-width';
@@ -14,6 +15,16 @@ mock.module('expo-router', () => ({
   useIsFocused: () => screenFocus.focused,
 }));
 mock.module('@/shared/hooks/use-theme-preference', () => ({ getThemePreference: () => 'system' }));
+mock.module('@/shared/hooks/use-date-formatter', () => ({
+  useDateFormatter: () =>
+    createDateFormatter('es', {
+      languageTag: 'es-PE',
+      regionCode: 'PE',
+      uses24hourClock: true,
+      firstWeekday: 2,
+      timeZone: 'America/Lima',
+    }),
+}));
 
 const { AuraDemo } = await import('@/features/ui-lab/demos/aura-demo');
 const { AvatarDemo } = await import('@/features/ui-lab/demos/avatar-demo');
@@ -32,6 +43,7 @@ const { MediaDemo } = await import('@/features/ui-lab/demos/media-demo');
 const { MenuDemo } = await import('@/features/ui-lab/demos/menu-demo');
 const { NavDemo } = await import('@/features/ui-lab/demos/nav-demo');
 const { NoticeDemo } = await import('@/features/ui-lab/demos/notice-demo');
+const { PickerDemo } = await import('@/features/ui-lab/demos/picker-demo');
 const { PresenceDemo } = await import('@/features/ui-lab/demos/presence-demo');
 const { PressableDemo } = await import('@/features/ui-lab/demos/pressable-demo');
 const { ResourceViewDemo } = await import('@/features/ui-lab/demos/resource-view-demo');
@@ -67,6 +79,7 @@ const DEMOS: Record<string, ComponentType> = {
   menu: MenuDemo,
   nav: NavDemo,
   notice: NoticeDemo,
+  picker: PickerDemo,
   presence: PresenceDemo,
   pressable: PressableDemo,
   'resource-view': ResourceViewDemo,

@@ -45,6 +45,7 @@ function TapSurface({
         accessibilityState={{
           checked: a11y.checked,
           selected: a11y.selected,
+          expanded: a11y.expanded,
           busy: a11y.busy,
           disabled,
         }}

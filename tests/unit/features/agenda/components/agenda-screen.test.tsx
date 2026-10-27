@@ -145,7 +145,6 @@ const { AgendaLine } = await import('@/features/agenda/components/agenda-line');
 const { AgendaList } = await import('@/features/agenda/components/agenda-list');
 const { AgendaTop } = await import('@/features/agenda/components/agenda-top');
 const { DayEmpty } = await import('@/features/agenda/components/day-empty');
-const { DayField } = await import('@/features/agenda/components/day-field');
 const { DayHead } = await import('@/features/agenda/components/day-head');
 const { DayView } = await import('@/features/agenda/components/day-view');
 const { EventBar } = await import('@/features/agenda/components/event-bar');
@@ -369,18 +368,6 @@ describe('the agenda parts', () => {
     expect(screen.getByText('Aquí verás lo que te compartan.')).toBeDefined();
     fireEvent.click(screen.getByRole('button', { name: 'miércoles 21' }));
     expect(picked).toEqual([at(0)]);
-  });
-
-  test('the day field opens a month and picks a day', () => {
-    const days: number[] = [];
-    render(<DayField day={at(0)} now={NOW} onChange={(day) => days.push(day)} />);
-    fireEvent.click(screen.getByRole('button', { name: /^Día, / }));
-    const next = at(0, 0, 1);
-    fireEvent.click(
-      screen.getAllByRole('button', { name: date.formatFullDate(new Date(next)) })[0] ??
-        document.body
-    );
-    expect(days).toEqual([next]);
   });
 
   test('a form line carries the field label at the field edge, with its value or control', () => {

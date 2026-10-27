@@ -28,6 +28,11 @@ export const home = {
   'notification-deleted': 'Notification deleted',
   'notification-delete-failed': 'The notification could not be deleted',
   thread: {
+    'delete-short': 'Delete',
+    'delete-title': 'Delete this update?',
+    'delete-body': '"{title}" is removed from News on all your devices.',
+    'mark-read': 'Mark as read',
+    actions: 'Options for {title}',
     count: '{count} updates',
     unread: 'Unread',
     delete: 'Delete notification: {title}',

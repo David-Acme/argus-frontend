@@ -26,6 +26,7 @@ export function PressableSurface({
         aria-label={a11y.label}
         aria-checked={a11y.checked}
         aria-selected={a11y.selected}
+        aria-expanded={a11y.expanded}
         aria-busy={a11y.busy}
         aria-disabled={disabled}
         tabIndex={a11y.tabStop === false ? -1 : undefined}

@@ -80,10 +80,7 @@ export function NavBar({ items, active, onSelect, voice, copy, presence, listeni
       <Animated.View
         role="tablist"
         aria-label={copy.navigation}
-        className={clsx(
-          'inset-x-nav-bar-x px-nav-bar-pad absolute flex-row items-center justify-center rounded-full',
-          reduceTransparency ? 'bg-surface' : 'web:glass-bar bg-glass'
-        )}
+        className="inset-x-nav-bar-x px-nav-bar-pad bg-surface border-fill-press absolute flex-row items-center justify-center rounded-full border-t"
         style={[frame, collapse]}>
         {items.map((item) =>
           item.argus ? (

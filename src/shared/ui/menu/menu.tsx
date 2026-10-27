@@ -1,99 +1,89 @@
-import * as ContextPrimitive from '@rn-primitives/context-menu';
-import * as DropdownPrimitive from '@rn-primitives/dropdown-menu';
-import { View } from 'react-native';
-import { space } from '@/shared/theme';
-import { Icon } from '@/shared/ui/icon';
-import { opensContextMenu } from './menu-keys';
-import { MENU_ROW, MenuRowContent, useMenuPanel } from './menu-row';
-import type { ButtonMenuProps, ContextMenuProps, MenuItems, MenuProps } from './menu-types';
+import { useState } from 'react';
+import { hasFinePointer, useWindowLayout } from '@/shared/theme';
+import { Button } from '@/shared/ui/button';
+import { AnchoredButton, AnchoredContext } from './menu-anchored';
+import { MenuHold } from './menu-hold';
+import { menuForm, type MenuForm } from './menu-model';
+import { MenuSheet } from './menu-sheet';
+import type { ButtonMenuProps, ContextMenuProps, MenuProps, MenuRun } from './menu-types';
+import { useMenuRun } from './use-menu-run';
 
-type ItemsProps = { items: MenuItems };
+type FormProps = { form: MenuForm; onRun: MenuRun };
 
-type MenuKeyEvent = {
-  key: string;
-  shiftKey: boolean;
-  currentTarget: HTMLElement;
-  preventDefault: () => void;
-};
-
-const OFFSET = space[1];
-
-function DropdownItems({ items }: ItemsProps) {
-  return items.map((item) => (
-    <DropdownPrimitive.Item key={item.label} onPress={item.onPress} className={MENU_ROW}>
-      <MenuRowContent item={item} />
-    </DropdownPrimitive.Item>
-  ));
-}
-
-function ContextItems({ items }: ItemsProps) {
-  return items.map((item) => (
-    <ContextPrimitive.Item
-      key={item.label}
-      role="menuitem"
-      onPress={item.onPress}
-      className={MENU_ROW}>
-      <MenuRowContent item={item} />
-    </ContextPrimitive.Item>
-  ));
-}
-
-function DropdownMenu({ label, items, icon = 'more' }: ButtonMenuProps) {
-  const panel = useMenuPanel();
+function ButtonMenu({
+  label,
+  items,
+  icon = 'more',
+  item,
+  form,
+  onRun,
+}: ButtonMenuProps & FormProps) {
+  const [open, setOpen] = useState(false);
+  const [only, ...rest] = items;
+  if (rest.length === 0)
+    return <Button iconOnly icon={only.icon} label={only.label} onPress={() => onRun(only)} />;
+  if (!item || form === 'anchored')
+    return (
+      <AnchoredButton
+        label={label}
+        icon={icon}
+        items={items}
+        look={item ? 'anchored' : 'plain'}
+        onRun={onRun}
+      />
+    );
   return (
-    <DropdownPrimitive.Root>
-      <DropdownPrimitive.Trigger
-        role="button"
-        aria-label={label}
-        className="size-target-min web:focus-ring web:hover:bg-fill items-center justify-center rounded-full">
-        <Icon name={icon} />
-      </DropdownPrimitive.Trigger>
-      <DropdownPrimitive.Portal>
-        <DropdownPrimitive.Content
-          align="end"
-          sideOffset={OFFSET}
-          style={panel.style}
-          className={panel.className}>
-          <DropdownItems items={items} />
-        </DropdownPrimitive.Content>
-      </DropdownPrimitive.Portal>
-    </DropdownPrimitive.Root>
+    <>
+      <Button iconOnly icon={icon} label={label} onPress={() => setOpen(true)} />
+      <MenuSheet
+        open={open}
+        onClose={() => setOpen(false)}
+        label={label}
+        items={items}
+        onRun={onRun}
+      />
+    </>
   );
 }
 
-function openFromKeys(event: MenuKeyEvent): void {
-  if (!opensContextMenu(event)) return;
-  event.preventDefault();
-  const { left, bottom } = event.currentTarget.getBoundingClientRect();
-  event.currentTarget.dispatchEvent(
-    new MouseEvent('contextmenu', {
-      bubbles: true,
-      cancelable: true,
-      clientX: left,
-      clientY: bottom,
-    })
-  );
-}
-
-const KEYS = { onKeyDown: openFromKeys };
-
-function ContextMenu({ items, children }: ContextMenuProps) {
-  const panel = useMenuPanel();
+function ContextMenu({ label, items, children, form, onRun }: ContextMenuProps & FormProps) {
+  const [open, setOpen] = useState(false);
+  if (form === 'anchored')
+    return (
+      <AnchoredContext label={label} items={items} onRun={onRun}>
+        {children}
+      </AnchoredContext>
+    );
   return (
-    <ContextPrimitive.Root>
-      <ContextPrimitive.Trigger asChild>
-        <View {...KEYS}>{children}</View>
-      </ContextPrimitive.Trigger>
-      <ContextPrimitive.Portal>
-        <ContextPrimitive.Content style={panel.style} className={panel.className}>
-          <ContextItems items={items} />
-        </ContextPrimitive.Content>
-      </ContextPrimitive.Portal>
-    </ContextPrimitive.Root>
+    <>
+      <MenuHold onOpen={() => setOpen(true)}>{children}</MenuHold>
+      <MenuSheet
+        open={open}
+        onClose={() => setOpen(false)}
+        label={label}
+        items={items}
+        onRun={onRun}
+      />
+    </>
   );
+}
+
+function useMenuForm(): MenuForm {
+  const { navigation } = useWindowLayout();
+  return menuForm({ navigation, finePointer: hasFinePointer() });
 }
 
 export function Menu(props: MenuProps) {
-  if ('context' in props) return <ContextMenu {...props} />;
-  return <DropdownMenu {...props} />;
+  const form = useMenuForm();
+  const { run, confirm } = useMenuRun();
+  return (
+    <>
+      {'context' in props ? (
+        <ContextMenu {...props} form={form} onRun={run} />
+      ) : (
+        <ButtonMenu {...props} form={form} onRun={run} />
+      )}
+      {confirm}
+    </>
+  );
 }

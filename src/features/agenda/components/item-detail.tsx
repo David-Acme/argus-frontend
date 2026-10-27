@@ -6,12 +6,13 @@ import { Avatar } from '@/shared/ui/avatar';
 import { Button } from '@/shared/ui/button';
 import { Chip } from '@/shared/ui/chip';
 import type { IconGlyph } from '@/shared/ui/icon';
-import { Menu } from '@/shared/ui/menu';
+import { hasMenuItems, Menu } from '@/shared/ui/menu';
 import type { MenuItem } from '@/shared/ui/menu';
 import { Row } from '@/shared/ui/row';
 import { Section } from '@/shared/ui/section';
 import { Text } from '@/shared/ui/text';
 import { categoryOf, kindWords, lineWords } from '@/features/agenda/model/agenda-lines';
+import { removeConfirm } from '@/features/agenda/services/calendar-entry-commands';
 import type { DetailHandlers, ListContext } from '@/features/agenda/model/agenda-view';
 
 export type ItemDetailProps = {
@@ -34,37 +35,35 @@ const ownerName = (item: AgendaItem, { owners }: ListContext): string | null =>
 function moreItems({ item, context, handlers }: PartProps): MenuItem[] {
   const { actions, t } = context;
   const items: MenuItem[] = [];
-  if (actions.canSkip(item))
-    items.push({ label: t('screens.agenda.detail.skip'), onPress: () => actions.skip(item) });
   if (handlers.onShare)
     items.push({
       label: t('screens.agenda.share'),
-      icon: 'users',
+      icon: 'share',
+      family: 'share',
       onPress: () => handlers.onShare?.(item),
+    });
+  if (actions.canSkip(item))
+    items.push({
+      label: t('screens.agenda.detail.skip'),
+      icon: 'skip',
+      family: 'caution',
+      onPress: () => actions.skip(item),
     });
   if (actions.rightsOf(item).remove)
     items.push({
       label: t('screens.agenda.detail.delete'),
+      icon: 'trash',
       destructive: true,
+      confirm: removeConfirm({ entry: item.entry, t }),
       onPress: () => actions.remove(item),
     });
   return items;
 }
 
 function More(part: PartProps) {
-  const { t } = part.context;
-  const [first, second, ...rest] = moreItems(part);
-  if (first && second)
-    return <Menu label={t('screens.agenda.detail.more')} items={[first, second, ...rest]} />;
-  if (!first) return null;
-  return (
-    <Button
-      label={first.label}
-      onPress={first.onPress}
-      variant={first.destructive ? 'danger' : 'secondary'}
-      compact
-    />
-  );
+  const items = moreItems(part);
+  if (!hasMenuItems(items)) return null;
+  return <Menu item label={part.context.t('screens.agenda.detail.more')} items={items} />;
 }
 
 function Actions(part: PartProps) {

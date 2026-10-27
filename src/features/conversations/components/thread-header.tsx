@@ -4,6 +4,7 @@ import { size } from '@/shared/theme';
 import { Button } from '@/shared/ui/button';
 import { Icon } from '@/shared/ui/icon';
 import { Menu } from '@/shared/ui/menu';
+import type { MenuItem, MenuItems } from '@/shared/ui/menu';
 import { Presence } from '@/shared/ui/presence';
 import { PressableSurface } from '@/shared/ui/pressable';
 import { Text } from '@/shared/ui/text';
@@ -44,16 +45,25 @@ function Clear({ onClear }: ClearProps) {
 function ArgusActions({ onConversations, onClear }: ArgusActionsProps) {
   const { t } = useTranslation();
   if (!onClear) return null;
-  if (!onConversations) return <Clear onClear={onClear} />;
-  return (
-    <Menu
-      label={t('screens.conversations.more')}
-      items={[
-        { label: t('screens.conversations.see-list'), icon: 'chat', onPress: onConversations },
-        { label: t('screens.conversations.clear'), destructive: true, onPress: onClear },
-      ]}
-    />
-  );
+  const clear: MenuItem = {
+    label: t('screens.conversations.clear'),
+    icon: 'trash',
+    destructive: true,
+    confirm: 'by-action',
+    onPress: onClear,
+  };
+  const items: MenuItems = onConversations
+    ? [
+        {
+          label: t('screens.conversations.see-list'),
+          icon: 'chat',
+          family: 'view',
+          onPress: onConversations,
+        },
+        clear,
+      ]
+    : [clear];
+  return <Menu label={t('screens.conversations.more')} items={items} />;
 }
 
 function ArgusTitle({

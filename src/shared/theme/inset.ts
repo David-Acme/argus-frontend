@@ -1,10 +1,10 @@
 import { chromeInset } from '@/shared/theme/chrome-tokens';
 
 export const inset = {
-  row: { x: 18, y: 10, gap: 14, trailGap: 6, metaGap: 1 },
+  row: { x: 16, y: 10, gap: 12, trailGap: 6, metaGap: 1 },
   button: { x: 18, compactX: 14, ghostX: 12 },
   chip: { x: 10, statX: 11, gap: 5 },
-  section: { top: 26, headX: 4, headBottom: 10, headGap: 12, linkY: 10, groupY: 4 },
+  section: { top: 24, headX: 4, headBottom: 10, headGap: 12, linkY: 10, groupY: 4 },
   control: { switchThumb: 3, focusRing: 2, checkBorder: 2 },
   dialog: { x: 24, top: 24, bottom: 12, edge: 28, bodyTop: 12 },
   dialogActions: { top: 20, gap: 4, x: 14 },
@@ -28,7 +28,7 @@ export const inset = {
   segment: { pad: 3, gap: 2, iconGap: 6, minX: 2 },
   notice: { x: 16, y: 14, gap: 10, headGap: 12, bodyTop: 2, actionGap: 8 },
   banner: { x: 14, y: 10, gap: 10 },
-  feed: { x: 18, y: 2, itemY: 14, gap: 12, whoGap: 6, textTop: 2, actionsTop: 10, actionsGap: 8 },
+  feed: { x: 16, y: 2, itemY: 14, gap: 12, whoGap: 6, textTop: 2, actionsTop: 10, actionsGap: 8 },
   thread: { top: 6 },
   unread: { end: 2, top: 20 },
   media: {

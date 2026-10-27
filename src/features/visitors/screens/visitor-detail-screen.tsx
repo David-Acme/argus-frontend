@@ -3,9 +3,7 @@ import { ScrollView, View } from 'react-native';
 import type { ICameraCacheRow } from '@/core/interfaces';
 import type { VisitorDetail } from '@/core/types';
 import { AppScreen, ScreenHeader } from '@/shared/components/layout';
-import { AdaptiveMenu } from '@/shared/components/ui/adaptive-menu';
 import { EmptyState } from '@/shared/components/ui/empty-state';
-import { IconButton } from '@/shared/components/ui/icon-button';
 import { Panel } from '@/shared/components/ui/panel';
 import { StatusBadge } from '@/shared/components/ui/status-badge';
 import { Text } from '@/shared/components/ui/text';
@@ -14,6 +12,7 @@ import { useViewCacheRows } from '@/shared/hooks/use-cached-rows';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
+import { Menu } from '@/shared/ui/menu';
 import { VisitorFace } from '@/features/visitors/components/visitor-face';
 import { VisitorProfileForm } from '@/features/visitors/components/visitor-profile-form';
 import { VisitorSamplesPanel } from '@/features/visitors/components/visitor-samples-panel';
@@ -22,7 +21,12 @@ import { VISITOR_CATEGORY_ICONS } from '@/features/visitors/constants';
 import { useVisitor } from '@/features/visitors/hooks/use-visitor';
 import { useVisitors } from '@/features/visitors/hooks/use-visitors';
 import { hasPattern } from '@/features/visitors/model/visitor';
-import { categoryLabel, patternLabel, visitorLabel, visitsLabel } from '@/features/visitors/model/visitor-label';
+import {
+  categoryLabel,
+  patternLabel,
+  visitorLabel,
+  visitsLabel,
+} from '@/features/visitors/model/visitor-label';
 import type { VisitorUpdate } from '@/features/visitors/services/visitor.service';
 
 type VisitorBodyProps = {
@@ -64,7 +68,9 @@ function VisitorBody({ visitor, pending, onSave, onSplit, onDeleteSample }: Visi
         <Text variant="caption">
           {t('screens.visitors.first-seen', { when: dates.formatFullDate(first) })}
         </Text>
-        <Text variant="caption" className={hasPattern(visitor.pattern) ? 'text-foreground' : undefined}>
+        <Text
+          variant="caption"
+          className={hasPattern(visitor.pattern) ? 'text-foreground' : undefined}>
           {patternLabel(visitor.pattern, dates.formatHour, t)}
         </Text>
         {visitor.category ? (
@@ -80,7 +86,9 @@ function VisitorBody({ visitor, pending, onSave, onSplit, onDeleteSample }: Visi
     </Panel>
   );
 
-  const form = <VisitorProfileForm key={visitor.id} visitor={visitor} saving={pending} onSave={onSave} />;
+  const form = (
+    <VisitorProfileForm key={visitor.id} visitor={visitor} saving={pending} onSave={onSave} />
+  );
   const samples = (
     <VisitorSamplesPanel
       visitor={visitor}
@@ -152,18 +160,26 @@ export default function VisitorDetailScreen() {
           onBack={() => router.back()}
           action={
             detail ? (
-              <AdaptiveMenu
-                options={[{ value: 'delete' as const, label: t('screens.visitors.delete'), icon: 'trash', destructive: true }]}
-                onSelect={() => void remove()}
-                title={label}
-                closeLabel={t('common.close')}
-                trigger={<IconButton icon="more-horizontal" label={t('screens.visitors.actions')} />}
+              <Menu
+                label={t('screens.visitors.actions')}
+                items={[
+                  {
+                    label: t('screens.visitors.delete'),
+                    icon: 'trash',
+                    destructive: true,
+                    confirm: 'by-action',
+                    onPress: remove,
+                  },
+                ]}
               />
             ) : null
           }
         />
       }>
-      <ScrollView className="flex-1" contentContainerClassName="grow pb-6" showsVerticalScrollIndicator={false}>
+      <ScrollView
+        className="flex-1"
+        contentContainerClassName="grow pb-6"
+        showsVerticalScrollIndicator={false}>
         {detail ? (
           <VisitorBody
             visitor={detail}

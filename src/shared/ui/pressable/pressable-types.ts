@@ -3,13 +3,14 @@ import type { StyleProp, ViewStyle } from 'react-native';
 import type { FeedbackKind } from '@/core/types';
 import type { PressScaleKind } from '@/shared/theme';
 
-export type SurfaceRole = 'button' | 'link' | 'switch' | 'checkbox' | 'tab' | 'radio';
+export type SurfaceRole = 'button' | 'link' | 'switch' | 'checkbox' | 'tab' | 'radio' | 'menuitem';
 
 export type SurfaceAccessibility = {
   label: string;
   role: SurfaceRole;
   checked?: boolean | 'mixed';
   selected?: boolean;
+  expanded?: boolean;
   busy?: boolean;
   tabStop?: boolean;
 };

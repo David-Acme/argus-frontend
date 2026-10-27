@@ -42,6 +42,25 @@ export function sheetDetentsOf(
 
 export const sheetScrolls = (detents: readonly SheetDetent[]): boolean => detents[0] !== 'auto';
 
+export type PickerLayout = { rows: number; day: number };
+
+const WHEEL_ROWS = 5;
+
+const WHEEL_ROWS_SHORT = 3;
+
+export function pickerLayoutOf({ heightClass, landscape }: HeightLayout): PickerLayout {
+  const short = heightClass === 'tiny' || landscape;
+  return {
+    rows: short ? WHEEL_ROWS_SHORT : WHEEL_ROWS,
+    day: short ? size.pickerDayShort : size.pickerDay,
+  };
+}
+
+export function usePickerLayout(): PickerLayout {
+  const { width, height } = useWindowDimensions();
+  return pickerLayoutOf(heightLayoutOf({ width, height }));
+}
+
 export type NavBarLayout = {
   bar: number;
   tab: number;
