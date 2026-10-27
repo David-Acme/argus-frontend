@@ -1,3 +1,5 @@
+import type { VoicePurpose } from './voice.type';
+
 export type RtcCallState = 'connecting' | 'connected' | 'reconnecting' | 'disconnected';
 
 export type RtcEndReason = 'local' | 'revoked' | 'replaced' | 'ended' | 'lost';
@@ -58,6 +60,7 @@ export type RtcTokenRequest = {
   callId?: string;
   resume?: boolean;
   watchConversationId?: string;
+  purpose?: VoicePurpose;
 };
 
 export type RtcCallOutcome = 'not-found' | 'taken' | 'expired';

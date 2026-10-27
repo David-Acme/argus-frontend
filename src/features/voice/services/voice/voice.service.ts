@@ -79,6 +79,7 @@ import type {
   RtcTokenRequest,
   VoiceAction,
   VoiceActionOutcome,
+  VoicePurpose,
   VoiceStartOptions,
   VoiceTransport,
   VoiceActionRecord,
@@ -306,6 +307,7 @@ class VoiceService {
       const handled = await this.startRealtime(session, {
         callId: options.callId,
         watchConversationId: options.watchConversationId,
+        ...(options.purpose ? { purpose: options.purpose } : {}),
       }).catch((reason: unknown) => {
         log.error('voice', 'the call could not be answered', reason);
         if (this.isCurrent(session))
@@ -324,7 +326,7 @@ class VoiceService {
       this.fail('RTC_UNAVAILABLE|This device cannot take the camera conversation');
       return;
     }
-    await this.startLegacy(session);
+    await this.startLegacy(session, options.purpose);
   }
 
   completeWatchHandoff(conversationId: string): void {
@@ -546,7 +548,7 @@ class VoiceService {
       this.fail('SOCKET_LOST|Connection to Argus lost', { serverGone: true });
   }
 
-  private async startLegacy(session: number): Promise<void> {
+  private async startLegacy(session: number, purpose?: VoicePurpose): Promise<void> {
     const connected = await synchronizeService.ensureConnected();
     if (!this.isCurrent(session)) return;
     if (!connected) {
@@ -557,6 +559,7 @@ class VoiceService {
     synchronizeService.send(VOICE_START_TYPE, {
       mode: VOICE_MODE_DUPLEX,
       leg: voiceLegOf(IS_NATIVE),
+      ...(purpose ? { purpose } : {}),
     });
     this.serverSession = true;
     this.transport = 'sync';

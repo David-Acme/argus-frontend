@@ -93,8 +93,11 @@ export type CallEndReason = 'answered-ended' | 'missed' | 'declined' | 'claimed-
 
 export type VoiceTransport = 'none' | 'sync' | 'rtc';
 
+export type VoicePurpose = 'onboarding';
+
 export type VoiceStartOptions = {
   callId?: string;
+  purpose?: VoicePurpose;
   reason?: string | null;
   urgency?: RtcCallUrgency | null;
   responseId?: number | null;

@@ -34,6 +34,7 @@ type CallSurfaceProps = {
   liveCameraId?: string | null;
   header?: ReactNode;
   situation?: ReactNode;
+  footnote?: ReactNode;
   endedDurationMs?: number | null;
   onAnswerWaiting?: () => void;
   onDismissWaiting?: () => void;
@@ -60,6 +61,7 @@ export function CallSurface({
   liveCameraId = null,
   header,
   situation,
+  footnote,
   endedDurationMs = null,
   onAnswerWaiting,
   onDismissWaiting,
@@ -129,6 +131,7 @@ export function CallSurface({
           onViewCamera={onViewCamera}
         />
       ) : null}
+      {moment === 'live' && footnote ? <View className="mt-3">{footnote}</View> : null}
       {moment === 'failed' ? (
         <View className="w-full flex-row gap-3">
           <View className="flex-1">
