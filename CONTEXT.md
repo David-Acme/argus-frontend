@@ -5706,7 +5706,11 @@ on right click (Radix also opens it on a touch long press); touch (native)
 gets a sheet list from the same trigger and from a RNGH long press with
 `impactLight`. The context menu's items are given `role="menuitem"` because
 rn-primitives renders them as buttons. `items` is a tuple of at least two, so
-a single-item menu does not type-check (W38).
+a single-item menu does not type-check (W38). From the keyboard, the
+context-menu key or Shift+F10 on the focused row opens the same context menu
+(`opensContextMenu`): the trigger dispatches the `contextmenu` event Radix
+listens for at the row's bottom-left corner, so Inicio's agenda rows and
+Proyectos' task rows are operable without a pointer (WCAG 2.1.1).
 
 **Command.** `useCommand` owns the query and the selection over the groups a
 `source(query)` returns; the component fetches nothing. Free text adds a first

@@ -7,6 +7,7 @@ import './translation-stub';
 const { MenuPreview } = await import('@/shared/ui/menu/menu-row');
 const { Menu } = await import('@/shared/ui/menu/menu');
 const { Menu: NativeMenu } = await import('@/shared/ui/menu/menu.native');
+const { opensContextMenu } = await import('@/shared/ui/menu/menu-keys');
 
 function items(log: string[]): MenuItems {
   return [
@@ -47,6 +48,27 @@ describe('Menu', () => {
       await screen.findByRole('menuitem', { name: 'Marcar como hecho', hidden: true })
     );
     expect(log).toEqual(['done']);
+  });
+
+  test('the context-menu key and Shift+F10 open a context menu, and nothing else does', () => {
+    expect(opensContextMenu({ key: 'ContextMenu', shiftKey: false })).toBe(true);
+    expect(opensContextMenu({ key: 'F10', shiftKey: true })).toBe(true);
+    expect(opensContextMenu({ key: 'F10', shiftKey: false })).toBe(false);
+    expect(opensContextMenu({ key: 'Enter', shiftKey: true })).toBe(false);
+  });
+
+  test('from the keyboard, Shift+F10 on the focused row opens its context menu', async () => {
+    const log: string[] = [];
+    render(
+      <Menu context label="Pagar la luz" items={items(log)}>
+        <button type="button">Pagar la luz</button>
+      </Menu>
+    );
+    const row = screen.getByRole('button', { name: 'Pagar la luz' });
+    row.focus();
+    fireEvent.keyDown(row, { key: 'F10', shiftKey: true });
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Borrar', hidden: true }));
+    expect(log).toEqual(['erase']);
   });
 
   test('on touch the trigger opens the sheet list, and a row closes it before it runs', () => {
