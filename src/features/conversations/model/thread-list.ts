@@ -184,7 +184,7 @@ export const ESTIMATE = {
   bubblePad: 20,
   groupGap: 12,
   day: 40,
-  typing: 52,
+  typing: 40,
   result: 168,
   note: 76,
   charWidth: 7.6,

@@ -364,7 +364,7 @@ describe('the day pill and the size estimate', () => {
       estimatedHeightOf(long as ThreadItem, 360)
     );
     expect(estimatedHeightOf(day as ThreadItem, 360)).toBe(40);
-    expect(estimatedHeightOf(typing as ThreadItem, 360)).toBe(52);
+    expect(estimatedHeightOf(typing as ThreadItem, 360)).toBe(40);
     expect(estimatedItemSizeOf({ items: [], width: 360 })).toBe(72);
   });
 

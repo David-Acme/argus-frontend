@@ -171,6 +171,7 @@ export const chromeSize = {
   threadMax: 760,
   iconMeta: 16,
   bubbleTail: 8,
+  typingDot: 6,
   noteWave: 28,
   noteBar: 3,
   noteWidth: 232,
