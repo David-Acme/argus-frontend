@@ -15,6 +15,7 @@ type ThreadScrollerProps = Pick<
   | 'estimatedItemSize'
   | 'estimatedListSize'
   | 'onViewableItemsChanged'
+  | 'viewabilityConfig'
   | 'recycleItems'
   | 'initialScrollAtEnd'
   | 'alignItemsAtEnd'

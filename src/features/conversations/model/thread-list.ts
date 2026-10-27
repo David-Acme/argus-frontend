@@ -166,9 +166,9 @@ export function stickyKeyboardStep(
 }
 
 export function floatingDayOf(viewable: readonly ThreadItem[]): number | null {
-  const first = viewable.find((item) => item.type === 'message' || item.type === 'day');
-  if (!first || first.type === 'day' || first.type !== 'message') return null;
-  return viewable.some((item) => item.type === 'day' && item.day === first.day) ? null : first.day;
+  if (viewable.some((item) => item.type === 'day')) return null;
+  const first = viewable.find(isMessageItem);
+  return first ? first.day : null;
 }
 
 export type EstimateInput = { items: readonly ThreadItem[]; width: number };

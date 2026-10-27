@@ -66,6 +66,8 @@ const FLOATING_DAY = { position: 'absolute', top: space[2], left: 0, right: 0 } 
 
 const EDGE_SCREENS = 2;
 
+const ANY_PIXEL = { itemVisiblePercentThreshold: 1 } as const;
+
 const keyOf = (item: ThreadItem): string => item.key;
 
 const typeOf = (item: ThreadItem): string =>
@@ -141,6 +143,7 @@ export function ThreadList({ rows, bodies, paging, days, chat, argus }: ThreadLi
         onScroll={thread.onScroll}
         onLoad={onLoad}
         onViewableItemsChanged={onViewable}
+        viewabilityConfig={ANY_PIXEL}
         onStartReachedThreshold={EDGE_SCREENS}
         onEndReachedThreshold={EDGE_SCREENS}
         contentContainerStyle={LIST_CONTENT}

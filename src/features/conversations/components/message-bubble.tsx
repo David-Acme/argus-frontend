@@ -107,39 +107,41 @@ export function MessageBubble({
     <View className={clsx(groupStart ? 'pt-3' : 'pt-1', mine ? 'items-end' : 'items-start')}>
       <View className="flex-row items-center gap-1" style={mine ? MINE : THEIRS}>
         {failed ? <Resend mark={failed} body={message.body} onRetry={onRetry} /> : null}
-        <BubbleFrame items={items} label={label}>
-          <View
-            accessible
-            accessibilityLabel={label}
-            className={clsx(
-              'rounded-control min-w-0 shrink gap-1 px-3 py-2',
-              mine ? 'bg-fill' : 'bg-surface',
-              groupStart && (mine ? 'rounded-tr-none' : 'rounded-tl-none')
-            )}>
-            {groupStart ? (
-              <BubbleTail side={mine ? 'end' : 'start'} fill={mine ? 'fill' : 'surface'} />
-            ) : null}
-            <Quote text={visitor} />
-            <Quote text={reply} />
-            {voiceNote ? (
-              <VoiceNoteBubble
-                note={voiceNote}
-                transcript={message.body}
-                expanded={expanded}
-                onExpand={setExpanded}
-              />
-            ) : null}
-            <View className="flex-row flex-wrap items-end justify-end">
-              {voiceNote ? null : (
-                <View className="min-w-0 shrink">
-                  <Text variant="body">{message.body}</Text>
-                </View>
-              )}
-              <BubbleMeta time={time} note={note} status={status} />
+        <View className="min-w-0 shrink">
+          <BubbleFrame items={items} label={label}>
+            <View
+              accessible
+              accessibilityLabel={label}
+              className={clsx(
+                'rounded-control min-w-0 shrink gap-1 px-3 py-2',
+                mine ? 'bg-fill' : 'bg-surface',
+                groupStart && (mine ? 'rounded-tr-none' : 'rounded-tl-none')
+              )}>
+              {groupStart ? (
+                <BubbleTail side={mine ? 'end' : 'start'} fill={mine ? 'fill' : 'surface'} />
+              ) : null}
+              <Quote text={visitor} />
+              <Quote text={reply} />
+              {voiceNote ? (
+                <VoiceNoteBubble
+                  note={voiceNote}
+                  transcript={message.body}
+                  expanded={expanded}
+                  onExpand={setExpanded}
+                />
+              ) : null}
+              <View className="flex-row flex-wrap items-end justify-end">
+                {voiceNote ? null : (
+                  <View className="min-w-0 shrink">
+                    <Text variant="body">{message.body}</Text>
+                  </View>
+                )}
+                <BubbleMeta time={time} note={note} status={status} />
+              </View>
+              {ask}
             </View>
-            {ask}
-          </View>
-        </BubbleFrame>
+          </BubbleFrame>
+        </View>
       </View>
     </View>
   );

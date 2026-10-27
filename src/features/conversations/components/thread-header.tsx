@@ -72,7 +72,7 @@ export function ThreadHeader({
         <PressableSurface
           a11y={{ label: t('screens.conversations.info', { name: title }), role: 'button' }}
           onPress={onInfo}
-          pressed={{ scale: 'surface' }}
+          pressed={{ scale: 'surface', grow: true }}
           className="min-w-0 flex-1 px-1">
           {identity}
         </PressableSurface>

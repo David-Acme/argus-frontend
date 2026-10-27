@@ -325,14 +325,15 @@ describe('the composer after the keyboard', () => {
 });
 
 describe('the day pill and the size estimate', () => {
-  test('the pill floats with the day of the first visible line, and hides when its own separator shows', () => {
+  test('the pill floats with the day of the first visible line, and hides while any separator shows', () => {
     const items = threadItems({
       rows: [message({ id: '1' }), message({ id: '2', createdAt: T0 + DAY })],
       startOfDay,
       typing: false,
     });
     const [firstDay, first, secondDay, second] = items as ThreadItem[];
-    expect(floatingDayOf([first as ThreadItem, secondDay as ThreadItem])).toBe(startOfDay(T0));
+    expect(floatingDayOf([first as ThreadItem])).toBe(startOfDay(T0));
+    expect(floatingDayOf([first as ThreadItem, secondDay as ThreadItem])).toBeNull();
     expect(floatingDayOf([firstDay as ThreadItem, first as ThreadItem])).toBeNull();
     expect(floatingDayOf([secondDay as ThreadItem, second as ThreadItem])).toBeNull();
     expect(floatingDayOf([])).toBeNull();
