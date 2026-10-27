@@ -49,6 +49,8 @@ const control = async (url: URL, request: Request): Promise<Response> => {
     case '/__e2e/refuse':
       argus.refuse(device, Number(url.searchParams.get('ms') ?? 0));
       return Response.json({ refused: device });
+    case '/__e2e/down':
+      return Response.json({ dropped: argus.down(device, Number(url.searchParams.get('ms') ?? 0)) });
     case '/__e2e/connected':
       return Response.json({ connected: argus.connected(device) });
     case '/__e2e/rows':

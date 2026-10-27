@@ -81,6 +81,7 @@ export class FakeArgus {
   private readonly tables = new Map<string, Row[]>();
   private readonly sockets = new Set<DeviceSocket>();
   private readonly refusedUntil = new Map<string, number>();
+  private readonly downUntil = new Map<string, number>();
   private readonly routes = new Map<string, RouteSpec>();
   private readonly enabled: Record<string, boolean> = {};
   private contextPatch: Record<string, unknown> = {};
@@ -96,6 +97,7 @@ export class FakeArgus {
   reset(): void {
     this.routes.clear();
     this.refusedUntil.clear();
+    this.downUntil.clear();
     for (const key of Object.keys(this.enabled)) delete this.enabled[key];
     this.contextPatch = {};
     this.requests.length = 0;
@@ -116,7 +118,11 @@ export class FakeArgus {
   }
 
   accepts(device: string): boolean {
-    return (this.refusedUntil.get(device) ?? 0) <= Date.now();
+    return (this.refusedUntil.get(device) ?? 0) <= Date.now() && !this.isDown(device);
+  }
+
+  private isDown(device: string): boolean {
+    return (this.downUntil.get(device) ?? 0) > Date.now();
   }
 
   open(socket: DeviceSocket): void {
@@ -226,6 +232,11 @@ export class FakeArgus {
     this.refusedUntil.set(device, Date.now() + ms);
   }
 
+  down(device: string, ms: number): number {
+    this.downUntil.set(device, Date.now() + ms);
+    return this.drop(device);
+  }
+
   connected(device: string): number {
     return [...this.sockets].filter((socket) => socket.data.device === device).length;
   }
@@ -238,6 +249,7 @@ export class FakeArgus {
     const line = `${method} ${path}${device ? ` @${device}` : ''}`;
     this.requests.push(line);
     if (body) this.bodies[line] = body;
+    if (this.isDown(device)) return envelope(503, null, { code: 'SERVICE_UNAVAILABLE', message: 'the e2e backend is down' });
     const bare = path.split('?')[0] ?? path;
     const spec =
       this.routes.get(this.key(method, path, device)) ??
