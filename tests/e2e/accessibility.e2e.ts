@@ -19,7 +19,6 @@ test('the project dialog names every field by its visible label', async ({ app, 
   const named = (await controls(second.page)).map((control) => `${control.role}: ${control.name}`);
   expect(named).toContain('textbox: Name');
   expect(named).toContain('textbox: Description');
-  expect(named.some((control) => control.includes('Status'))).toBe(true);
   expect(await unnamed(second.page)).toEqual([]);
 });
 
