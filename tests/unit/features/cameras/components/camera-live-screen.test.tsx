@@ -25,6 +25,8 @@ let view: CameraLive | null = liveView();
 
 let clips: CameraClipsState;
 
+const HOLD_WAIT_MS = 300;
+
 mock.module('expo-router', () => ({
   Redirect: ({ href }: { href: string }) => <span data-testid="redirect">{href}</span>,
   useLocalSearchParams: () => ({ id: '3' }),
@@ -206,14 +208,16 @@ describe('the live camera screen', () => {
     expect(calls).toEqual(['ptz:true', 'sound', 'fullscreen:true']);
   });
 
-  test('the hold button reports its press and release, Llamar opens a call', () => {
+  test('a tap on the talk button toggles, a hold reports its start and end, Llamar opens a call', async () => {
     clips = clipsState(0);
     render(<CameraLiveScreen />);
     const hold = screen.getByRole('button', { name: 'Mantén para hablar por la cámara' });
-    fireEvent.keyDown(hold, { key: 'Enter' });
-    fireEvent.keyUp(hold, { key: 'Enter' });
+    fireEvent.click(hold);
+    fireEvent.mouseDown(hold, { button: 0 });
+    await act(() => Bun.sleep(HOLD_WAIT_MS));
+    fireEvent.mouseUp(hold, { button: 0 });
     fireEvent.click(screen.getByRole('button', { name: 'Llamar' }));
-    expect(calls).toEqual(['hold-start', 'hold-stop', 'start:call']);
+    expect(calls).toEqual(['tap', 'hold-start', 'hold-stop', 'start:call']);
   });
 });
 
@@ -372,11 +376,18 @@ describe('moving the camera', () => {
   test('the pad steps on a tap, in four directions', () => {
     render(<PtzPad ptz={ptzControls} />);
     for (const name of ['Arriba', 'Izquierda', 'Derecha', 'Abajo']) {
-      const button = screen.getByRole('button', { name });
-      fireEvent.keyDown(button, { key: 'Enter' });
-      fireEvent.keyUp(button, { key: 'Enter' });
+      fireEvent.click(screen.getByRole('button', { name }));
     }
     expect(calls).toEqual(['step:up', 'step:left', 'step:right', 'step:down']);
+  });
+
+  test('holding a pad button moves until it is let go', async () => {
+    render(<PtzPad ptz={ptzControls} />);
+    const button = screen.getByRole('button', { name: 'Arriba' });
+    fireEvent.mouseDown(button, { button: 0 });
+    await act(() => Bun.sleep(HOLD_WAIT_MS));
+    fireEvent.mouseUp(button, { button: 0 });
+    expect(calls).toEqual(['hold:up', 'hold-end']);
   });
 
   test('while steering, the notices name who holds the camera and the saved positions', () => {

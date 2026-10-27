@@ -1,13 +1,13 @@
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import type { GestureResponderEvent, View } from 'react-native';
-import { feedback } from '@/shared/theme';
+import { feedback, motion } from '@/shared/theme';
 import type { NavVoice } from './nav-types';
 
 export type ListenMode = 'off' | 'hold' | 'toggle';
 
 type Rect = { x: number; y: number; width: number; height: number };
 
-export const HOLD_DELAY = 220;
+export const HOLD_DELAY = motion.hold.talk;
 
 export const SLIDE_SLOP = 24;
 

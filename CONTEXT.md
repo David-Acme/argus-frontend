@@ -7235,8 +7235,18 @@ Controls that cannot apply are hidden, never disabled (W17), and
 `talkNoteOf` says in words why talk is missing. A camera the sync row reports
 offline shows «La cámara no responde» with Reintentar before the stream even
 answers; a painted picture wins over that row. `model/talk-dock.ts` holds the
-hold-to-talk reducer: a press shorter than 300 ms latches talking until the
-next tap, which is the tap alternative of rule 25.
+hold-to-talk reducer over four events: a hold talks until it is released, a tap
+latches talking until the next tap (the tap alternative of rule 25), and
+leaving the screen always stops. The phone run (finding #1) found the old
+reducer, which read any press-out under 300 ms as a tap, latched the camera
+talk when a scroll started on the button: the scroll's cancel looked like a
+tap. `PressableSurface`'s `hold` now separates the two at the gesture: on
+native it is an RNGH `Pan` that activates only after `motion.hold.talk`
+(220 ms) without moving past the touch slop, so a scroll fails it, and once
+active the gesture handler owns the touch, so the scroll view cannot take it;
+its `onEnd` fires on release and on cancel. A tap is a separate `Tap` bounded
+by `motion.hold.slop`. On web the same contract is `onLongPress` after the
+same delay. The PTZ pad uses the same contract (a tap steps, a hold moves).
 
 **The stage says its state; no words for connecting.** `CameraLiveView`
 takes `onStatus`, and when it is given the view stops drawing its old status

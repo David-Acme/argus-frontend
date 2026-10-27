@@ -125,6 +125,7 @@ export function dockOf(overrides: Partial<TalkDock> = {}): TalkDock {
     trouble: null,
     silencesLive: false,
     hold: { onStart: note('hold-start'), onEnd: note('hold-stop') },
+    tap: note('tap'),
     ...overrides,
   };
 }

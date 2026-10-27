@@ -40,7 +40,7 @@ mock.module('react-native-gesture-handler', async () => {
   return {
     Pressable: web.Pressable,
     ScrollView: web.ScrollView,
-    Gesture: { LongPress: chain, Pan: chain },
+    Gesture: { LongPress: chain, Pan: chain, Tap: chain, Exclusive: chain },
     GestureDetector: ({ children }: { children: ReactNode }) => children,
   };
 });

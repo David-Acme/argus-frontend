@@ -1,39 +1,39 @@
 import { describe, expect, test } from 'bun:test';
 import {
-  IDLE_HOLD,
-  TAP_MS,
   callTroubleOf,
   dockPhase,
   holdReducer,
   holdTalking,
   litBars,
 } from '@/features/cameras/model/talk-dock';
-import type { HoldState } from '@/features/cameras/model/talk-dock';
+import type { HoldEvent, HoldPhase } from '@/features/cameras/model/talk-dock';
 
-const steps = (events: readonly ['down' | 'up', number][]): HoldState =>
-  events.reduce((state, [kind, at]) => holdReducer(state, { kind, at }), IDLE_HOLD);
+const steps = (events: readonly HoldEvent[]): HoldPhase => events.reduce(holdReducer, 'idle');
 
 describe('hold to talk, with a tap alternative', () => {
   test('holding talks and letting go stops', () => {
-    const held = steps([['down', 0]]);
-    expect(holdTalking(held)).toBe(true);
-    expect(holdTalking(holdReducer(held, { kind: 'up', at: TAP_MS + 1 }))).toBe(false);
+    expect(holdTalking(steps(['hold']))).toBe(true);
+    expect(holdTalking(steps(['hold', 'release']))).toBe(false);
   });
 
   test('a tap latches talking until the next tap', () => {
-    const latched = steps([
-      ['down', 0],
-      ['up', 120],
-    ]);
-    expect(latched.phase).toBe('latched');
-    expect(holdTalking(latched)).toBe(true);
-    const stopping = holdReducer(latched, { kind: 'down', at: 2000 });
-    expect(holdTalking(stopping)).toBe(false);
-    expect(holdReducer(stopping, { kind: 'up', at: 2100 })).toEqual(IDLE_HOLD);
+    expect(steps(['tap'])).toBe('latched');
+    expect(holdTalking(steps(['tap']))).toBe(true);
+    expect(steps(['tap', 'tap'])).toBe('idle');
   });
 
-  test('a stray release changes nothing', () => {
-    expect(holdReducer(IDLE_HOLD, { kind: 'up', at: 10 })).toBe(IDLE_HOLD);
+  test('a press a scroll took never talks, and a release alone changes nothing', () => {
+    expect(steps(['release'])).toBe('idle');
+    expect(steps(['tap', 'release'])).toBe('latched');
+  });
+
+  test('a hold over a latched talk ends it on release', () => {
+    expect(steps(['tap', 'hold', 'release'])).toBe('idle');
+  });
+
+  test('leaving the screen always stops talking', () => {
+    expect(steps(['tap', 'leave'])).toBe('idle');
+    expect(steps(['hold', 'leave'])).toBe('idle');
   });
 });
 

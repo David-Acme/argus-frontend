@@ -29,21 +29,21 @@ const ORIGIN = { transformOrigin: 'left' } as const;
 const COMPACT_SLOP = (size.target - size.targetMin) / 2;
 
 function tick(step: number) {
-  feedback(step >= motion.holdTicks ? 'warning' : 'selection');
+  feedback(step >= motion.hold.ticks ? 'warning' : 'selection');
 }
 
 function useHoldProgress(onDone: () => void) {
   const progress = useSharedValue(0);
   const fill = useAnimatedStyle(() => ({ transform: [{ scaleX: progress.get() }] }));
   useAnimatedReaction(
-    () => Math.floor(progress.get() * motion.holdTicks),
+    () => Math.floor(progress.get() * motion.hold.ticks),
     (step, previous) => {
       if (previous !== null && step > previous && step > 0) scheduleOnRN(tick, step);
     }
   );
   const start = () =>
     progress.set(
-      withTiming(1, { duration: motion.holdConfirm }, (finished) => {
+      withTiming(1, { duration: motion.hold.confirm }, (finished) => {
         if (finished) scheduleOnRN(onDone);
       })
     );

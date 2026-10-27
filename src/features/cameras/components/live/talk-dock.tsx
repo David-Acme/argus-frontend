@@ -50,6 +50,7 @@ function TalkButton({ dock, compact }: TalkButtonProps) {
         selected: dock.phase === 'talking',
       }}
       hold={dock.hold}
+      onPress={dock.tap}
       pressed={{ scale: 'surface' }}
       className={clsx(
         frame,
