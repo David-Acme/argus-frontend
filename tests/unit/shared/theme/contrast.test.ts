@@ -6,6 +6,7 @@ type Pair = { fg: ColorRole; bg: ColorRole; min: number };
 
 const TEXT = 4.5;
 const GRAPHIC = 3;
+const OWN_APART = 1.35;
 
 const TEXT_ROLES: readonly ColorRole[] = [
   'text',
@@ -40,6 +41,9 @@ const PAIRS: readonly Pair[] = [
   { fg: 'receipt-read', bg: 'fill', min: GRAPHIC },
   { fg: 'receipt-read', bg: 'surface', min: GRAPHIC },
   { fg: 'text-2', bg: 'fill', min: GRAPHIC },
+  { fg: 'text', bg: 'bubble-own', min: TEXT },
+  { fg: 'text-2', bg: 'bubble-own', min: TEXT },
+  { fg: 'receipt-read', bg: 'bubble-own', min: GRAPHIC },
 ];
 
 type Exception = { ratio: number; where: string };
@@ -117,6 +121,13 @@ describe('token contrast', () => {
     );
     expect(Object.keys(KNOWN).filter((key) => !measuredKeys.has(key))).toEqual([]);
   });
+
+  for (const theme of themeNames) {
+    test(`${theme} own bubbles read apart from Argus's at a glance`, () => {
+      const own = ratio(theme, { fg: 'bubble-own', bg: 'surface', min: OWN_APART });
+      expect(own).toBeGreaterThanOrEqual(OWN_APART);
+    });
+  }
 
   for (const theme of themeNames) {
     for (const pair of PAIRS) {

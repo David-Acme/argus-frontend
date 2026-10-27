@@ -530,6 +530,7 @@
       --color-ev4-bar: oklch(0.6437 0.1133 24.09);
       --color-on-media: oklch(1.0000 0 0);
       --color-receipt-read: oklch(0.5160 0.1161 252.02);
+      --color-bubble-own: oklch(0.8870 0.0460 84.56);
     }
 
     @variant dark {
@@ -574,6 +575,7 @@
       --color-ev4-bar: oklch(0.6437 0.1133 24.09);
       --color-on-media: oklch(1.0000 0 0);
       --color-receipt-read: oklch(0.7441 0.0969 252.39);
+      --color-bubble-own: oklch(0.3671 0.0428 82.99);
     }
   }
 }

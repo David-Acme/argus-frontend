@@ -7795,7 +7795,7 @@ suggestion chips over the field and the microphone as tap-to-talk.
   older global confirm is gone from the clear). Tapping Argus on a phone opens
   `ArgusInfo` (Conversaciones, what Argus did, En casa). A member thread has
   the same header, with «escribiendo…» from its Typing frames.
-- **Bubbles** (`message-bubble.tsx`): mine on `fill`, theirs on `surface`, a
+- **Bubbles** (`message-bubble.tsx`): mine on `bubble-own`, theirs on `surface`, a
   tail on the first of a group (`BubbleTail`), 4 apart inside a group and 12
   between groups. A bubble hugs its content up to 78 % of the thread: the
   text is one start-aligned run that ends in a clear reserve as wide as the
@@ -7817,8 +7817,8 @@ suggestion chips over the field and the microphone as tap-to-talk.
   suggestion chips are only in the empty thread.
 - **Ticks** (`model/receipts.ts`): member rows read `receipt` (sent ✓,
   delivered ✓✓, read blue ✓✓ in `receipt-read`, a colour role measured at 3:1
-  on `fill`; blue on `ink` stays under 3:1 in both themes, which is why my
-  bubbles are `fill`, not `ink`); a row from before the receipts reads its
+  on `fill` and `bubble-own`; blue on `ink` stays under 3:1 in both themes,
+  which is why my bubbles are never `ink`); a row from before the receipts reads its
   relay state. A typed turn to Argus reads its chat entry: the clock while
   sending, ✓✓ once a Typing frame carries its `clientId`, blue ✓✓ on
   `voice:text_done`, and the resend icon on `voice:text_error` or a session
@@ -7828,6 +7828,12 @@ suggestion chips over the field and the microphone as tap-to-talk.
   theirs, up to that id (`useDeliveryReports`, from the summaries, app-wide
   through `useConversationRuntime`); read with `upToId` while the thread is
   focused (`useReadReports`).
+- **Own bubbles** (phone run 2 #4): `bubble-own` is an accent-tinted flat
+  surface (light `#E8D8B8`, dark `#4A3D24`), so whose line is whose reads at a
+  glance against Argus's `surface` (1.41:1 light, 1.49:1 dark between the two
+  surfaces; `fill` was 1.27 and 1.16). On it, measured in `contrast.test.ts`:
+  body text 12.88 (light) and 9.25 (dark), the time in `text-2` 5.49 and
+  6.60, the blue read ticks 3.99 and 4.68.
 - **Thinking** is a compact bubble like a one-line one (the same radius and
   tail, 28 high, three 6 dots, `size.typingDot`), with no Estela beside it:
   «escribiendo…» and Estela are in the header (phone run 2 #8).

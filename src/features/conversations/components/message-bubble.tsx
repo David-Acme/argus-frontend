@@ -135,11 +135,11 @@ export function MessageBubble({
               accessibilityLabel={label}
               className={clsx(
                 'rounded-control min-w-0 shrink gap-1 px-3 py-2',
-                mine ? 'bg-fill' : 'bg-surface',
+                mine ? 'bg-bubble-own' : 'bg-surface',
                 groupStart && (mine ? 'rounded-tr-none' : 'rounded-tl-none')
               )}>
               {groupStart ? (
-                <BubbleTail side={mine ? 'end' : 'start'} fill={mine ? 'fill' : 'surface'} />
+                <BubbleTail side={mine ? 'end' : 'start'} fill={mine ? 'bubble-own' : 'surface'} />
               ) : null}
               <Quote text={visitor} />
               <Quote text={reply} />
