@@ -8,52 +8,56 @@ import { Text } from '@/shared/ui/text';
 import { NOTE_WAVE_WIDTH, NoteWave } from '@/features/conversations/components/note-wave';
 import { useNotePlayback } from '@/features/conversations/hooks/use-note-playback';
 import {
+  nextTranscriptView,
   noteClock,
   TRANSCRIPT_LINES,
-  transcriptFolds,
+  type TranscriptView,
 } from '@/features/conversations/model/voice-note';
 
 export type VoiceNoteBubbleProps = {
   note: ConversationVoiceNote;
   transcript: string;
-  expanded: boolean;
-  onExpand: (expanded: boolean) => void;
+  view: TranscriptView;
+  onView: (view: TranscriptView) => void;
 };
 
 const NOTE_BODY = { width: size.wellSmall + space[2] + NOTE_WAVE_WIDTH } as const;
 
-type TranscriptProps = {
-  transcript: string;
-  expanded: boolean;
-  onExpand: (expanded: boolean) => void;
-};
+type TranscriptProps = Omit<VoiceNoteBubbleProps, 'note'>;
 
-function Transcript({ transcript, expanded, onExpand }: TranscriptProps) {
+const TOGGLE_LABELS = {
+  hidden: 'screens.conversations.note.show-transcript',
+  folded: 'screens.conversations.note.more',
+  whole: 'screens.conversations.note.hide-transcript',
+} as const;
+
+function Transcript({ transcript, view, onView }: TranscriptProps) {
   const { t } = useTranslation();
   if (transcript.trim().length === 0) return null;
-  const toggle = expanded
-    ? t('screens.conversations.note.less')
-    : t('screens.conversations.note.more');
+  const toggle = t(TOGGLE_LABELS[view]);
   return (
     <View className="gap-1">
-      <Text variant="meta" tone="2" numberOfLines={expanded ? undefined : TRANSCRIPT_LINES}>
-        {transcript}
-      </Text>
-      {transcriptFolds(transcript) ? (
-        <PressableSurface
-          a11y={{ label: toggle, role: 'button' }}
-          onPress={() => onExpand(!expanded)}
-          className="self-start">
-          <Text variant="caption" tone="accent">
-            {toggle}
-          </Text>
-        </PressableSurface>
-      ) : null}
+      {view === 'hidden' ? null : (
+        <Text
+          variant="meta"
+          tone="2"
+          numberOfLines={view === 'folded' ? TRANSCRIPT_LINES : undefined}>
+          {transcript}
+        </Text>
+      )}
+      <PressableSurface
+        a11y={{ label: toggle, role: 'button' }}
+        onPress={() => onView(nextTranscriptView(view, transcript))}
+        className="self-start">
+        <Text variant="caption" tone="accent">
+          {toggle}
+        </Text>
+      </PressableSurface>
     </View>
   );
 }
 
-export function VoiceNoteBubble({ note, transcript, expanded, onExpand }: VoiceNoteBubbleProps) {
+export function VoiceNoteBubble({ note, transcript, view, onView }: VoiceNoteBubbleProps) {
   const { t } = useTranslation();
   const playback = useNotePlayback(note.id);
   const stored = note.id.length > 0;
@@ -99,7 +103,7 @@ export function VoiceNoteBubble({ note, transcript, expanded, onExpand }: VoiceN
           </View>
         </View>
       </View>
-      <Transcript transcript={transcript} expanded={expanded} onExpand={onExpand} />
+      <Transcript transcript={transcript} view={view} onView={onView} />
     </View>
   );
 }

@@ -540,7 +540,7 @@ describe('the pieces of a thread', () => {
     expect(screen.getAllByText(/^Por la cámara · /).length).toBeGreaterThan(0);
   });
 
-  test('a voice note plays from its bubble and shows a short transcript whole', async () => {
+  test('a voice note plays from its bubble and keeps a short transcript hidden until asked', async () => {
     await show(
       <MessageBubble
         message={message('3', {
@@ -553,14 +553,18 @@ describe('the pieces of a thread', () => {
         status="delivered"
       />
     );
-    expect(screen.getByText('Compra pan')).toBeDefined();
+    expect(screen.queryByText('Compra pan')).toBeNull();
     expect(screen.getByText('0:12')).toBeDefined();
+    fireEvent.click(screen.getByRole('button', { name: 'Ver transcripción' }));
+    expect(screen.getByText('Compra pan')).toBeDefined();
     expect(screen.queryByRole('button', { name: 'Ver más' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Ocultar transcripción' }));
+    expect(screen.queryByText('Compra pan')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: /^Reproducir la nota de voz/ }));
     expect(calls).toEqual([`play ${NOTE.id}`]);
   });
 
-  test('a long transcript starts folded to two lines and opens with «Ver más»', async () => {
+  test('a long transcript opens folded to two lines, then whole with «Ver más», then hides', async () => {
     const body =
       'Hola, Argus, quería saber qué tengo pendiente para mañana por la tarde y el jueves.';
     await show(
@@ -571,10 +575,13 @@ describe('the pieces of a thread', () => {
       />
     );
     const clamped = () => screen.getByText(body).className.includes('WebkitBoxOrient');
+    expect(screen.queryByText(body)).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Ver transcripción' }));
     expect(clamped()).toBe(true);
     fireEvent.click(screen.getByRole('button', { name: 'Ver más' }));
     expect(clamped()).toBe(false);
-    expect(screen.getByRole('button', { name: 'Ver menos' })).toBeDefined();
+    fireEvent.click(screen.getByRole('button', { name: 'Ocultar transcripción' }));
+    expect(screen.queryByText(body)).toBeNull();
   });
 
   test('a bubble opens its actions: copy or share, and Eliminar para mí last behind a confirm', async () => {
