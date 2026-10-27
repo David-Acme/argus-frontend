@@ -105,6 +105,8 @@ const TextScale = createContext(1);
 
 export const TextScaleProvider = TextScale.Provider;
 
+const CLEAR_INK = { color: 'transparent' } as const;
+
 const MEDIA_SHADOW = {
   textShadowColor: illustration.mediaTextShadow.color,
   textShadowOffset: { width: 0, height: illustration.mediaTextShadow.offsetY },
@@ -140,8 +142,8 @@ export function ClearText({ variant, children }: ClearTextProps) {
     <NativeText
       aria-hidden
       maxFontSizeMultiplier={SPECS[variant].maxScale}
-      style={style}
-      className={clsx('web:font-system text-transparent', VARIANT_CLASS[variant])}>
+      style={style ? [style, CLEAR_INK] : CLEAR_INK}
+      className={clsx('web:font-system', VARIANT_CLASS[variant])}>
       {children}
     </NativeText>
   );
