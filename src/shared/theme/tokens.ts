@@ -281,6 +281,7 @@ export const layout = {
   mediaGridThree: 560,
   mediaGridFour: 1400,
   bandMax: 2256,
+  laneListCap: 440,
 } as const;
 
 export const tokens = {

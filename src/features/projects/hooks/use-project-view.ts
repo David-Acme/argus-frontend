@@ -1,5 +1,8 @@
 import type { IProjectCacheRow } from '@/core/interfaces';
 import { useAuthStore } from '@/core/stores';
+import type { DashboardProjectCard } from '@/core/types';
+import { VIEW_CACHE_KEYS } from '@/shared/constants';
+import { useViewCacheRows } from '@/shared/hooks/use-cached-rows';
 import { useCapabilities } from '@/shared/hooks/use-capabilities';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { peopleAccessOf } from '@/shared/libs/capabilities';
@@ -26,9 +29,14 @@ export type ProjectView = {
 
 export type ProjectSummary = { line: string; progress: TaskProgress };
 
+const NO_PROGRESS: TaskProgress = { done: 0, total: 0 };
+
 export function useProjectSummary(project: IProjectCacheRow): ProjectSummary {
   const { t } = useTranslation();
-  const { progress } = useProjectTasks(project.id);
+  const card = useViewCacheRows<DashboardProjectCard>(VIEW_CACHE_KEYS.dashboardProjects).find(
+    (candidate) => candidate.id === project.id
+  );
+  const progress = card ? { done: card.done, total: card.total } : NO_PROGRESS;
   const { rows } = useProjectMembers(project.id);
   return {
     line: projectLine(

@@ -118,7 +118,6 @@ src/core/services/view-cache/camera.projection.ts
 src/core/services/view-cache/conversation.projection.ts
 src/core/services/view-cache/module-source-gate.ts
 src/core/services/view-cache/notification.projection.ts
-src/core/services/view-cache/project.projection.ts
 src/core/services/view-cache/projection.ts
 src/core/services/view-cache/summary.projection.ts
 src/core/services/zone.service.ts

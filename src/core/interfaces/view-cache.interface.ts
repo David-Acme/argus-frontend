@@ -91,6 +91,19 @@ export interface IProjectTaskCacheRow {
   createdVia?: CreatedVia;
 }
 
+export interface IProjectTasksPage {
+  rows: readonly IProjectTaskCacheRow[];
+  hasMore: boolean;
+  open: readonly IProjectTaskCacheRow[];
+  doneTotal: number;
+  progress: { done: number; total: number };
+}
+
+export interface IWeekTaskCounts {
+  done: number;
+  pending: number;
+}
+
 export interface IPeopleDirectoryCacheRow {
   id: string;
   name: string;

@@ -34,8 +34,17 @@ export function laneOf(status: string): TaskLaneKey {
 export function groupTasksByLane(tasks: readonly IProjectTaskCacheRow[]): TaskLanes {
   const lanes: TaskLanes = { todo: [], doing: [], done: [] };
   for (const task of tasks) lanes[laneOf(task.status)].push(task);
-  for (const lane of Object.values(lanes)) lane.sort(byLaneOrder);
+  lanes.todo.sort(byLaneOrder);
+  lanes.doing.sort(byLaneOrder);
   return lanes;
+}
+
+export function projectTaskRows(
+  open: readonly IProjectTaskCacheRow[],
+  done: readonly IProjectTaskCacheRow[]
+): IProjectTaskCacheRow[] {
+  const seen = new Set(open.map((task) => task.id));
+  return [...open, ...done.filter((task) => !seen.has(task.id))];
 }
 
 export function statusForLane(lane: TaskLaneKey, current: ProjectTaskStatus): ProjectTaskStatus {
