@@ -147,7 +147,7 @@ export const elevation: Record<
     ...chromeElevation.light,
   },
   dark: {
-    card: 'inset 0px 1px 0px 0px rgba(255,255,255,0.035), 0px 10px 30px 0px rgba(0,0,0,0.25)',
+    card: '0px 0px 0px 1px #2D2A25, 0px 10px 30px 0px rgba(0,0,0,0.25)',
     float: '0px 1px 2px 0px rgba(0,0,0,0.4), 0px 12px 34px 0px rgba(0,0,0,0.55)',
     thumb: '0px 1px 3px 0px rgba(0,0,0,0.3)',
     glass: 'inset 0px 0px 0px 1px rgba(255,255,255,0.08), 0px 1px 2px 0px rgba(255,255,255,0.06)',

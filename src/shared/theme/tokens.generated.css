@@ -18,9 +18,9 @@
   --radius-status: 26px;
   --radius-sheet: 28px;
   --radius-meter: 3px;
-  --spacing-row-x: 18px;
+  --spacing-row-x: 16px;
   --spacing-row-y: 10px;
-  --spacing-row-gap: 14px;
+  --spacing-row-gap: 12px;
   --spacing-row-trail-gap: 6px;
   --spacing-row-meta-gap: 1px;
   --spacing-button-x: 18px;
@@ -29,7 +29,7 @@
   --spacing-chip-x: 10px;
   --spacing-chip-stat-x: 11px;
   --spacing-chip-gap: 5px;
-  --spacing-section-top: 26px;
+  --spacing-section-top: 24px;
   --spacing-section-head-x: 4px;
   --spacing-section-head-bottom: 10px;
   --spacing-section-head-gap: 12px;
@@ -92,7 +92,7 @@
   --spacing-banner-x: 14px;
   --spacing-banner-y: 10px;
   --spacing-banner-gap: 10px;
-  --spacing-feed-x: 18px;
+  --spacing-feed-x: 16px;
   --spacing-feed-y: 2px;
   --spacing-feed-item-y: 14px;
   --spacing-feed-gap: 12px;
