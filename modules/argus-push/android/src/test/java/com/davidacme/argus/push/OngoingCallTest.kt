@@ -2,6 +2,7 @@ package com.davidacme.argus.push
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class OngoingCallTest {
@@ -119,7 +120,48 @@ class OngoingCallTest {
         val actions = ongoingCallActions(ongoingCallCopy(spanish = true), CallControlState(speakerOn = false, muted = false), OngoingCallStyle.Plain)
         assertEquals(actions.size, actions.map { it.icon }.toSet().size)
         val reason = ongoingActionsTrace(actions, OngoingCallStyle.Call)
-        assertEquals("actions-3-own-icons-call-style-default-color", reason)
+        assertEquals("actions-3-own-icons-call-style-tinted-3", reason)
         assertEquals("trace ongoing outcome=shown reason=$reason", NativeTrace.line("ongoing", "shown", reason))
+    }
+
+    @Test
+    fun theCallStylePillsCarryTheirOwnFillSoOneUiNeverPaintsWhiteOnWhite() {
+        assertEquals(CallPalette.STAGE.control, ongoingActionTint(OngoingCallAction.Mute, OngoingCallStyle.Call))
+        assertEquals(CallPalette.STAGE.control, ongoingActionTint(OngoingCallAction.Speaker, OngoingCallStyle.Call))
+        assertEquals(CallPalette.STAGE.decline, ongoingActionTint(OngoingCallAction.HangUp, OngoingCallStyle.Call))
+    }
+
+    @Test
+    fun thePlainNotificationLeavesMuteAndSpeakerToTheSystemAndKeepsColgarRed() {
+        assertNull(ongoingActionTint(OngoingCallAction.Mute, OngoingCallStyle.Plain))
+        assertNull(ongoingActionTint(OngoingCallAction.Speaker, OngoingCallStyle.Plain))
+        assertEquals(CallPalette.STAGE.decline, ongoingActionTint(OngoingCallAction.HangUp, OngoingCallStyle.Plain))
+    }
+
+    @Test
+    fun thePillColourReadsAsAFillUnderWhiteWordsAndAsWordsOnAWhitePill() {
+        val control = CallPalette.STAGE.control
+        assertTrue(contrast(WHITE, control) >= 4.5)
+        assertTrue(contrast(control, WHITE) >= 4.5)
+        assertTrue(contrast(control, ONE_UI_DARK_CARD) >= 1.3)
+    }
+
+    private fun contrast(foreground: Int, background: Int): Double {
+        val a = luminance(foreground)
+        val b = luminance(background)
+        return (maxOf(a, b) + 0.05) / (minOf(a, b) + 0.05)
+    }
+
+    private fun luminance(color: Int): Double {
+        val channels = listOf((color shr 16) and 0xFF, (color shr 8) and 0xFF, color and 0xFF).map { value ->
+            val c = value / 255.0
+            if (c <= 0.03928) c / 12.92 else Math.pow((c + 0.055) / 1.055, 2.4)
+        }
+        return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2]
+    }
+
+    private companion object {
+        val WHITE = 0xFFFFFFFF.toInt()
+        val ONE_UI_DARK_CARD = 0xFF2A2A2A.toInt()
     }
 }

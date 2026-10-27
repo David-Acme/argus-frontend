@@ -75,11 +75,6 @@ export const projects = {
     'read-only': 'Aquí verás los proyectos que compartan contigo.',
     'tasks-body': 'Añade la primera o pídesela a Argus.',
     'tasks-read-only': 'Aquí verás las tareas de este proyecto.',
-    'ideas-title': 'Prueba a decirle',
-    'idea-move': 'Crea el proyecto Mudanza',
-    'idea-party': 'Organiza el cumpleaños de mamá',
-    'idea-task': 'Añade «Comprar cajas» a {name}',
-    'idea-split': 'Divide {name} en tareas',
   },
   guide: {
     title: 'Así funcionan los proyectos',

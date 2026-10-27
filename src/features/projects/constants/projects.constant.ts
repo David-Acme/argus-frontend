@@ -36,11 +36,6 @@ export const TASK_TITLE_MAX = 160;
 
 export const NAMES_SHOWN = 2;
 
-export const PROJECT_IDEAS: readonly TranslationKey[] = [
-  'screens.projects.empty.idea-move',
-  'screens.projects.empty.idea-party',
-];
-
 export const LANE_LABEL: Record<TaskLaneKey, TranslationKey> = {
   todo: 'screens.projects.lane.todo',
   doing: 'screens.projects.lane.doing',

@@ -9,7 +9,7 @@ import {
   noteFileOf,
   noteMimeOf,
   progressOf,
-  withLevel,
+  transcriptFolds,
 } from '@/features/conversations/model/voice-note';
 
 describe('a recorded voice note', () => {
@@ -44,11 +44,10 @@ describe('a recorded voice note', () => {
     expect(keepsNote(300, 300)).toBe(true);
   });
 
-  test('the live level comes from decibels and the live wave keeps the newest bars', () => {
+  test('the live level comes from decibels', () => {
     expect(levelOfDecibels(-60)).toBe(0);
     expect(levelOfDecibels(0)).toBe(1);
     expect(levelOfDecibels(undefined)).toBe(0);
-    expect(withLevel([0.1, 0.2, 0.3], 0.4, 3)).toEqual([0.2, 0.3, 0.4]);
   });
 });
 
@@ -72,5 +71,14 @@ describe('holding the microphone', () => {
     expect(holdDecision({ dx: -20, dy: -20 }, limits)).toBe('hold');
     expect(cancelProgress(-48, 96)).toBe(0.5);
     expect(cancelProgress(30, 96)).toBe(0);
+  });
+});
+
+describe('a voice note bubble', () => {
+  test('a transcript longer than two lines folds behind «Ver más»', () => {
+    expect(transcriptFolds('Compra pan')).toBe(false);
+    expect(transcriptFolds('Hola, Argus, quería saber qué tengo pendiente para mañana.')).toBe(
+      true
+    );
   });
 });

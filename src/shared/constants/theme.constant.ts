@@ -14,3 +14,5 @@ export const THEME_ICONS: Record<ThemePreference, IconName> = {
   light: 'sun',
   dark: 'moon',
 };
+
+export const MICROPHONE_STORAGE_KEY = 'app.microphone';

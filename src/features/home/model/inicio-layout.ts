@@ -14,8 +14,7 @@ export type InicioSection =
   | 'clips'
   | 'watch'
   | 'system'
-  | 'help'
-  | 'try';
+  | 'help';
 
 export type InicioReads = {
   agenda: boolean;
@@ -60,7 +59,7 @@ function bandPlans(reads: InicioReads): ColumnPlan[] {
         ...when(reads.cameras && reads.tiles, 'cameras'),
         ...when(reads.people, 'people'),
         ...when(reads.system && reads.sparse, 'system'),
-        ...when(reads.sparse, 'help', 'try'),
+        ...when(reads.sparse, 'help'),
       ],
       grow: 'cameras',
       width: size.columnAside,
@@ -91,7 +90,7 @@ function widePlans(reads: InicioReads): ColumnPlan[] {
         ...when(reads.agenda, 'projects'),
         ...when(reads.cameras, 'clips'),
         ...when(reads.system, 'system'),
-        ...when(reads.sparse, 'help', 'try'),
+        ...when(reads.sparse, 'help'),
       ],
       width: size.columnWide,
     },
@@ -132,7 +131,6 @@ export function inicioStack(
       ...when(reads.news, 'news'),
       ...when(reads.system, 'system'),
       ...when(tablet, 'help'),
-      'try',
       ...when(tablet && reads.agenda, 'today'),
     ];
   return [

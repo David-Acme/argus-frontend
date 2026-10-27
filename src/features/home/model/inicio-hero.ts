@@ -28,7 +28,7 @@ export type Age = { unit: 'now' } | { unit: 'minutes' | 'hours' | 'days'; count:
 
 export type MetaPart =
   | { kind: 'greeting' }
-  | { kind: 'mode'; mode: GuardMode; named: boolean }
+  | { kind: 'mode'; mode: GuardMode }
   | { kind: 'watching' }
   | { kind: 'people'; line: HomeLine }
   | { kind: 'age' }
@@ -99,9 +99,9 @@ export function heroMeta({ phase, band, mode, people, newHousehold }: HeroMetaIn
   if (phase === 'alert') return [{ kind: 'age' }, { kind: 'headline' }];
   const greeting: MetaPart[] = band ? [{ kind: 'greeting' }] : [];
   if (phase === 'night' && mode !== null)
-    return [...greeting, { kind: 'mode', mode, named: true }, { kind: 'watching' }];
+    return [...greeting, { kind: 'mode', mode }, { kind: 'watching' }];
   const known: MetaPart[] = [
-    ...(mode === null ? [] : [{ kind: 'mode', mode, named: band } as const]),
+    ...(mode === null ? [] : [{ kind: 'mode', mode } as const]),
     ...(people === null ? [] : [{ kind: 'people', line: people } as const]),
   ];
   const connect: MetaPart[] = known.length === 0 && newHousehold ? [{ kind: 'connect' }] : [];

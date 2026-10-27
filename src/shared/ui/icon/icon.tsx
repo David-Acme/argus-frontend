@@ -26,6 +26,7 @@ export type IconProps = {
   size?: 'meta' | 'small' | 'default' | 'large';
   tone?: IconTone;
   label?: string;
+  fine?: boolean;
 };
 
 type ShapeProps = { shape: IconShape };
@@ -42,7 +43,7 @@ function Shape({ shape }: ShapeProps) {
   return <Circle cx={shape.cx} cy={shape.cy} r={shape.r} />;
 }
 
-export function Icon({ name, size = 'default', tone = 'text', label }: IconProps) {
+export function Icon({ name, size = 'default', tone = 'text', label, fine = false }: IconProps) {
   const { color } = useThemeTokens();
   const pixels = PIXELS[size];
   return (
@@ -52,7 +53,7 @@ export function Icon({ name, size = 'default', tone = 'text', label }: IconProps
       viewBox={`0 0 ${sizes.icon} ${sizes.icon}`}
       fill="none"
       stroke={color[tone]}
-      strokeWidth={sizes.iconStroke}
+      strokeWidth={fine ? sizes.iconStrokeFine : sizes.iconStroke}
       strokeLinecap="round"
       strokeLinejoin="round"
       role={label ? 'img' : undefined}

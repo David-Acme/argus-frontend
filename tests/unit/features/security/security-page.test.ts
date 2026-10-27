@@ -399,18 +399,9 @@ describe('visits and activity', () => {
 });
 
 describe('starters', () => {
-  test('few cameras explain what Argus does, and an answered empty feed suggests what to try', () => {
-    expect(starters({ cameras: 0, feed: 'ready', episodes: 0 })).toEqual({
-      promise: true,
-      suggest: true,
-    });
-    expect(starters({ cameras: 3, feed: 'ready', episodes: 2 })).toEqual({
-      promise: false,
-      suggest: false,
-    });
-    expect(starters({ cameras: 2, feed: 'loading', episodes: 0 })).toEqual({
-      promise: true,
-      suggest: false,
-    });
+  test('few cameras explain what Argus does, and nothing suggests what to try', () => {
+    expect(starters({ cameras: 0 })).toEqual({ promise: true });
+    expect(starters({ cameras: 3 })).toEqual({ promise: false });
+    expect(starters({ cameras: 2 })).toEqual({ promise: true });
   });
 });

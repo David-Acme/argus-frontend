@@ -202,7 +202,7 @@ class CallActivity : Activity() {
                 },
                 LinearLayout.LayoutParams(dp(scale.controlDp), dp(scale.controlDp)),
             )
-            addView(label(text, palette.secondary, CAPTION_SP, bold = true), spaced(8))
+            addView(label(text, palette.secondary, CAPTION_SP), spaced(8))
             setOnClickListener { onTap() }
         }
     }
@@ -238,10 +238,10 @@ class CallActivity : Activity() {
         const val MIN_TOUCH_DP = 48
         const val ESTELA_FILL = 0.8f
         const val GLOW_DP = 420
-        const val CONTROL_ICON_DP = 28
+        const val CONTROL_ICON_DP = 22
         const val PULSE_MS = 900L
         const val PULSE_SCALE = 1.04f
         const val LINE_SP = 15f
-        const val CAPTION_SP = 13f
+        const val CAPTION_SP = 12f
     }
 }

@@ -218,22 +218,21 @@ describe('Seguridad', () => {
       expect(screen.getByRole('heading', { name })).toBeDefined();
   });
 
-  test('with no data a phone still says the next step, how Argus helps and what to try', () => {
+  test('with no data a phone still says the next step and how Argus helps, with no suggestions', () => {
     security = securityOf();
     tiles = tilesOf({ tiles: [] });
     render(<SecurityScreen />);
     expect(screen.getByText('Conecta tu primera cámara')).toBeDefined();
     expect(screen.getByRole('heading', { name: 'Qué hará Argus con tus cámaras' })).toBeDefined();
-    expect(screen.getByRole('heading', { name: 'Prueba esto' })).toBeDefined();
+    expect(screen.queryByRole('heading', { name: 'Prueba esto' })).toBeNull();
   });
 
-  test('a quiet desktop suggests what to try, and a failed load offers Reintentar', () => {
+  test('a quiet desktop suggests nothing, and a failed load offers Reintentar', () => {
     setWindowWidth(1280);
     security = securityOf();
     tiles = tilesOf({ tiles: [] });
     const { unmount } = render(<SecurityScreen />);
-    fireEvent.click(screen.getByRole('button', { name: /^Pon el modo Noche/ }));
-    expect(calls).toEqual(['mode:night']);
+    expect(screen.queryByRole('button', { name: /^Pon el modo Noche/ })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Conectar cámara' }));
     expect(screen.getByText('camera-wizard')).toBeDefined();
     unmount();
@@ -241,7 +240,7 @@ describe('Seguridad', () => {
     security = securityOf({ failed: true });
     render(<SecurityScreen />);
     fireEvent.click(screen.getByRole('button', { name: 'Reintentar' }));
-    expect(calls).toEqual(['mode:night', 'reload']);
+    expect(calls).toEqual(['reload']);
   });
 });
 

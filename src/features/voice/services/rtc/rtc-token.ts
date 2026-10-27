@@ -1,5 +1,10 @@
 import { httpService } from '@/core/services/http';
-import type { RtcDeclineAnswer, RtcDeclineRequest, RtcTokenAnswer, RtcTokenRequest } from '@/core/types';
+import type {
+  RtcDeclineAnswer,
+  RtcDeclineRequest,
+  RtcTokenAnswer,
+  RtcTokenRequest,
+} from '@/core/types';
 import { readDeclineAnswer, readTokenAnswer } from '@/features/voice/model/rtc-protocol';
 import { withTimeout } from '@/features/voice/model/with-timeout';
 
@@ -10,10 +15,10 @@ export const RTC_TOKEN_TIMEOUT_MS = 15_000;
 
 export async function requestCallToken(
   request: RtcTokenRequest,
-  timeoutMs: number = RTC_TOKEN_TIMEOUT_MS,
+  timeoutMs: number = RTC_TOKEN_TIMEOUT_MS
 ): Promise<RtcTokenAnswer> {
   return readTokenAnswer(
-    await withTimeout(httpService.post<unknown>(RTC_TOKEN_ROUTE, request), timeoutMs),
+    await withTimeout(httpService.post<unknown>(RTC_TOKEN_ROUTE, request), timeoutMs)
   );
 }
 

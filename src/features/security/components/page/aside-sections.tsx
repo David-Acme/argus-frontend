@@ -41,7 +41,7 @@ export function VisitsSection({ guests, now }: VisitsProps) {
         <Row
           leading={<Avatar icon="door" />}
           title={t('screens.security.more.visits-none')}
-          meta={t('screens.security.try.visit-detail')}
+          meta={t('screens.security.more.visits-none-detail')}
           chevron
           onPress={open}
         />

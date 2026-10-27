@@ -109,11 +109,5 @@ export const profile = {
       meta: 'By voice and on your phone, right on time',
     },
     answer: { title: 'It answers when you talk to it', meta: 'Everything stays at home' },
-    'try-title': 'Try saying',
-    try: {
-      remind: 'Remind me to pay the water bill on Friday',
-      who: 'Who is at home?',
-      night: 'Switch to night mode',
-    },
   },
 } as const;

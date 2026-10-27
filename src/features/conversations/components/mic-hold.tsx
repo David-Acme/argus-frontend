@@ -1,5 +1,7 @@
 import { View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import { useSharedValue, type SharedValue } from 'react-native-reanimated';
+import { scheduleOnRN } from 'react-native-worklets';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { feedback } from '@/shared/theme';
 import { Icon } from '@/shared/ui/icon';
@@ -8,12 +10,13 @@ import {
   SLIDE_LOCK_PX,
 } from '@/features/conversations/constants/voice-note.constant';
 import { holdDecision } from '@/features/conversations/model/hold-record';
-import type { HoldDecision } from '@/features/conversations/model/hold-record';
+import type { HoldDecision, HoldVerdict } from '@/features/conversations/model/hold-record';
 
 export type MicHoldProps = {
   holding: boolean;
   onStart: () => void;
-  onDrag: (decision: HoldDecision, dx: number) => void;
+  drag: SharedValue<number>;
+  onDecide: (verdict: HoldVerdict) => void;
   onRelease: () => void;
   onActivate: () => void;
 };
@@ -24,23 +27,34 @@ const ACTIONS = [{ name: 'activate' as const }];
 
 const LOCK_HINT = { position: 'absolute', right: 0, bottom: '100%' } as const;
 
-export function MicHold({ holding, onStart, onDrag, onRelease, onActivate }: MicHoldProps) {
+export function MicHold({ holding, drag, onStart, onDecide, onRelease, onActivate }: MicHoldProps) {
   const { t } = useTranslation();
+  const decided = useSharedValue<HoldDecision>('hold');
+  const begin = () => {
+    feedback('impactLight');
+    onStart();
+  };
   const gesture = Gesture.Pan()
     .minDistance(0)
     .shouldCancelWhenOutside(false)
-    .runOnJS(true)
     .onBegin(() => {
-      feedback('impactLight');
-      onStart();
+      'worklet';
+      decided.set('hold');
+      drag.set(0);
+      scheduleOnRN(begin);
     })
-    .onUpdate((event) =>
-      onDrag(
-        holdDecision({ dx: event.translationX, dy: event.translationY }, LIMITS),
-        event.translationX
-      )
-    )
-    .onFinalize(onRelease);
+    .onUpdate((event) => {
+      'worklet';
+      drag.set(Math.min(0, event.translationX));
+      const decision = holdDecision({ dx: event.translationX, dy: event.translationY }, LIMITS);
+      if (decision === 'hold' || decision === decided.get()) return;
+      decided.set(decision);
+      scheduleOnRN(onDecide, decision);
+    })
+    .onFinalize(() => {
+      'worklet';
+      scheduleOnRN(onRelease);
+    });
   return (
     <View>
       {holding ? (

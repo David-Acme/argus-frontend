@@ -6,7 +6,7 @@ import type { IConversationMessageCacheRow } from '@/core/interfaces';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { Button } from '@/shared/ui/button';
-import { Text } from '@/shared/ui/text';
+import { ClearText, Text } from '@/shared/ui/text';
 import { BubbleFrame } from '@/features/conversations/components/bubble-frame';
 import { BubbleMeta } from '@/features/conversations/components/bubble-meta';
 import { BubbleTail } from '@/features/conversations/components/bubble-tail';
@@ -14,6 +14,11 @@ import { VoiceNoteBubble } from '@/features/conversations/components/voice-note-
 import { useBubbleActions } from '@/features/conversations/hooks/use-bubble-actions';
 import { chatErrorMessage } from '@/features/conversations/model/assistant-chat-errors';
 import type { ChatMark } from '@/features/conversations/model/assistant-chat-overlay';
+import {
+  glyphShownOf,
+  metaLabelOf,
+  metaReserveOf,
+} from '@/features/conversations/model/bubble-meta';
 import { quoted } from '@/features/conversations/model/conversation-thread';
 import {
   bubbleNoteOf,
@@ -36,11 +41,16 @@ export type MessageBubbleProps = {
 
 type QuoteProps = { text: string | null };
 
+type BubbleTextProps = {
+  body: string;
+  time: string;
+  note: string | null;
+  status: BubbleStatus | null;
+};
+
 type ResendProps = { mark: ChatMark; body: string; onRetry?: (clientId: string) => void };
 
-const MINE = { maxWidth: '82%' } as const;
-
-const THEIRS = { maxWidth: '86%' } as const;
+const BUBBLE_MAX = { maxWidth: '78%' } as const;
 
 function Quote({ text }: QuoteProps) {
   if (!text) return null;
@@ -48,6 +58,21 @@ function Quote({ text }: QuoteProps) {
     <Text variant="caption" tone="2" numberOfLines={1}>
       {text}
     </Text>
+  );
+}
+
+function BubbleText({ body, time, note, status }: BubbleTextProps) {
+  const reserve = metaReserveOf({ label: metaLabelOf(time, note), glyph: glyphShownOf(status) });
+  return (
+    <View className="min-w-0 shrink">
+      <Text variant="body">
+        <Text variant="body">{body}</Text>
+        <ClearText variant="caption">{reserve}</ClearText>
+      </Text>
+      <View className="absolute right-0 bottom-0">
+        <BubbleMeta time={time} note={note} status={status} />
+      </View>
+    </View>
   );
 }
 
@@ -103,7 +128,7 @@ export function MessageBubble({
   ]);
   return (
     <View className={clsx(groupStart ? 'pt-3' : 'pt-1', mine ? 'items-end' : 'items-start')}>
-      <View className="flex-row items-center gap-1" style={mine ? MINE : THEIRS}>
+      <View className="flex-row items-center gap-1" style={BUBBLE_MAX}>
         {failed ? <Resend mark={failed} body={message.body} onRetry={onRetry} /> : null}
         <View className="min-w-0 shrink">
           <BubbleFrame items={items} label={label}>
@@ -112,11 +137,11 @@ export function MessageBubble({
               accessibilityLabel={label}
               className={clsx(
                 'rounded-control min-w-0 shrink gap-1 px-3 py-2',
-                mine ? 'bg-fill' : 'bg-surface',
+                mine ? 'bg-bubble-own' : 'bg-surface',
                 groupStart && (mine ? 'rounded-tr-none' : 'rounded-tl-none')
               )}>
               {groupStart ? (
-                <BubbleTail side={mine ? 'end' : 'start'} fill={mine ? 'fill' : 'surface'} />
+                <BubbleTail side={mine ? 'end' : 'start'} fill={mine ? 'bubble-own' : 'surface'} />
               ) : null}
               <Quote text={visitor} />
               <Quote text={reply} />
@@ -128,14 +153,13 @@ export function MessageBubble({
                   onExpand={setExpanded}
                 />
               ) : null}
-              <View className="flex-row flex-wrap items-end justify-end">
-                {voiceNote ? null : (
-                  <View className="min-w-0 shrink">
-                    <Text variant="body">{message.body}</Text>
-                  </View>
-                )}
-                <BubbleMeta time={time} note={note} status={status} />
-              </View>
+              {voiceNote ? (
+                <View className="flex-row justify-end">
+                  <BubbleMeta time={time} note={note} status={status} />
+                </View>
+              ) : (
+                <BubbleText body={message.body} time={time} note={note} status={status} />
+              )}
               {ask}
             </View>
           </BubbleFrame>

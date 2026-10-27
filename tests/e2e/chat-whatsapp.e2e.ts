@@ -236,7 +236,6 @@ test('a voice note is recorded, sent to Argus by its id, and plays from its bubb
       { timeout: LIVE_MS }
     )
     .toBe(true);
-  await page.getByRole('button', { name: 'Show transcript' }).click();
   await page
     .getByText('Nota de prueba para Argus', { exact: true })
     .waitFor({ state: 'visible', timeout: LIVE_MS });

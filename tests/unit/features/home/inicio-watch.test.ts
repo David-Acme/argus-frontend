@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { helpRows, tryPhrases } from '@/features/home/model/inicio-guide';
+import { helpRows } from '@/features/home/model/inicio-guide';
 import { isSparse, systemRows } from '@/features/home/model/inicio-system';
 import { wakeRuleOf, watchedCameras, watchTitleOf } from '@/features/home/model/inicio-watch';
 
@@ -107,17 +107,5 @@ describe('the guide for a home with little data', () => {
       'answers',
     ]);
     expect(helpRows({ cameras: false, reminders: true, voice: false })).toEqual(['reminds']);
-  });
-
-  test('what to say follows the rights behind each answer', () => {
-    expect(tryPhrases({ events: true, presence: true, setsMode: true, agenda: true })).toEqual([
-      'who-home',
-      'night',
-      'happened',
-      'today',
-    ]);
-    expect(tryPhrases({ events: false, presence: false, setsMode: false, agenda: true })).toEqual([
-      'today',
-    ]);
   });
 });

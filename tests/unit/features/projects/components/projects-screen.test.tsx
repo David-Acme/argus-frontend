@@ -198,14 +198,11 @@ describe('Proyectos on a phone', () => {
     expect(calls.pushed.at(-1)).toBe('/agenda');
   });
 
-  test('with no projects it offers one, and Argus', () => {
+  test('with no projects it offers one, with no suggestion chips', () => {
     state.rows = new Map();
     render(<ProjectsScreen />);
     expect(screen.getByText('Aún no hay proyectos')).toBeDefined();
-    fireEvent.click(
-      screen.getByRole('button', { name: 'Pedirle a Argus: Crea el proyecto Mudanza' })
-    );
-    expect(calls.asked).toEqual(['Crea el proyecto Mudanza']);
+    expect(screen.queryByRole('button', { name: /^Pedirle a Argus:/ })).toBeNull();
   });
 
   test('the + opens Nuevo proyecto, which refuses an empty name and saves', async () => {
@@ -285,9 +282,7 @@ describe('Proyectos on a phone', () => {
     expect(screen.getAllByText(/Aún no hay tareas/).length).toBeGreaterThan(0);
     expect(screen.queryByText(/0 de 0/)).toBeNull();
     expect(screen.queryByRole('progressbar')).toBeNull();
-    expect(
-      screen.getByRole('button', { name: 'Pedirle a Argus: Añade «Comprar cajas» a Mudanza' })
-    ).toBeDefined();
+    expect(screen.queryByRole('button', { name: /^Pedirle a Argus:/ })).toBeNull();
   });
 
   test('a view-only member sees the tasks with no add, no check and no menu', () => {

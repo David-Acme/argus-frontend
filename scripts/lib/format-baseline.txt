@@ -300,7 +300,6 @@ src/features/visitors/services/visitor.service.ts
 src/features/voice/components/call-settings-dialog.tsx
 src/features/voice/hooks/use-call-audio.ts
 src/features/voice/hooks/use-desktop-bridge.ts
-src/features/voice/model/call-audio.ts
 src/features/voice/model/call-decline.ts
 src/features/voice/model/call-lock-state.ts
 src/features/voice/model/call-lock.ts
@@ -315,9 +314,7 @@ src/features/voice/model/voice-error.ts
 src/features/voice/model/watch-handoff.ts
 src/features/voice/services/call-audio/call-audio.native.ts
 src/features/voice/services/call-audio/call-audio.web.ts
-src/features/voice/services/rtc/rtc-token.ts
 src/features/voice/services/voice/voice-frames.ts
-src/features/voice/services/voice/voice-mic.web.ts
 src/features/voice/services/voice/voice-playout.ts
 src/features/voice/services/voice/voice-transcript.ts
 src/features/voice/services/voice/watch-continuation.ts

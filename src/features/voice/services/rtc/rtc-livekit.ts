@@ -5,13 +5,28 @@ import { decodeUtf8, encodeUtf8, endReasonOf } from '@/features/voice/model/rtc-
 
 type Listener = (event: RtcEvent) => void;
 
+export type MicrophoneChoice = { deviceId: string; label: string };
+
+export type MicrophoneSource = {
+  chosen: () => MicrophoneChoice | null;
+  watch: (onChange: (choice: MicrophoneChoice | null) => void) => () => void;
+};
+
 export type LivekitCallOptions = {
   attachAudio: boolean;
+  microphone?: MicrophoneSource;
   prepare?: (join: RtcJoin) => Promise<RtcJoin>;
   release?: () => Promise<void>;
 };
 
 const AGENT_STATE_ATTRIBUTE = 'lk.agent.state';
+
+const SYSTEM_DEVICE = 'default';
+
+function microphoneDeviceOf(source: MicrophoneSource | undefined): { deviceId?: string } {
+  const choice = source?.chosen() ?? null;
+  return choice ? { deviceId: choice.deviceId } : {};
+}
 
 export function connectOptionsOf(join: RtcJoin): {
   autoSubscribe: boolean;
@@ -31,6 +46,7 @@ export class LivekitRealtimeCall implements IRealtimeCall {
   private audioElements: HTMLMediaElement[] = [];
   private levelTimer: ReturnType<typeof setInterval> | null = null;
   private followedSid: string | null = null;
+  private stopMicrophoneWatch: () => void = () => undefined;
 
   constructor(private readonly options: LivekitCallOptions) {}
 
@@ -48,6 +64,7 @@ export class LivekitRealtimeCall implements IRealtimeCall {
         echoCancellation: true,
         noiseSuppression: true,
         autoGainControl: true,
+        ...microphoneDeviceOf(this.options.microphone),
       },
       publishDefaults: { dtx: true, red: true },
     });
@@ -88,6 +105,7 @@ export class LivekitRealtimeCall implements IRealtimeCall {
     try {
       await room.connect(target.url, target.token, connectOptionsOf(target));
       await room.localParticipant.setMicrophoneEnabled(true);
+      this.followMicrophoneChoice(room);
     } catch (error) {
       await this.leave();
       throw error;
@@ -123,9 +141,21 @@ export class LivekitRealtimeCall implements IRealtimeCall {
   async leave(): Promise<void> {
     const room = this.room;
     this.room = null;
+    this.stopMicrophoneWatch();
+    this.stopMicrophoneWatch = () => undefined;
     this.dropAgentAudio();
     if (room) await room.disconnect();
     if (room && this.options.release) await this.options.release();
+  }
+
+  private followMicrophoneChoice(room: Room): void {
+    const source = this.options.microphone;
+    if (!source) return;
+    this.stopMicrophoneWatch = source.watch((choice) => {
+      void room
+        .switchActiveDevice('audioinput', choice?.deviceId ?? SYSTEM_DEVICE)
+        .catch(() => undefined);
+    });
   }
 
   private emit(event: RtcEvent): void {

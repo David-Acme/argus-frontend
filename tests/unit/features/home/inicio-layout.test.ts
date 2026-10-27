@@ -81,21 +81,16 @@ describe('the phone stack', () => {
     expect(inicioStack({ ...ALL, tiles: false }, false)).toEqual(['lead', 'now', 'news']);
   });
 
-  test('a new household: its first step, Novedades and Estado when there are any, then what to say', () => {
-    expect(inicioStack(ALL, true)).toEqual(['lead', 'news', 'try']);
-    expect(inicioStack({ ...ALL, news: false, system: true }, true)).toEqual([
-      'lead',
-      'system',
-      'try',
-    ]);
+  test('a new household: its first step, Novedades and Estado when there are any, with no suggestions', () => {
+    expect(inicioStack(ALL, true)).toEqual(['lead', 'news']);
+    expect(inicioStack({ ...ALL, news: false, system: true }, true)).toEqual(['lead', 'system']);
   });
 
-  test('a new household on a tablet adds how Argus helps and the day under what to say', () => {
+  test('a new household on a tablet adds how Argus helps and the day', () => {
     expect(inicioStack({ ...ALL, news: false, system: true }, true, true)).toEqual([
       'lead',
       'system',
       'help',
-      'try',
       'today',
     ]);
   });
@@ -145,13 +140,12 @@ describe('night, away and a sparse home', () => {
     ]);
   });
 
-  test('a sparse home ends the side column with how Argus helps and what to say', () => {
+  test('a sparse home ends the side column with how Argus helps', () => {
     expect(inicioColumns('band', { ...ALL, system: true, sparse: true }).at(-1)?.sections).toEqual([
       'cameras',
       'people',
       'system',
       'help',
-      'try',
     ]);
     expect(inicioColumns('wide', { ...ALL, system: true, sparse: true }).at(-1)?.sections).toEqual([
       'people',
@@ -159,7 +153,6 @@ describe('night, away and a sparse home', () => {
       'clips',
       'system',
       'help',
-      'try',
     ]);
   });
 

@@ -35,12 +35,4 @@ export const agendaSections = {
   'empty-body': 'Ask Argus to remind you of something.',
   'empty-action': 'Ask Argus',
   'empty-draft': 'Remind me to ',
-  ask: 'Ask Argus: {text}',
-  'ideas-title': 'Ideas to start',
-  quoted: '“{text}”',
-  ideas: {
-    water: 'Remind me to pay the water bill',
-    call: 'Remind me to call mum on Sunday',
-    tomorrow: 'What do I have tomorrow?',
-  },
 } as const;

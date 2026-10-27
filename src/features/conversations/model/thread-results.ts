@@ -60,8 +60,3 @@ export function streamingResultId(
   const live = [...anchored.trailing, ...current].some((result) => result.id === latestCamera);
   return live ? latestCamera : null;
 }
-
-export function shownCameraOf(results: readonly ArgusResult[]): string | null {
-  const shown = results.findLast((result) => result.kind === 'camera' && result.status === 'done');
-  return shown?.kind === 'camera' ? shown.name : null;
-}

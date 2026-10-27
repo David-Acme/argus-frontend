@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { IAuthUser } from '@/core/interfaces';
 import { useAuthStore } from '@/core/stores';
-import type { GuardMode, IncidentResponse, TranslateFn } from '@/core/types';
+import type { IncidentResponse, TranslateFn } from '@/core/types';
 import { OFFLINE_NOTICE_DELAY_MS, VIEW_CACHE_KEYS } from '@/shared/constants';
 import { useOfflineNotice } from '@/shared/components/layout/use-offline-notice';
 import { useViewCacheValue } from '@/shared/hooks/use-cached-rows';
@@ -73,10 +73,10 @@ const ALONE_KEYS = {
 } as const;
 
 const MODE_KEYS = {
-  home: 'screens.security.mode.home',
-  night: 'screens.security.mode.night',
-  away: 'screens.security.mode.away',
-  armed: 'screens.security.mode.armed',
+  home: 'screens.home.inicio.mode.home',
+  night: 'screens.home.inicio.mode.night',
+  away: 'screens.home.inicio.mode.away',
+  armed: 'screens.home.inicio.mode.armed',
 } as const;
 
 const AGE_KEYS = {
@@ -111,11 +111,6 @@ function peopleText(line: HomeLine, t: TranslateFn): string {
   return t(PEOPLE_KEYS[line.kind], { names: namesText(line.names, t) });
 }
 
-function modeText(mode: GuardMode, named: boolean, t: TranslateFn): string {
-  const label = t(MODE_KEYS[mode]);
-  return named ? t('screens.home.inicio.mode', { mode: label }) : label;
-}
-
 function ageText(age: Age, key: 'age' | 'since', t: TranslateFn): string {
   if (age.unit === 'now') return t(AGE_KEYS[key].now);
   return t(AGE_KEYS[key][age.unit], { count: String(age.count) });
@@ -126,7 +121,7 @@ function partText(part: MetaPart, words: MetaWords): string {
     case 'greeting':
       return words.greeting;
     case 'mode':
-      return modeText(part.mode, part.named, words.t);
+      return words.t(MODE_KEYS[part.mode]);
     case 'watching':
       return words.t('screens.home.inicio.watching');
     case 'people':

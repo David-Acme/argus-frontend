@@ -109,11 +109,5 @@ export const profile = {
       meta: 'Por voz y en el teléfono, a la hora justa',
     },
     answer: { title: 'Te responde cuando le hablas', meta: 'Todo se queda en tu casa' },
-    'try-title': 'Prueba a decirle',
-    try: {
-      remind: 'Recuérdame pagar el agua el viernes',
-      who: '¿Quién está en casa?',
-      night: 'Pon el modo noche',
-    },
   },
 } as const;

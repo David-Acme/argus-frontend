@@ -33,6 +33,13 @@ describe('Icon', () => {
     expect(container.querySelector('svg')?.getAttribute('width')).toBe('16');
   });
 
+  test('a fine glyph draws the call stage line at 1.5, the default at 1.75', () => {
+    const fine = render(<Icon name="mic" fine />).container.querySelector('svg');
+    const regular = render(<Icon name="mic" />).container.querySelector('svg');
+    expect(fine?.getAttribute('stroke-width')).toBe('1.5');
+    expect(regular?.getAttribute('stroke-width')).toBe('1.75');
+  });
+
   test('is hidden from assistive tech unless it carries a label', () => {
     render(<Icon name="alert" label="Atención" />);
     expect(screen.getByRole('img', { name: 'Atención' })).toBeDefined();

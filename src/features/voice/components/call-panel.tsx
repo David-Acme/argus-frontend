@@ -3,7 +3,6 @@ import { View } from 'react-native';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { CallSettingsDialog } from '@/features/voice/components/call-settings-dialog';
 import { RoundControl } from '@/features/voice/components/round-control';
-
 import { useCallScale } from '@/features/voice/hooks/use-call-scale';
 import { useCallSpeaker } from '@/features/voice/hooks/use-call-speaker';
 
@@ -20,7 +19,7 @@ export function CallPanel({ muted, onToggleMute, onHangUp, onViewCamera }: CallP
   const [audioOpen, setAudioOpen] = useState(false);
   const speaker = useCallSpeaker(() => setAudioOpen(true));
   return (
-    <View className="bg-surface rounded-sheet w-full flex-row justify-around px-3 py-4">
+    <View className="border-line rounded-sheet w-full flex-row justify-around border px-2 py-2">
       <RoundControl
         icon="speaker"
         label={t('screens.voice.stage.speaker')}

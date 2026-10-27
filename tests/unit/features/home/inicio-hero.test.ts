@@ -1,4 +1,6 @@
 import { describe, expect, test } from 'bun:test';
+import { en } from '@/core/i18n/locales/en';
+import { es } from '@/core/i18n/locales/es';
 import {
   ageOf,
   dayPart,
@@ -96,11 +98,11 @@ describe('the age of the last known data', () => {
 describe('the hero meta line', () => {
   const people = { kind: 'me-and-others', names: ['Luis'] } as const;
 
-  test('the phone says the mode and who is home', () => {
+  test('the phone names the mode apart from who is home', () => {
     expect(
       heroMeta({ phase: 'calm', band: false, mode: 'home', people, newHousehold: false })
     ).toEqual([
-      { kind: 'mode', mode: 'home', named: false },
+      { kind: 'mode', mode: 'home' },
       { kind: 'people', line: people },
     ]);
   });
@@ -110,7 +112,7 @@ describe('the hero meta line', () => {
       heroMeta({ phase: 'calm', band: true, mode: 'home', people, newHousehold: false })
     ).toEqual([
       { kind: 'greeting' },
-      { kind: 'mode', mode: 'home', named: true },
+      { kind: 'mode', mode: 'home' },
       { kind: 'people', line: people },
     ]);
   });
@@ -118,7 +120,7 @@ describe('the hero meta line', () => {
   test('at night Argus says it keeps watch', () => {
     expect(
       heroMeta({ phase: 'night', band: false, mode: 'night', people, newHousehold: false })
-    ).toEqual([{ kind: 'mode', mode: 'night', named: true }, { kind: 'watching' }]);
+    ).toEqual([{ kind: 'mode', mode: 'night' }, { kind: 'watching' }]);
   });
 
   test('an alert says how long ago and who is answering', () => {
@@ -140,5 +142,24 @@ describe('the hero meta line', () => {
     expect(
       heroMeta({ phase: 'calm', band: true, mode: null, people: null, newHousehold: true })
     ).toEqual([{ kind: 'greeting' }, { kind: 'connect' }]);
+  });
+});
+
+describe('the hero words', () => {
+  test('the mode and who is home read apart, never as «En casa · Nadie en casa»', () => {
+    for (const locale of [es, en]) {
+      const { mode, people } = locale.screens.home.inicio;
+      const presence = Object.values(people).map((line) => line.toLowerCase());
+      for (const label of Object.values(mode)) {
+        expect(presence.some((line) => line.startsWith(label.toLowerCase()))).toBe(false);
+        expect(presence.includes(label.toLowerCase())).toBe(false);
+      }
+    }
+    expect(`${es.screens.home.inicio.mode.home} · ${es.screens.home.inicio.people.nobody}`).toBe(
+      'Modo casa · No hay nadie en casa'
+    );
+    expect(`${en.screens.home.inicio.mode.home} · ${en.screens.home.inicio.people.nobody}`).toBe(
+      'Home mode · No one is home'
+    );
   });
 });

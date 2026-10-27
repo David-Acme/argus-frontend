@@ -6,8 +6,13 @@ import org.junit.Test
 
 class CallStageScaleTest {
     @Test
-    fun aTallPhoneKeepsThePrototypeStage() {
-        assertEquals(CallStageScale(avatarDp = 168, controlDp = 64, topDp = 48, avatarGapDp = 32, titleSp = 30f), callStageScaleOf(760))
+    fun aTallPhoneKeepsThePrototypeAvatarWithTheFinerControls() {
+        assertEquals(CallStageScale(avatarDp = 168, controlDp = 54, topDp = 48, avatarGapDp = 32, titleSp = 30f), callStageScaleOf(760))
+    }
+
+    @Test
+    fun theControlsMatchTheAppStageStepByStep() {
+        assertEquals(listOf(54, 54, 52, 48), listOf(760, 640, 568, 360).map { callStageScaleOf(it).controlDp })
     }
 
     @Test

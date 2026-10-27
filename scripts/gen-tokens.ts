@@ -18,7 +18,13 @@ import {
 const ROOT = join(import.meta.dir, '..');
 const TARGET = join(ROOT, 'src', 'shared', 'theme', 'tokens.generated.css');
 const SKIPPED_RADII = new Set(['full']);
-const SKIPPED_SIZES = new Set(['iconStroke', 'hairline', 'scrollbar', 'scrollbarInset']);
+const SKIPPED_SIZES = new Set([
+  'iconStroke',
+  'iconStrokeFine',
+  'hairline',
+  'scrollbar',
+  'scrollbarInset',
+]);
 
 function usage(): never {
   console.log(`usage: bun scripts/gen-tokens.ts [--check]

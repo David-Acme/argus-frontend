@@ -15,8 +15,7 @@ const { ModeControl } = await import('@/features/security/components/page/mode-c
 const { MoreSection } = await import('@/features/security/components/page/more-section');
 const { PlacePicker } = await import('@/features/security/components/page/place-picker');
 const { EpisodeSheet } = await import('@/features/security/components/page/episode-sheet');
-const { PromiseSection, TrySection } =
-  await import('@/features/security/components/page/starter-sections');
+const { PromiseSection } = await import('@/features/security/components/page/starter-sections');
 const { ActivitySection, MaintenanceSection, PlacesSection, VisitsSection } =
   await import('@/features/security/components/page/aside-sections');
 const { ScreenColumn, ScreenColumns } = await import('@/shared/ui/screen/screen-columns');
@@ -357,22 +356,6 @@ describe('Más and the desktop asides', () => {
     );
     expect(screen.getByText('Nadie por ahora')).toBeDefined();
     expect(screen.queryByRole('heading', { name: 'Mantenimiento' })).toBeNull();
-  });
-
-  test('«Prueba esto» sets Noche, plans a visit and teaches the family', () => {
-    let night = 0;
-    render(<TrySection onNight={() => (night += 1)} />);
-    fireEvent.click(screen.getByRole('button', { name: /^Pon el modo Noche/ }));
-    fireEvent.click(screen.getByRole('button', { name: /^Agenda una visita/ }));
-    fireEvent.click(screen.getByRole('button', { name: /^Enséñale tu familia/ }));
-    expect(night).toBe(1);
-    expect(routes).toEqual(['/security/visits', '/users']);
-  });
-
-  test('«Prueba esto» is gone when there is nothing this role can try', () => {
-    Object.assign(access, { owner: false, manageGuests: false });
-    const { container } = render(<TrySection />);
-    expect(container.textContent).toBe('');
   });
 });
 

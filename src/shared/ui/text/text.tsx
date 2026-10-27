@@ -132,6 +132,21 @@ function withMediaShadow(
   return scaled ? [scaled, MEDIA_SHADOW] : MEDIA_SHADOW;
 }
 
+export type ClearTextProps = { variant: TextVariant; children: string };
+
+export function ClearText({ variant, children }: ClearTextProps) {
+  const { style } = useTypeScale(variant);
+  return (
+    <NativeText
+      aria-hidden
+      maxFontSizeMultiplier={SPECS[variant].maxScale}
+      style={style}
+      className={clsx('web:font-system text-transparent', VARIANT_CLASS[variant])}>
+      {children}
+    </NativeText>
+  );
+}
+
 export function Text({
   variant = 'body',
   tone,

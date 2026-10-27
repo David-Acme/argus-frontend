@@ -153,22 +153,16 @@ export function keyboardOffsets(bottomInset: number): KeyboardOffsets {
   return { list: inset, sticky, pill: { ...sticky } };
 }
 
-export type StickyKeyboardEvent = 'show' | 'resume' | 'leave';
-
-export function stickyKeyboardStep(
-  enabled: boolean,
-  event: StickyKeyboardEvent,
-  keyboardShown: boolean
-): boolean {
-  if (event === 'show') return true;
-  if (event === 'leave') return false;
-  return enabled && keyboardShown;
-}
-
 export function floatingDayOf(viewable: readonly ThreadItem[]): number | null {
-  if (viewable.some((item) => item.type === 'day')) return null;
+  if (viewable[0]?.type === 'day') return null;
   const first = viewable.find(isMessageItem);
   return first ? first.day : null;
+}
+
+export type DayPillInput = { day: number | null; scrolling: boolean; atEnd: boolean };
+
+export function dayPillOf({ day, scrolling, atEnd }: DayPillInput): number | null {
+  return scrolling && !atEnd ? day : null;
 }
 
 export type EstimateInput = { items: readonly ThreadItem[]; width: number };
@@ -178,7 +172,7 @@ export const ESTIMATE = {
   bubblePad: 20,
   groupGap: 12,
   day: 40,
-  typing: 52,
+  typing: 40,
   result: 168,
   note: 76,
   charWidth: 7.6,

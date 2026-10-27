@@ -12,9 +12,8 @@ import { freeGaps } from '@/features/agenda/model/agenda-days';
 import type { DayGroup, FreeGap } from '@/features/agenda/model/agenda-days';
 import { durationText } from '@/features/agenda/model/agenda-lines';
 import type { Category } from '@/features/agenda/model/agenda-lines';
-import { Ideas } from '@/features/agenda/components/day-empty';
 import { MonthGrid } from '@/features/agenda/components/month-grid';
-import { ASIDE_IDEAS, CATEGORIES } from '@/features/agenda/constants/agenda.constant';
+import { CATEGORIES } from '@/features/agenda/constants/agenda.constant';
 import type { AsideMonth, ListContext } from '@/features/agenda/model/agenda-view';
 
 export type AgendaAsideProps = {
@@ -107,17 +106,10 @@ export function asideBlocks({
   today,
   context,
 }: AgendaAsideProps): ReactNode[] {
-  const { t } = context;
   const gaps = freeGaps(today);
   return [
     <MonthCard key="month" month={month} />,
     <Show key="show" shown={shown} onToggle={onToggle} />,
-    gaps.length > 0 ? (
-      <FreeToday key="free" gaps={gaps} context={context} />
-    ) : (
-      <Section key="ideas" title={t('screens.agenda.empty.ideas-title')} variant="plain">
-        <Ideas ideas={ASIDE_IDEAS.map((key) => t(key))} />
-      </Section>
-    ),
+    gaps.length > 0 ? <FreeToday key="free" gaps={gaps} context={context} /> : null,
   ];
 }

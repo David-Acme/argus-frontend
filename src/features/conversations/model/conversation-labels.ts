@@ -31,13 +31,19 @@ export const STATUS_KEYS = {
   failed: 'screens.conversations.status.failed',
 } as const satisfies Record<BubbleStatus, TranslationKey>;
 
+export const NOTE_KEY_PREFIX = 'note-';
+
+export const answersNote = (replyToKey: string | null): boolean =>
+  replyToKey?.startsWith(NOTE_KEY_PREFIX) ?? false;
+
 export function bubbleNoteOf(
-  message: Pick<IConversationMessageCacheRow, 'kind' | 'leg' | 'via' | 'voiceNote'>,
+  message: Pick<IConversationMessageCacheRow, 'kind' | 'leg' | 'via' | 'voiceNote' | 'replyToKey'>,
   t: TranslateFn
 ): string | null {
   if (message.kind === 'turn' && message.leg === 'camera') return t(LEG_KEYS.camera);
-  if (message.via === 'voice' && !message.voiceNote) return t('screens.conversations.by-voice');
-  return null;
+  const spokenInCall =
+    message.via === 'voice' && !message.voiceNote && !answersNote(message.replyToKey);
+  return spokenInCall ? t('screens.conversations.by-voice') : null;
 }
 
 export const replyLineOf = (body: string | null, t: TranslateFn): string | null =>

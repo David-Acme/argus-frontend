@@ -7026,7 +7026,12 @@ and T7 under one hero; every decision is a pure function in
   and stacks its first step, Novedades if any, Estado and «Prueba a
   decirle»; on a tablet also «Así te ayuda Argus» before the phrases and
   the day (Hoy) after them. With no mode and nobody known its hero meta is
-  «Conecta una cámara para que Argus vigile», never a blank. Presence that is unknown is never «sin datos»: a person reads
+  «Conecta una cámara para que Argus vigile», never a blank. The mode is
+  always named as a mode («Modo casa», «Modo noche», «Modo fuera», «Modo
+  armado»; en «Home mode»…) and nobody home reads «No hay nadie en casa»
+  («No one is home»), so «En casa · Nadie en casa» can no longer read as a
+  contradiction (phone run 2 #6; the spec's «En casa · Luis y tú en casa»
+  example predates it). Presence that is unknown is never «sin datos»: a person reads
   «Aún no sé si está en casa», me with the hint to connect a camera or the
   phone; one person whose presence is unknown is no section, and the hero
   names who is home only once someone's presence is known. Rutinas has no
@@ -7247,11 +7252,33 @@ The owner-approved prototype is `uiux-map/redesign/later-phases/owner-2026-10-26
   light pills with light labels. Each action now carries its own monochrome vector
   (`res/drawable/argus_ic_*`), the colour is gone so the system CallStyle defaults apply, and the
   action list is a pure function (`ongoingCallActions`) with a NativeTrace line
-  (`actions-<n>-own-icons-<style>-style-default-color`).
+  (`actions-<n>-own-icons-<style>-style-tinted-<k>`).
+- **One UI still painted white on white (phone run 2 #5).** Expanded on a
+  S21 FE, «Silenciar» and «Auricular» were white words on white pills while
+  «Colgar» read. CallStyle draws its actions as emphasized pills and takes a
+  pill's fill from a full-length colour span on its title, which is how the
+  system's own «Colgar» gets its red; an action without one falls back to the
+  theme's secondary accent, which One UI renders white under white text.
+  Every CallStyle action now carries that span, the pattern CallStyle uses for
+  its own buttons (`ongoingActionTint`): Mute and Speaker in
+  `CallPalette.control` (#57524E), Hang up in `decline`. The colour holds
+  either way an OEM reads it: as the fill under white words (7.9:1) or as the
+  words on a white pill (7.9:1), and it stays apart from a dark card. The
+  plain notification (no Telecom call) leaves Mute and Speaker to the system
+  and keeps Colgar red. Verified by `OngoingCallTest` (17, in
+  `:argus-push:testDebugUnitTest`, 122 pass) and a review of the builder; the
+  phone confirms it on the next run.
 - **Short screens.** The stage holds at 320×568, 360×640 and in phone landscape: `callScaleOf(height)`
   (`shared/theme/call-scale.ts`, tested) steps the avatar (168, 136, 104, 64), the gap above it, the ring
   and panel buttons (never below 48) and the caption lines (two, then one). `CallActivity` reads the same
   steps from the display height in dp (`callStageScaleOf`), title size included.
+- **A finer stage (phone run 2 #10, owner: «más pequeños, minimalista, delicado»).** The round
+  controls are about a sixth smaller: the ring buttons 54 (52 short, 48 flat; were 64/56/52) and the
+  panel buttons 48 at every height (were 56/52/48), in the app and in `CallActivity` alike; a control
+  under 48 gets a hit slop up to 48. Their glyphs draw at 1.5 (`Icon fine`, `size.iconStrokeFine`;
+  the native `argus_ic_*` vectors too, 22 dp in `CallActivity`), the captions at 12 and not bold, and
+  the in-call bar is a hairline outline (`border-line`, `px-2 py-2`) instead of a filled surface.
+  Order and colours hold: Colgar and Rechazar red, Contestar green.
 - **The missed card reads the paged notification feed** (`usePagedView`), the same subscription Inicio
   uses: the feed is a paged value, not a row list, and reading it as rows crashed the first capture build.
 - **The missed-call notification** offers «Devolver» (opens `argus://call`) and joins the
@@ -7795,9 +7822,17 @@ suggestion chips over the field and the microphone as tap-to-talk.
   older global confirm is gone from the clear). Tapping Argus on a phone opens
   `ArgusInfo` (Conversaciones, what Argus did, En casa). A member thread has
   the same header, with «escribiendo…» from its Typing frames.
-- **Bubbles** (`message-bubble.tsx`): mine on `fill`, theirs on `surface`, a
+- **Bubbles** (`message-bubble.tsx`): mine on `bubble-own`, theirs on `surface`, a
   tail on the first of a group (`BubbleTail`), 4 apart inside a group and 12
-  between groups; time and ticks inside at bottom-right (`BubbleMeta`): a
+  between groups. A bubble hugs its content up to 78 % of the thread: the
+  text is one start-aligned run that ends in a clear reserve as wide as the
+  time and ticks (`metaReserveOf`, unbreakable but for the space before it),
+  and the real `BubbleMeta` sits over that reserve at the bottom-end. The
+  line breaker makes the inline-time decision: a short line keeps the time on
+  its own line's end, and when the reserve does not fit it drops whole to a
+  line of its own, so the time never pushes the words to the end (phone run 2
+  #3 and #9: the old wrapping row grew to the maximum width and its
+  `justify-end` pushed short lines right). Time and ticks (`BubbleMeta`): a
   camera turn says «Por la cámara», a spoken turn «Por voz»; the phone and
   laptop legs are only in the spoken label. Actions through the shared menu:
   long press on phones, right click and a hover «⋯» (`bubble-more.web.tsx`)
@@ -7806,11 +7841,11 @@ suggestion chips over the field and the microphone as tap-to-talk.
   last behind the menu's Confirm. The backend has no per-message delete, so
   «Eliminar para mí» removes the row from this device only and says so.
   A closed question from Argus (`asksYesNo`) carries Sí/No inside its bubble;
-  suggestion chips are only in the empty thread.
+  no suggestion chips anywhere, the empty thread included (phone run 2 #12).
 - **Ticks** (`model/receipts.ts`): member rows read `receipt` (sent ✓,
   delivered ✓✓, read blue ✓✓ in `receipt-read`, a colour role measured at 3:1
-  on `fill`; blue on `ink` stays under 3:1 in both themes, which is why my
-  bubbles are `fill`, not `ink`); a row from before the receipts reads its
+  on `fill` and `bubble-own`; blue on `ink` stays under 3:1 in both themes,
+  which is why my bubbles are never `ink`); a row from before the receipts reads its
   relay state. A typed turn to Argus reads its chat entry: the clock while
   sending, ✓✓ once a Typing frame carries its `clientId`, blue ✓✓ on
   `voice:text_done`, and the resend icon on `voice:text_error` or a session
@@ -7820,6 +7855,15 @@ suggestion chips over the field and the microphone as tap-to-talk.
   theirs, up to that id (`useDeliveryReports`, from the summaries, app-wide
   through `useConversationRuntime`); read with `upToId` while the thread is
   focused (`useReadReports`).
+- **Own bubbles** (phone run 2 #4): `bubble-own` is an accent-tinted flat
+  surface (light `#E8D8B8`, dark `#4A3D24`), so whose line is whose reads at a
+  glance against Argus's `surface` (1.41:1 light, 1.49:1 dark between the two
+  surfaces; `fill` was 1.27 and 1.16). On it, measured in `contrast.test.ts`:
+  body text 12.88 (light) and 9.25 (dark), the time in `text-2` 5.49 and
+  6.60, the blue read ticks 3.99 and 4.68.
+- **Thinking** is a compact bubble like a one-line one (the same radius and
+  tail, 28 high, three 6 dots, `size.typingDot`), with no Estela beside it:
+  «escribiendo…» and Estela are in the header (phone run 2 #8).
 - **Typing** (`services/typing`): `Typing = 17` frames per counterpart until
   their `ttlMs` passes, an `active: false`, `voice:text_done`, `voice:done`
   or a lost socket. A member thread sends `{type: "typing", payload:
@@ -7837,15 +7881,29 @@ suggestion chips over the field and the microphone as tap-to-talk.
   the `audio` part; a note to Argus then asks for its turn with `voice:text
   {clientId, noteId}` (`AssistantChat.sendNote`). The bubble plays one note
   at a time (`services/note-player`, the one-use grant then the content, kept
-  in memory for the last six notes), 1×/1.5×/2×, the transcript folded. On
+  in memory for the last six notes), 1×/1.5×/2× beside the duration while it
+  plays. The bubble hugs the note (a 36 play button, `compact`, and the
+  waveform; the transcript wraps inside that width); the played part of the
+  waveform takes the accent only during playback (`barToneOf`); the
+  transcript shows two lines, with «Ver más» / «Ver menos» when it is longer
+  (`transcriptFolds`). Argus's reply to a note carries no «Por voz»: it
+  answers the note (`replyToKey` `note-…`, `answersNote`), and «por voz» is
+  kept for lines said in a call (phone run 2 #13). On
   native the bytes play from a data URI: Android's player reads it, iOS's does
   not and would need expo-file-system to write a file first. The speaker is
   the default; the earpiece at the ear needs a proximity sensor package the
   app does not have.
 - **Days and scrolling**: separators are pills (Hoy, Ayer, the weekday
-  within the week, «19 oct»), and a floating pill shows the day of the first
-  visible line while its own separator is off screen (`floatingDayOf`); the
-  scroll button is round with a double chevron and an unread badge.
+  within the week, «19 oct») that stay in the flow between groups. A floating
+  pill shows the day of the first visible line only while the user scrolls
+  away from the newest line and its own separator is not at the top
+  (`floatingDayOf`, `dayPillOf`); it fades out 1 s after the last scroll
+  event (`DAY_PILL_HOLD_MS`, `useScrollActivity`). It sits in its own band at
+  the top of the list, on the screen background with a solid pill, so it
+  never lies over a bubble's text (phone run 2 #2). The scroll button is
+  round with a double chevron and an unread badge; it floats over older lines
+  and the list keeps no room for it, so the last bubble sits 12 above the
+  composer (phone run 2 #1).
 - **Search**: a sheet over a local `LIKE` on the thread's bodies, newest
   first, 50 at most (`conversationService.searchThread`).
 - **Instant thread**: measured on the web build from the click on a
@@ -7870,6 +7928,105 @@ suggestion chips over the field and the microphone as tap-to-talk.
   reminder call opens `/call?purpose=call_back&reminderId=<id>`; the call
   sends both on `/rtc/token` and `voice:start`. Any other missed call keeps
   the plain call.
+
+## Choosing the microphone on the web and the desktop (phone run 2 #15, 2026-10-27)
+
+On a browser and in the Tauri desktop (WebKitGTK) the user chooses the
+input: Ajustes › Este dispositivo › «Micrófono» lists «Predeterminado del
+sistema» and every `audioinput` of `enumerateDevices` (with its label once
+the microphone permission is granted, «Micrófono N» before), without the
+`default`/`communications` aliases. The choice is per device
+(`app.microphone` in the device storage, `shared/libs/microphone.ts`) and
+every web capture asks for it with `deviceId: { ideal }`, so a missing
+device never fails a capture: voice notes (`use-note-recorder.web.ts`),
+hold-to-talk and camera talk (both through `voice-mic.web.ts`) and calls
+(LiveKit `audioCaptureDefaults.deviceId`, and `switchActiveDevice` when the
+choice changes mid-call; the desktop's native call selects the native input
+with the same name through `argus_rtc_select_device`, `inputNamed`, since the
+WebKit and WebRTC device ids differ). The calls get the choice injected
+(`MicrophoneSource`, `rtc-microphone.ts`), so the LiveKit client stays free of
+the device storage. The list refreshes on `devicechange`; a chosen
+input that is gone is forgotten for the system one and a quiet notice says
+so once (`useMicrophoneNotice`, mounted where the choice is shown). A list
+the browser has not answered yet keeps the choice. The recording bar shows
+the current input, small, with a dropdown to switch on the spot, and the
+call stage's top bar has a «⋯» with the same list. On the phones nothing
+shows: the system route decides (`microphonesSupported`). UI tests map
+`@/core/services/storage` to its web build in the shared setup.
+
+## The chat's motion runs on the UI thread (phone run 2 #14, 2026-10-27)
+
+Owner: «más fluido… a 120 FPS, depende del dispositivo… súper optimizado».
+Nothing in the chat re-renders React per frame or per sample any more:
+
+- **The live recording wave** is one canvas: Skia on the phones
+  (`live-wave.tsx`, one `Path` built by `usePathValue`, stroked 2 px with
+  round caps every 4 px, `size.liveBar`, `size.livePitch`) and one 2D canvas
+  on the web and the desktop (`live-wave.web.tsx` through
+  `services/wave-painter`, `requestAnimationFrame`). The recorder writes each
+  level into a shared value (`live`, `pushLevel`, `seq` + the newest 96)
+  from its 100 ms tick; the frame callback (`useFrameCallback`, the same
+  display-rate pacing Estela's canvas uses: `timeSincePreviousFrame`) slides
+  the bars in from the right by the frame time since the last sample
+  (`scrollShare`) and eases the newest bar toward its level by frame time
+  (`easeToward`, τ 70 ms), so 60, 90 and 120 Hz show the same motion. The
+  bars are the accent, the played colour of a note. With reduced motion the
+  wave is a still line in `text-3`. The recording clock re-renders once a
+  second (`wholeSecondsOf`).
+- **The slide to cancel and the lock** run as worklets: the pan writes its
+  `translationX` into a shared value (`useNoteCapture().drag`), the hint
+  fades with `useAnimatedStyle`, and only the verdict (cancel or lock) crosses
+  to JavaScript, once (`HoldVerdict`).
+- **Playback progress** runs on between the player's position reports at the
+  playback speed (`playedShare`, a frame callback while it plays); the played
+  part is an accent copy of the bars clipped by two opposite translations, no
+  layout per frame.
+- The typing dots (CSS animations) and the day pill's fade (layout
+  animations) already ran on the UI thread.
+
+## The keyboard after a call (phone run 2 #11, 2026-10-27)
+
+With the Argus thread's keyboard up, an incoming call's activity (or its
+full-screen intent) took the window focus and the keyboard went away, but
+the keyboard events never reached the app: back in the thread the composer
+sat at the keyboard's old height mid-screen. The run 1 fix listened to the
+app going to the background, which a call activity on top does not always
+cause, and on resume it trusted `KeyboardController.isVisible()`, which is
+itself a cache of the same missed events.
+
+`useKeyboardTruth` (`shared/hooks`, native; the web build answers true
+because it has no soft keyboard) is the one answer every keyboard-riding
+surface reads: the composer's and the scroll button's `KeyboardStickyView`
+(`enabled`) and the phone sheet's inset (`useKeyboardInset`). A
+`keyboardWillShow` lifts it; a `keyboardDidHide`, a window focus loss
+(`AppState` `blur`) or the app leaving `active` drops it and dismisses the
+keyboard natively, so the two can not disagree on return; a focus regain or
+a return to `active` keeps what is known and never re-reads the cache. Only
+a fresh show lifts the composer again. `watchKeyboardTruth` and
+`keyboardTruthStep` (`shared/hooks/use-keyboard-truth/keyboard-truth.ts`) are the pure part,
+tested with fake sources, the path «focus lost while the keyboard is up and
+no hide ever reported» included.
+
+## No system suggestions (phone run 2 #12, 2026-10-27)
+
+Owner, 2026-10-27: «quita todas las sugerencias del sistema». Every phrase
+chip and «Prueba…» block that offered words to say is gone, superseding the
+sections above that describe them: the empty Argus thread's suggestions
+(`suggestionsOf`, `SuggestionChips`, `useArgusSuggestions`), Inicio's
+«Prueba a decirle» (`TrySection`, `tryPhrases`, the `try` section of the
+layout) and the chips under Ahora's empty card (`IdeaChips`), Novedades'
+empty ideas, the Agenda's empty day and its aside «Prueba a decirle»
+(`Ideas`, `LIST_IDEAS`, `ASIDE_IDEAS`), Proyectos' and an empty project's
+ideas (`PROJECT_IDEAS`), Tú's «Prueba a decirle» and Seguridad's «Prueba
+esto» (`starters` keeps only `promise`). Their i18n keys went with them. An
+empty state is its one card with its message and, where it has one, its
+single primary action («Pídeselo a Argus», «Nuevo evento», «Nuevo
+proyecto», «Nueva tarea»), and nothing under it. Kept: a closed question
+from Argus still carries Sí/No inside its bubble (`asksYesNo`, now in
+`model/conversation-thread.ts`, keys `screens.conversations.answer.*`), and
+the camera wizard's name choices, which fill a field rather than suggest
+what to say. `Chip size="suggestion"` stays as the option-chip size the
+ui-lab's filters show.
 
 ## Local first, real time: the inventory (R-live, 2026-10-27)
 

@@ -1,5 +1,6 @@
 import { View } from 'react-native';
 import { KeyboardStickyView } from 'react-native-keyboard-controller';
+import { useKeyboardTruth } from '@/shared/hooks/use-keyboard-truth';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { Icon } from '@/shared/ui/icon';
 import { PressableSurface } from '@/shared/ui/pressable';
@@ -15,6 +16,7 @@ const BADGE = { position: 'absolute', top: -6, right: -2 } as const;
 
 export function ScrollDown({ unseen, onPress, offset }: ScrollDownProps) {
   const { t } = useTranslation();
+  const sticky = useKeyboardTruth();
   const go = t('screens.conversations.latest.go');
   const count =
     unseen === 1
@@ -23,7 +25,7 @@ export function ScrollDown({ unseen, onPress, offset }: ScrollDownProps) {
         ? t('screens.conversations.latest.many', { count: String(unseen) })
         : null;
   return (
-    <KeyboardStickyView offset={offset} pointerEvents="box-none" style={FLOAT}>
+    <KeyboardStickyView enabled={sticky} offset={offset} pointerEvents="box-none" style={FLOAT}>
       <PressableSurface
         a11y={{ label: count ? `${count}. ${go}` : go, role: 'button' }}
         onPress={onPress}

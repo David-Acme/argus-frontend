@@ -18,16 +18,6 @@ export const KIND_LABEL: Record<Category, TranslationKey> = {
 
 export const ALL_SHOWN: ReadonlySet<Category> = new Set(CATEGORIES);
 
-export const LIST_IDEAS: readonly TranslationKey[] = [
-  'screens.agenda.empty.idea-light',
-  'screens.agenda.empty.idea-dentist',
-];
-
-export const ASIDE_IDEAS: readonly TranslationKey[] = [
-  ...LIST_IDEAS,
-  'screens.agenda.empty.idea-project',
-];
-
 export const REPEAT_CHOICES: readonly RepeatChoice[] = [
   'none',
   'DAILY',

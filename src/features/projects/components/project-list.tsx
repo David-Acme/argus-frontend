@@ -1,11 +1,8 @@
 import type { IProjectCacheRow } from '@/core/interfaces';
 import { useTranslation } from '@/shared/hooks/use-translation';
-import { Stack } from '@/shared/ui/layout';
 import { Notice } from '@/shared/ui/notice';
 import { Empty } from '@/shared/ui/resource-view';
 import { Section } from '@/shared/ui/section';
-import { Ideas } from '@/features/agenda';
-import { PROJECT_IDEAS } from '@/features/projects/constants/projects.constant';
 import { projectGroups } from '@/features/projects/model/project-words';
 import { ProjectLine } from '@/features/projects/components/project-line';
 
@@ -20,25 +17,22 @@ type ProjectsEmptyProps = Pick<ProjectListProps, 'onCreate'>;
 
 export function ProjectsEmpty({ onCreate }: ProjectsEmptyProps) {
   const { t } = useTranslation();
+  if (onCreate)
+    return (
+      <Empty
+        centred
+        icon="grid"
+        message={t('screens.projects.empty.title')}
+        detail={t('screens.projects.empty.body')}
+        action={{ label: t('screens.projects.new-project'), onPress: onCreate }}
+      />
+    );
   return (
-    <Stack gap={4}>
-      {onCreate ? (
-        <Empty
-          centred
-          icon="grid"
-          message={t('screens.projects.empty.title')}
-          detail={t('screens.projects.empty.body')}
-          action={{ label: t('screens.projects.new-project'), onPress: onCreate }}
-        />
-      ) : (
-        <Notice
-          icon="grid"
-          title={t('screens.projects.empty.title')}
-          body={t('screens.projects.empty.read-only')}
-        />
-      )}
-      <Ideas ideas={PROJECT_IDEAS.map((key) => t(key))} />
-    </Stack>
+    <Notice
+      icon="grid"
+      title={t('screens.projects.empty.title')}
+      body={t('screens.projects.empty.read-only')}
+    />
   );
 }
 

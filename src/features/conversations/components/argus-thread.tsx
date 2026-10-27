@@ -38,8 +38,8 @@ type ComposerAreaProps = { state: ArgusThreadState };
 
 function Ask({ onAnswer }: AskProps) {
   const { t } = useTranslation();
-  const yes = t('screens.conversations.suggest.yes');
-  const no = t('screens.conversations.suggest.no');
+  const yes = t('screens.conversations.answer.yes');
+  const no = t('screens.conversations.answer.no');
   return (
     <View className="flex-row gap-2 pt-1">
       <Button compact variant="secondary" label={yes} onPress={() => onAnswer(yes)} />
@@ -53,7 +53,6 @@ function ThreadComposerArea({ state }: ComposerAreaProps) {
     <>
       {state.failure ? <TalkNotice failure={state.failure} onAllow={state.allowMic} /> : null}
       <ArgusComposer
-        key={state.draftVersion}
         talk={state.talk}
         heard={state.heard}
         busy={state.chat.busy}
@@ -128,7 +127,7 @@ export function ArgusThread({ thread, desktop }: ArgusThreadProps) {
   return (
     <ThreadFrame phone={!desktop} header={header} composer={<ThreadComposerArea state={state} />}>
       {empty ? (
-        <ArgusEmpty suggestions={state.suggestions} onPick={state.pick} />
+        <ArgusEmpty />
       ) : (
         <ThreadList
           rows={rows}

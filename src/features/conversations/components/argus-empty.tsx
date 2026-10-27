@@ -3,16 +3,9 @@ import { useTranslation } from '@/shared/hooks/use-translation';
 import { useHeightLayout } from '@/shared/theme';
 import { Presence } from '@/shared/ui/presence';
 import { Text } from '@/shared/ui/text';
-import { SuggestionChips } from '@/features/conversations/components/suggestion-chips';
-import { emptyMarkSizeOf } from '@/features/conversations/model/suggestions';
-import type { Suggestion } from '@/features/conversations/model/suggestions';
+import { emptyMarkSizeOf } from '@/features/conversations/model/conversation-layout';
 
-export type ArgusEmptyProps = {
-  suggestions: readonly Suggestion[];
-  onPick: (text: string, send: boolean) => void;
-};
-
-export function ArgusEmpty({ suggestions, onPick }: ArgusEmptyProps) {
+export function ArgusEmpty() {
   const { t } = useTranslation();
   const { heightClass, landscape } = useHeightLayout();
   return (
@@ -26,7 +19,6 @@ export function ArgusEmpty({ suggestions, onPick }: ArgusEmptyProps) {
           {t('screens.conversations.argus-empty-hint')}
         </Text>
       </View>
-      <SuggestionChips suggestions={suggestions} onPick={onPick} />
     </View>
   );
 }

@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { render, screen } from '@testing-library/react';
-import { Text, TextScaleProvider } from '@/shared/ui/text/text';
+import { ClearText, Text, TextScaleProvider } from '@/shared/ui/text/text';
 
 describe('Text', () => {
   test('renders its words and a heading role when asked', () => {
@@ -15,6 +15,17 @@ describe('Text', () => {
     expect(screen.getByRole('heading', { name: 'Todo tranquilo.' })).toBeDefined();
     expect(screen.getByText('En casa · Luis y tú en casa')).toBeDefined();
     expect(screen.queryAllByRole('heading')).toHaveLength(1);
+  });
+
+  test('a clear run keeps its room in the line without showing, as a bubble reserves its time', () => {
+    render(
+      <Text variant="body">
+        Hola
+        <ClearText variant="caption">{' 21:54'}</ClearText>
+      </Text>
+    );
+    const run = screen.getByText('21:54', { exact: false, selector: 'span' });
+    expect(run.parentElement?.textContent).toBe('Hola 21:54');
   });
 
   test('a heading carries its level, so the web does not make every heading an h1', () => {

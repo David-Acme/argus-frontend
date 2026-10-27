@@ -1,16 +1,17 @@
 import { useState } from 'react';
+import { useSharedValue, type SharedValue } from 'react-native-reanimated';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { toast } from '@/shared/libs/toast';
 import { useNoteRecorder } from '@/features/conversations/hooks/use-note-recorder';
-import type { HoldDecision, HoldRecordMode } from '@/features/conversations/model/hold-record';
+import type { HoldRecordMode, HoldVerdict } from '@/features/conversations/model/hold-record';
 import type { NoteRecorder, RecordedNote } from '@/features/conversations/model/voice-note';
 
 export type NoteCapture = {
   recorder: NoteRecorder;
   mode: HoldRecordMode;
-  dragDx: number;
+  drag: SharedValue<number>;
   start: () => void;
-  drag: (decision: HoldDecision, dx: number) => void;
+  decide: (verdict: HoldVerdict) => void;
   release: () => void;
   toggle: () => void;
   cancel: () => void;
@@ -21,11 +22,11 @@ export function useNoteCapture(onNote: (note: RecordedNote) => void): NoteCaptur
   const { t } = useTranslation();
   const recorder = useNoteRecorder();
   const [mode, setMode] = useState<HoldRecordMode>('idle');
-  const [dragDx, setDragDx] = useState(0);
+  const drag = useSharedValue(0);
 
   const reset = () => {
     setMode('idle');
-    setDragDx(0);
+    drag.set(0);
   };
 
   const send = () => {
@@ -48,11 +49,10 @@ export function useNoteCapture(onNote: (note: RecordedNote) => void): NoteCaptur
     });
   };
 
-  const drag = (decision: HoldDecision, dx: number) => {
+  const decide = (verdict: HoldVerdict) => {
     if (mode !== 'holding') return;
-    if (decision === 'cancel') cancel();
-    else if (decision === 'lock') setMode('locked');
-    else setDragDx(Math.min(0, dx));
+    if (verdict === 'cancel') cancel();
+    else setMode('locked');
   };
 
   const release = () => {
@@ -67,9 +67,9 @@ export function useNoteCapture(onNote: (note: RecordedNote) => void): NoteCaptur
   return {
     recorder,
     mode,
-    dragDx,
-    start: () => begin('holding'),
     drag,
+    start: () => begin('holding'),
+    decide,
     release,
     toggle,
     cancel,

@@ -1,6 +1,4 @@
-import { Chip } from '@/shared/ui/chip';
 import { Avatar } from '@/shared/ui/avatar';
-import { Cluster } from '@/shared/ui/layout';
 import {
   ResourceView,
   SkeletonRow,
@@ -35,12 +33,6 @@ const EMPTY = {
   detail: copy.freeDay,
   action: { label: copy.newReminder, onPress: noop, icon: 'plus' },
   presence: 'happy',
-  children: (
-    <Cluster>
-      <Chip label={copy.askPayWater} />
-      <Chip label={copy.askTechnician} />
-    </Cluster>
-  ),
 } as const;
 
 const SKELETON = (

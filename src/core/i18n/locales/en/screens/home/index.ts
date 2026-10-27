@@ -57,13 +57,18 @@ export const home = {
       away: 'Watching your home.',
       offline: 'Offline.',
     },
-    mode: '{mode} mode',
+    mode: {
+      home: 'Home mode',
+      night: 'Night mode',
+      away: 'Away mode',
+      armed: 'Armed mode',
+    },
     watching: 'I keep watch',
     people: {
       'me-and-others': '{names} and you are home',
       others: '{names} at home',
       me: 'You are home',
-      nobody: 'Nobody home',
+      nobody: 'No one is home',
     },
     and: '{first} and {last}',
     stat: {
@@ -129,13 +134,6 @@ export const home = {
       answers: 'Answers when you talk to it',
       'answers-body': 'Hold the centre and speak',
     },
-    try: {
-      title: 'Try saying',
-      'who-home': 'Who is home?',
-      night: 'Turn on Night mode',
-      happened: 'What happened today?',
-      today: 'What do I have today?',
-    },
     connect: 'Connect a camera so Argus can keep watch',
     columns: {
       agenda: 'Your day',
@@ -158,10 +156,6 @@ export const home = {
     'empty-security-hint': 'When your cameras see something, I will tell you here.',
     'empty-pending': 'You are up to date',
     'empty-pending-hint': 'You have no unread notices.',
-    idea: {
-      today: 'What happened at home today?',
-      week: 'Sum up my week',
-    },
     filter: {
       label: 'Show',
       all: 'All',

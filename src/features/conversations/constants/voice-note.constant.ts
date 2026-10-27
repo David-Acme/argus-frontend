@@ -8,3 +8,9 @@ export const WEB_NOTE_TYPES: readonly string[] = [
 export const SLIDE_CANCEL_PX = 96;
 
 export const SLIDE_LOCK_PX = 72;
+
+export const NOTE_CAPTURE: MediaTrackConstraints = {
+  channelCount: 1,
+  echoCancellation: true,
+  noiseSuppression: true,
+};

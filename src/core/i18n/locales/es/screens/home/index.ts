@@ -57,13 +57,18 @@ export const home = {
       away: 'Vigilo tu casa.',
       offline: 'Sin conexión.',
     },
-    mode: 'Modo {mode}',
+    mode: {
+      home: 'Modo casa',
+      night: 'Modo noche',
+      away: 'Modo fuera',
+      armed: 'Modo armado',
+    },
     watching: 'vigilo por ti',
     people: {
       'me-and-others': '{names} y tú en casa',
       others: '{names} en casa',
       me: 'Tú en casa',
-      nobody: 'Nadie en casa',
+      nobody: 'No hay nadie en casa',
     },
     and: '{first} y {last}',
     stat: {
@@ -129,13 +134,6 @@ export const home = {
       answers: 'Te responde cuando le hablas',
       'answers-body': 'Mantén el centro y háblale',
     },
-    try: {
-      title: 'Prueba a decirle',
-      'who-home': '¿Quién está en casa?',
-      night: 'Pon el modo Noche',
-      happened: '¿Qué pasó hoy?',
-      today: '¿Qué tengo hoy?',
-    },
     connect: 'Conecta una cámara para que Argus vigile',
     columns: {
       agenda: 'Tu día',
@@ -158,10 +156,6 @@ export const home = {
     'empty-security-hint': 'Cuando tus cámaras vean algo, te lo cuento aquí.',
     'empty-pending': 'Estás al día',
     'empty-pending-hint': 'No tienes avisos sin leer.',
-    idea: {
-      today: '¿Qué pasó hoy en casa?',
-      week: 'Resúmeme la semana',
-    },
     filter: {
       label: 'Mostrar',
       all: 'Todo',

@@ -1,6 +1,6 @@
 import { clsx } from 'clsx';
 import { View } from 'react-native';
-import { illustration, state } from '@/shared/theme';
+import { illustration, size as sizes, state } from '@/shared/theme';
 import { Icon, type IconGlyph, type IconTone } from '@/shared/ui/icon';
 import { PressableSurface } from '@/shared/ui/pressable';
 import { Text } from '@/shared/ui/text';
@@ -56,6 +56,7 @@ export function RoundControl({
       disabled={disabled}
       haptic="impactLight"
       pressed={{ scale: 'icon' }}
+      hitSlop={Math.max(0, (sizes.target - size) / 2)}
       className="items-center gap-2">
       <View
         className={clsx(
@@ -64,10 +65,10 @@ export function RoundControl({
           tone === 'on' && 'bg-ink'
         )}
         style={circle}>
-        <Icon name={icon} tone={ICON_TONES[tone]} />
+        <Icon name={icon} tone={ICON_TONES[tone]} fine />
       </View>
       {caption ? (
-        <Text variant="chip" tone="2">
+        <Text variant="caption" tone="2">
           {label}
         </Text>
       ) : null}

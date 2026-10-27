@@ -9,6 +9,7 @@ internal data class CallPalette(
     val alertGlow: Int,
     val accept: Int,
     val decline: Int,
+    val control: Int,
 ) {
     companion object {
         val STAGE = CallPalette(
@@ -20,6 +21,7 @@ internal data class CallPalette(
             alertGlow = 0xFF6A231E.toInt(),
             accept = 0xFF25A85A.toInt(),
             decline = 0xFFD83A34.toInt(),
+            control = 0xFF57524E.toInt(),
         )
     }
 }

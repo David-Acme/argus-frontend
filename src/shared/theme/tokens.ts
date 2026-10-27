@@ -50,6 +50,7 @@ const light = {
   'ev4-bar': '#C9706B',
   'on-media': '#FFFFFF',
   'receipt-read': '#2F6AA8',
+  'bubble-own': '#E8D8B8',
 } as const;
 
 const dark = {
@@ -94,6 +95,7 @@ const dark = {
   'ev4-bar': '#C9706B',
   'on-media': '#FFFFFF',
   'receipt-read': '#7FB0E8',
+  'bubble-own': '#4A3D24',
 } as const satisfies Record<keyof typeof light, string>;
 
 export type ColorRole = keyof typeof light;
@@ -175,6 +177,7 @@ export const size = {
   icon: 24,
   iconSmall: 20,
   iconStroke: 1.75,
+  iconStrokeFine: 1.5,
   well: 42,
   wellSmall: 36,
   avatar: 36,
