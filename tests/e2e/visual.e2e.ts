@@ -16,8 +16,6 @@ const WIDTHS = [
 
 const SHOT = { maxDiffPixels: 40, timeout: 15000 } as const;
 
-const ESTELA = 'Argus, at rest';
-
 const INTRO_MS = 3000;
 
 const TOOLTIP_MS = 600;
@@ -82,15 +80,13 @@ for (const size of WIDTHS) {
   test(`the welcome looks as recorded at ${size.name} width`, async ({ app, browser, screen }) => {
     await browser.setViewport({ width: size.width, height: size.height });
     await browser.addInitScript(installFixedClock, FIXED_NOW);
+    await browser.addInitScript(installReducedMotion, null);
     await openFirst(browser, app, unpairedDevice('A'));
     await expect(screen.getByRole('heading', 'Hi, I am Argus')).toBeVisible({ timeout: 10000 });
     const platform = await platformOf(browser);
     test.skip(!UPDATING && !platformRecorded(platform), missingBaseline(platform));
     await expect(screen.getByText('Get started', { exact: true })).toBeVisible({ timeout: 15000 });
     await settle(INTRO_MS);
-    await expect(screen).toHaveScreenshot(`welcome-${size.name}-${platform}.png`, {
-      ...SHOT,
-      mask: [screen.getByRole('img', ESTELA)],
-    });
+    await expect(screen).toHaveScreenshot(`welcome-${size.name}-${platform}.png`, SHOT);
   });
 }
