@@ -82,7 +82,8 @@ const crowdedDay: Row[] = Array.from({ length: 32 }, (_, index) =>
 const AGENDA_ROWS: Row[] = [...PRODUCTIVITY, ...busyDay, share(1400, 900, 2, 'edit')];
 
 const openMore = async (scene: Scene): Promise<void> => {
-  await button(scene, 'screens.projects.more', { name: 'Mudanza' })
+  await scene.page
+    .getByLabel(say(scene, 'screens.projects.more', { name: 'Mudanza' }))
     .first()
     .click({ timeout: 8000 });
   await sleep(800);
