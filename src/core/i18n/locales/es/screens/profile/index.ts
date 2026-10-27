@@ -48,7 +48,6 @@ export const profile = {
     invite: {
       title: 'Invita a alguien',
       body: 'Que Argus también le reconozca y le avise.',
-      action: 'Invitar',
     },
     camera: {
       title: 'Conecta tu primera cámara',

@@ -265,7 +265,7 @@ describe('Tú with panes', () => {
 });
 
 describe('the Casa panel alone', () => {
-  test('alone in Argus offers to invite, once', () => {
+  test('alone in Argus says so once and leaves the one Invitar button to the hero', () => {
     state.household = household({
       people: [person({})],
       summary: { title: { kind: 'alone' }, meta: { kind: 'everyone' } },
@@ -275,6 +275,8 @@ describe('the Casa panel alone', () => {
     render(<HomePanel household={state.household} peopleHref="/users" />);
     expect(screen.getAllByText('Por ahora vives solo en Argus')).toHaveLength(1);
     expect(screen.getByText('Empieza con Argus')).toBeDefined();
+    expect(screen.getByText('Invita a alguien')).toBeDefined();
+    expect(screen.queryByRole('button', { name: 'Invitar' })).toBeNull();
   });
 
   test('the hero without facts or actions keeps the name and role only', () => {
