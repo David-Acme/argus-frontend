@@ -105,7 +105,7 @@ const TextScale = createContext(1);
 
 export const TextScaleProvider = TextScale.Provider;
 
-const CLEAR_INK = { color: 'transparent' } as const;
+const CLEAR_INK = { color: illustration.clearInk } as const;
 
 const MEDIA_SHADOW = {
   textShadowColor: illustration.mediaTextShadow.color,

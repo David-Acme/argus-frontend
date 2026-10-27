@@ -1,5 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { render, screen } from '@testing-library/react';
+import { processColor } from 'react-native';
+import { illustration } from '@/shared/theme';
 import { ClearText, Text, TextScaleProvider } from '@/shared/ui/text/text';
 
 describe('Text', () => {
@@ -26,6 +28,13 @@ describe('Text', () => {
     );
     const run = screen.getByText('21:54', { exact: false, selector: 'span' });
     expect(run.parentElement?.textContent).toBe('Hola 21:54');
+  });
+
+  test('a clear run is inked at alpha 0 but never ARGB 0, which Android Fabric reads as no colour', () => {
+    const argb = Number(processColor(illustration.clearInk));
+    expect(argb >>> 24).toBe(0);
+    expect(argb | 0).not.toBe(0);
+    expect(Number(processColor('transparent'))).toBe(0);
   });
 
   test('a heading carries its level, so the web does not make every heading an h1', () => {

@@ -8,6 +8,7 @@ export const illustration = {
   eyeChip: 'rgba(10,9,12,0.48)',
   eyeChipText: '#F4EFE7',
   sceneShade: '#000000',
+  clearInk: 'rgba(255,255,255,0)',
   scenes: {
     kitchen: {
       axis: 'x',

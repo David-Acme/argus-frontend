@@ -7832,7 +7832,13 @@ suggestion chips over the field and the microphone as tap-to-talk.
   its own line's end, and when the reserve does not fit it drops whole to a
   line of its own, so the time never pushes the words to the end (phone run 2
   #3 and #9: the old wrapping row grew to the maximum width and its
-  `justify-end` pushed short lines right). Time and ticks (`BubbleMeta`): a
+  `justify-end` pushed short lines right). The reserve's ink
+  (`illustration.clearInk`) is white at alpha 0, never `transparent`: React
+  Native's Android Fabric spells an undefined colour as ARGB `0`
+  (`HostPlatformColor::UndefinedColor`), the same int `transparent`
+  normalises to, so a `transparent` span carried no foreground colour and
+  inherited the body's, painting the time twice on a release APK (phone run
+  3). Time and ticks (`BubbleMeta`): a
   camera turn says «Por la cámara», a spoken turn «Por voz»; the phone and
   laptop legs are only in the spoken label. Actions through the shared menu:
   long press on phones, right click and a hover «⋯» (`bubble-more.web.tsx`)
