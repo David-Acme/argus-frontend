@@ -911,14 +911,6 @@
       "count": 1
     }
   },
-  "src/features/security/components/guard-card.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 1
-    },
-    "argus/no-template-key": {
-      "count": 2
-    }
-  },
   "src/features/security/components/guard-mode-picker.tsx": {
     "argus/activity-indicator-home": {
       "count": 1

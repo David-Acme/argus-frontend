@@ -287,7 +287,6 @@ src/features/security/components/emergency-contacts-panel.tsx
 src/features/security/components/environment-form-dialog.tsx
 src/features/security/components/environment-settings-panel.tsx
 src/features/security/components/expected-guest-form.tsx
-src/features/security/components/guard-card.tsx
 src/features/security/components/guard-mode-picker.tsx
 src/features/security/components/hours-editor.tsx
 src/features/security/components/hours-fields.tsx

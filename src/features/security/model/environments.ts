@@ -128,12 +128,6 @@ export function headlineMode(environments: readonly GuardEnvironment[]): GuardMo
     : null;
 }
 
-export function sharedMode(environments: readonly GuardEnvironment[]): GuardMode | null {
-  const first = environments[0];
-  if (!first) return null;
-  return environments.every((environment) => environment.mode === first.mode) ? first.mode : null;
-}
-
 export function matchEnvironment(environments: readonly GuardEnvironment[], hint: string): EnvironmentMatch {
   const words = foldWords(hint).filter((word) => word.length >= 3);
   if (environments.length <= 1 || words.length === 0) return { kind: 'all' };
