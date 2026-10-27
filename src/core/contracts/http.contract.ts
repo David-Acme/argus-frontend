@@ -130,6 +130,25 @@ const cameraFeatures = z.object({
   sdCard: z.boolean(),
 });
 
+const cameraCatalogSpecs = z.object({
+  fovDeg: z.number(),
+  nightVisionM: z.number(),
+  colorNight: z.boolean(),
+  spotlight: z.boolean(),
+  siren: z.boolean(),
+  microphone: z.boolean(),
+  twoWayAudio: z.boolean(),
+  panDeg: z.number(),
+  tiltDeg: z.number(),
+  opticalZoom: z.number(),
+  ipRating: z.string(),
+  power: z.enum(['adapter', 'poe', 'adapter-poe', 'battery', 'doorbell-wiring', 'battery-wiring']),
+  storageGb: z.number(),
+  rtsp: z.boolean(),
+  onvif: z.boolean(),
+  onvifProfile: z.string(),
+});
+
 export const cameraCatalogSchema = z.object({
   models: z.array(
     z.object({
@@ -160,6 +179,11 @@ export const cameraCatalogSchema = z.object({
       }),
       features: cameraFeatures,
       note: z.string(),
+      support: z.enum(['full', 'control', 'video', 'none']).optional(),
+      tested: z.boolean().default(false),
+      look: z.string().default(''),
+      specs: cameraCatalogSpecs.nullable().catch(null),
+      source: z.string().default(''),
     })
   ),
 }) satisfies z.ZodType<ICameraCatalog>;

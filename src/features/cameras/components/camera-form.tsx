@@ -11,6 +11,7 @@ import { ModelStep } from '@/features/cameras/components/camera-setup/model-step
 import { ProbeStep } from '@/features/cameras/components/camera-setup/probe-step';
 import { useCameraSetup } from '@/features/cameras/hooks/use-camera-setup';
 import type { CameraSetup } from '@/features/cameras/hooks/use-camera-setup';
+import { connectable } from '@/features/cameras/model/camera-catalog';
 import type { CameraFormStep } from '@/features/cameras/model/camera-form-steps';
 
 export type CameraFormProps = {
@@ -66,7 +67,7 @@ function SetupSheet({ camera, onClose }: SetupSheetProps) {
   const { t } = useTranslation();
   const setup = useCameraSetup(camera, onClose);
   const disabled =
-    (setup.step === 'model' && !setup.selectedModel) ||
+    (setup.step === 'model' && !(setup.previewModel && connectable(setup.previewModel))) ||
     (setup.step === 'test' && setup.probe.running);
   return (
     <Sheet
