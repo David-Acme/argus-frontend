@@ -7410,6 +7410,11 @@ density and components.
   · Hechas, Hechas collapsed behind «Mostrar N»; the board with the three
   lanes appears only when the window is at least `BOARD_MIN_WIDTH` (1280),
   where three lanes still fit beside the list, and keeps drag between lanes.
+  Lanes size to their content: the board opts out of the column's grow, so a
+  short lane never stretches into an empty card, and an empty lane is one
+  quiet line under its head («Arrastra una tarea aquí», or «Aquí aparecerán
+  las tareas» for a view-only member). A long press (touch), a right click or
+  Shift+F10 / the context-menu key opens a task's menu.
   A task's `Check` completes or reopens it with Deshacer; a long press (touch)
   or right click opens its menu (Pasar a…, Editar, Borrar); a tap edits.
 - **Sheets.** One task sheet and one project sheet on the redesign's `Sheet`
