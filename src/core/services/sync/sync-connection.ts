@@ -137,7 +137,10 @@ export class SyncConnection {
       return false;
     }
 
-    if (!accessToken || !instance) return false;
+    if (!accessToken || !instance) {
+      this.scheduleReconnect(false);
+      return false;
+    }
 
     let socket: IArgusSocket;
     try {
@@ -233,10 +236,10 @@ export class SyncConnection {
     });
   }
 
-  private scheduleReconnect(): void {
+  private scheduleReconnect(refreshAddress = true): void {
     if (this.manualClose) return;
     if (this.reconnectTimer) return;
-    void netService.refreshAddress().catch(() => undefined);
+    if (refreshAddress) void netService.refreshAddress().catch(() => undefined);
     const wait = backoffDelay(this.reconnectAttempt);
     this.reconnectAttempt += 1;
     this.reconnectTimer = setTimeout(() => {
