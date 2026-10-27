@@ -494,6 +494,17 @@ describe('the composer', () => {
 });
 
 describe('the pieces of a thread', () => {
+  test('the words of a bubble are their own run, findable whole, with the time reserve beside them', async () => {
+    await show(
+      <MessageBubble
+        message={message('7', { direction: 'in', body: 'Ana is at home.' })}
+        repliedBody={null}
+        status={null}
+      />
+    );
+    expect(screen.getByText('Ana is at home.', { exact: true })).toBeDefined();
+  });
+
   test('time and ticks sit inside the bubble: clock, ✓, ✓✓ and blue ✓✓', async () => {
     await show(
       <>
