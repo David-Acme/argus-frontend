@@ -34,6 +34,7 @@ import { projectProjects } from './view-cache/project.projection';
 import { startOfNextDay } from './view-cache/dates';
 import { startProjection, type ProjectionContext } from './view-cache/projection';
 import { notificationPages, searchPages } from './view-cache-pages';
+import { projectProgress, projectTaskPages, startWeekTasks } from './view-cache-tasks';
 import { projectSummary } from './view-cache/summary.projection';
 
 const shared = <T>(source: Observable<T>): Observable<T> =>
@@ -50,7 +51,7 @@ function sessionSources(userId: string) {
     cameras: shared(moduleGate.of(SURVEILLANCE, cameraService.observeList(), [])),
     zones: shared(moduleGate.of(SURVEILLANCE, zoneService.observeForCache(), [])),
     projects: shared(moduleGate.of(PRODUCTIVITY, projectService.observeList(), [])),
-    tasks: shared(moduleGate.of(PRODUCTIVITY, projectTaskService.observeAll(), [])),
+    openTasks: shared(moduleGate.of(PRODUCTIVITY, projectTaskService.observeOpenCount(), 0)),
     members: shared(moduleGate.of(PRODUCTIVITY, projectMemberService.observeAll(), [])),
     calendarShares: shared(moduleGate.of(PRODUCTIVITY, calendarEventShareService.observeAll(), [])),
     series: shared(moduleGate.of(PRODUCTIVITY, calendarEventService.observeRecurring(), [])),
@@ -67,6 +68,7 @@ type SessionSources = ReturnType<typeof sessionSources>;
 function startSessionProjections(sources: SessionSources, ctx: ProjectionContext): Subscription[] {
   const { from, to } = todayRange(ctx.now);
   return [
+    startWeekTasks(moduleGate, ctx),
     startProjection(
       {
         sources: () => ({ cameras: sources.cameras, zones: sources.zones }),
@@ -78,12 +80,12 @@ function startSessionProjections(sources: SessionSources, ctx: ProjectionContext
       {
         sources: () => ({
           projects: sources.projects,
-          tasks: sources.tasks,
+          progress: projectProgress(sources.projects),
           members: sources.members,
           users: sources.users,
         }),
         project: projectProjects,
-        tracked: ['project.tasks', 'project.members'],
+        tracked: ['project.members'],
       },
       ctx,
     ),
@@ -108,7 +110,7 @@ function startSessionProjections(sources: SessionSources, ctx: ProjectionContext
         sources: () => ({
           cameras: sources.cameras,
           projects: sources.projects,
-          tasks: sources.tasks,
+          openTasks: sources.openTasks,
         }),
         project: projectSummary,
       },
@@ -132,7 +134,8 @@ function startSessionProjections(sources: SessionSources, ctx: ProjectionContext
 export type PagedViewKey =
   | typeof VIEW_CACHE_KEYS.notificationFeed
   | typeof VIEW_CACHE_KEYS.conversationThread
-  | typeof VIEW_CACHE_KEYS.commandSearch;
+  | typeof VIEW_CACHE_KEYS.commandSearch
+  | typeof VIEW_CACHE_KEYS.projectTasks;
 
 function startPagedViews(
   sources: SessionSources,
@@ -162,6 +165,7 @@ function startPagedViews(
       ctx,
     ),
     [VIEW_CACHE_KEYS.commandSearch]: new PagedView(searchPages(moduleGate), ctx),
+    [VIEW_CACHE_KEYS.projectTasks]: new PagedView(projectTaskPages(moduleGate), ctx),
   };
 }
 

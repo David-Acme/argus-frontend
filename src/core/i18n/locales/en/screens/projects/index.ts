@@ -123,4 +123,5 @@ export const projects = {
   'member-none-left': 'Everyone at home who can see projects is already here.',
   'read-only': 'You can view this project. Whoever created it decides who can edit it.',
   'no-results': 'No results',
+  'done-end': 'No more finished tasks',
 } as const;

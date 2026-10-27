@@ -1,4 +1,5 @@
 import { View } from 'react-native';
+import type { IWeekTaskCounts } from '@/core/interfaces';
 import type { TranslationKey } from '@/core/types';
 import { useAuthStore } from '@/core/stores';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
@@ -14,11 +15,10 @@ import { Text } from '@/shared/ui/text';
 import { RecentActivitySection } from '@/features/activity';
 import { DevicesSection } from '@/features/sessions';
 import { useWeek } from '@/features/profile/hooks/use-week';
-import type { WeekStats } from '@/features/profile/model/week-stats';
 
 type TileProps = { icon: IconGlyph; tone: AvatarTone; value: number; label: string };
 
-type TilesProps = { stats: WeekStats };
+type TilesProps = { stats: IWeekTaskCounts };
 
 const HELP = [
   {

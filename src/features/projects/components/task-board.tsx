@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { View } from 'react-native';
 import type { LayoutChangeEvent } from 'react-native';
 import { useSharedValue } from 'react-native-reanimated';
+import type { IProjectTaskCacheRow } from '@/core/interfaces';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { ColumnGrowProvider } from '@/shared/ui/screen';
 import { Section } from '@/shared/ui/section';
@@ -18,6 +19,7 @@ import {
   TaskGhostLayer,
 } from '@/features/projects/components/task-drag';
 import type { TaskDragState, TaskGhost } from '@/features/projects/components/task-drag';
+import { DoneLaneList } from '@/features/projects/components/done-lane-list';
 import { TaskRow } from '@/features/projects/components/task-row';
 
 export type TaskBoardProps = { view: ProjectView; context: TaskContext };
@@ -28,15 +30,27 @@ const PRESS_GUARD_MS = 350;
 
 const DROP_SETTLE_MS = 160;
 
+function laneCount(view: ProjectView, lane: TaskLaneKey): number {
+  return lane === 'done'
+    ? Math.max(view.tasks.doneTotal, view.lanes.done.length)
+    : view.lanes[lane].length;
+}
+
 function Lane({ view, context, lane, index }: LaneProps) {
   const { t } = useTranslation();
   const tasks = view.lanes[lane];
+  const count = String(laneCount(view, lane));
+  const renderTask = (task: IProjectTaskCacheRow) => (
+    <DraggableTask key={task.id} taskId={task.id} lane={index} disabled={!context.editable}>
+      <TaskRow task={task} context={context} />
+    </DraggableTask>
+  );
   return (
     <TaskDropZone index={index}>
       {tasks.length === 0 ? (
         <Section
           title={t(LANE_LABEL[lane])}
-          meta={String(tasks.length)}
+          meta={count}
           variant="plain"
           testID={`task-lane-${lane}`}>
           <View className="px-section-head-x">
@@ -50,15 +64,12 @@ function Lane({ view, context, lane, index }: LaneProps) {
           </View>
         </Section>
       ) : (
-        <Section
-          title={t(LANE_LABEL[lane])}
-          meta={String(tasks.length)}
-          testID={`task-lane-${lane}`}>
-          {tasks.map((task) => (
-            <DraggableTask key={task.id} taskId={task.id} lane={index} disabled={!context.editable}>
-              <TaskRow task={task} context={context} />
-            </DraggableTask>
-          ))}
+        <Section title={t(LANE_LABEL[lane])} meta={count} testID={`task-lane-${lane}`}>
+          {lane === 'done' ? (
+            <DoneLaneList tasks={tasks} paging={view.tasks.donePaging} renderTask={renderTask} />
+          ) : (
+            tasks.map(renderTask)
+          )}
         </Section>
       )}
     </TaskDropZone>

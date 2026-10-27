@@ -10,3 +10,5 @@ export {
   projectSearch,
   taskHit,
 } from './search.projection';
+export { projectTasksPage, projectWeekTasks, type ProjectProgressMap } from './project.projection';
+export type { ProjectionContext } from './projection';

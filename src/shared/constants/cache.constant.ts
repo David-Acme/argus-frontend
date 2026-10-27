@@ -1,6 +1,6 @@
 export const VIEW_CACHE_PREFIX = 'view.cache.v2.';
 
-export const RETIRED_VIEW_CACHE_KEYS = ['reminder.list', 'event.list'] as const;
+export const RETIRED_VIEW_CACHE_KEYS = ['reminder.list', 'event.list', 'task.list'] as const;
 
 export const VIEW_CACHE_PAGE_SIZE = 40;
 
@@ -15,6 +15,8 @@ export const VIEW_CACHE_CALENDAR_ENTRY_LIMIT = 400;
 export const NOTIFICATION_FEED_PAGE_SIZE = 40;
 
 export const SEARCH_PAGE_SIZE = 20;
+
+export const PROJECT_DONE_PAGE_SIZE = 20;
 export const NOTIFICATION_READ_BATCH_SIZE = 500;
 
 export const NOTIFICATION_FEED_SCOPE = 'all';
@@ -43,7 +45,7 @@ export const VIEW_CACHE_KEYS = {
   commandSearch: 'command.search',
   projectList: 'project.list',
   projectTasks: 'project.tasks',
-  taskList: 'task.list',
+  weekTasks: 'week.tasks',
   projectMembers: 'project.members',
   calendarEventShares: 'calendar.event.shares',
   peopleUsers: 'people.users',

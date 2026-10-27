@@ -4,6 +4,7 @@ import {
   groupTasksByLane,
   laneAtPosition,
   laneOf,
+  projectTaskRows,
   statusForLane,
   taskLayoutOf,
   toggledStatus,
@@ -28,7 +29,7 @@ describe('task lanes', () => {
     ]);
   });
 
-  test('a lane lists its tasks by status, then priority, then the nearest date', () => {
+  test('an open lane lists its tasks by status, then priority, then the nearest date; Terminadas keeps the database order', () => {
     const lanes = groupTasksByLane([
       task('1', 'backlog', 'urgent'),
       task('2', 'todo', 'low', 200),
@@ -39,7 +40,19 @@ describe('task lanes', () => {
     ]);
     expect(lanes.todo.map((entry) => entry.id)).toEqual(['3', '6', '2', '1']);
     expect(lanes.doing).toEqual([]);
-    expect(lanes.done.map((entry) => entry.id)).toEqual(['5', '4']);
+    expect(lanes.done.map((entry) => entry.id)).toEqual(['4', '5']);
+  });
+
+  test('open tasks come first and a finished page never repeats a task the open query still holds', () => {
+    const rows = projectTaskRows(
+      [task('1', 'todo'), task('2', 'doing')],
+      [task('2', 'done'), task('3', 'done')]
+    );
+    expect(rows.map((entry) => `${entry.id}:${entry.status}`)).toEqual([
+      '1:todo',
+      '2:doing',
+      '3:done',
+    ]);
   });
 
   test('moving into a lane keeps a status the lane already holds', () => {

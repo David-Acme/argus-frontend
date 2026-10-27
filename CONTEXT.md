@@ -3413,10 +3413,11 @@ window, the end detection and the loading/error state; components render.
   last release shrinks a warm scope back to its first page (so MMKV holds one
   page, not everything ever scrolled) or closes a cold one. The coordinator
   exposes `watchPages` / `extendPages` / `releasePages`. Watch requests made
-  before a session starts are replayed when it does. Three views use it
-  today: `notification.feed` (keyset), `calendar.agenda` (a span of weeks)
-  and `command.search` (segmented keyset, see "The search reads the database
-  page by page").
+  before a session starts are replayed when it does. Four views use it
+  today: `notification.feed` (keyset), `calendar.agenda` (a span of weeks),
+  `command.search` (segmented keyset, see "The search reads the database
+  page by page") and `project.tasks` (see "Tasks read the database by
+  project").
 - **Remote feeds.** `RemoteFeed` (`core/services/paging/remote-feed.ts`) is
   the same idea for server-only lists. It stores `{rows, next}` in the view
   cache per scope. `refresh` re-reads the head and keeps the pages already
@@ -6740,6 +6741,34 @@ the client. The agenda keeps loading by its visible range.
   its projection; the key is retired so MMKV drops it. The «create task» action
   now asks `dashboard.summary.projectsTotal` instead of reading the project
   list.
+
+## Tasks read the database by project (2026-10-27, feat/lists-paged)
+
+David asked every long list to page from the database. The coordinator no
+longer observes the whole `project_task` table.
+
+- **`project.tasks`** is a paged view per project id
+  (`core/services/view-cache-tasks.ts`, `projectTaskPages`), opened only while
+  a screen watches it. Its value (`IProjectTasksPage`) holds the project's open
+  tasks (one bounded query, at most `VIEW_CACHE_LIST_LIMIT`), a keyset page of
+  its finished and canceled tasks (20 at a time, `PROJECT_DONE_PAGE_SIZE`,
+  newest `updated_at` first), and the counts: progress (done over all but
+  canceled) and how many are in Terminadas.
+- **The board** merges the open rows with the finished page
+  (`projectTaskRows`, an id seen open wins) before the optimistic lenses, so a
+  task marked done moves lanes at once. Terminadas keeps the database order
+  (most recently finished first) and renders through `InfiniteList`, capped at
+  `layout.laneListCap` (440) on the board and in the phone's groups, loading
+  the next page at its end; its head shows the counted total.
+- **Counts instead of rows.** Each project card's progress comes from three
+  count queries per project (`observeProgress`, fed by the project list), the
+  dashboard's open tasks from one count (`observeOpenCount`), and the
+  profile's week from counts of tasks due in the week (`observeDueCounts`,
+  `week.tasks`, rebuilt at midnight with the other date-derived projections).
+  The project list rows read their progress from `dashboard.projects`. Inicio's
+  project rows watch `project.tasks` for their next open task.
+- **Gone.** `task.list` (retired key) and `observeAll`; `weekOf` moved to
+  `shared/libs/week-range.ts` because core and the profile both read it.
 
 ## Inicio's agenda sections (2026-10-26, Phase 2 T5, p2/inicio-agenda)
 
