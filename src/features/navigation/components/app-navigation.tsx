@@ -6,7 +6,13 @@ import { COMMAND_KEY, VIEW_CACHE_KEYS } from '@/shared/constants';
 import { BottomNavShown } from '@/shared/hooks/use-bottom-nav-inset';
 import { useViewCacheValue } from '@/shared/hooks/use-cached-rows';
 import { useTranslation } from '@/shared/hooks/use-translation';
-import { useSurfaces, type ResolvedSurfaces } from '@/shared/libs/surfaces';
+import {
+  AttentionProbes,
+  attentionByModule,
+  useAttention,
+  useSurfaces,
+  type ResolvedSurfaces,
+} from '@/shared/libs/surfaces';
 import { layout, useWindowLayout } from '@/shared/theme';
 import {
   Nav,
@@ -27,6 +33,7 @@ import {
   ALL_KEY,
   barEntries,
   barKey,
+  entryCount,
   MENU_KEY,
   navGroups,
   railEntries,
@@ -92,6 +99,17 @@ function useNavForm(pathname: string, resolved: ResolvedSurfaces): NavForm {
   };
 }
 
+type CountInput = { sidebar: boolean; entries: readonly NavEntry[]; unread: number };
+
+function useCountOf({ sidebar, entries, unread }: CountInput) {
+  const attention = attentionByModule(useAttention());
+  return (entry: NavEntry): string | undefined => {
+    if (sidebar && entry.key === 'home') return unread > 0 ? String(unread) : undefined;
+    const count = entryCount(entry, entries, attention);
+    return count > 0 ? String(count) : undefined;
+  };
+}
+
 export function AppNavigation({ voice, listening, onCommand, children }: AppNavigationProps) {
   const pathname = usePathname();
   const { t } = useTranslation();
@@ -103,13 +121,14 @@ export function AppNavigation({ voice, listening, onCommand, children }: AppNavi
   const unread = useViewCacheValue<number>(VIEW_CACHE_KEYS.dashboardUnread) ?? 0;
   const shown = !bar || barShownOn(pathname);
   const active = activeKey(pathname, resolved);
+  const countOf = useCountOf({ sidebar, entries, unread });
   const itemOf = (entry: NavEntry, index: number): NavItem => ({
     key: entry.key,
     label: t(entry.label),
     icon: entry.icon,
     argus: entry.argus,
     shortcut: sidebar && index >= 0 ? String(index + 1) : undefined,
-    count: sidebar && entry.key === 'home' && unread > 0 ? String(unread) : undefined,
+    count: countOf(entry),
     children: entry.children?.map((child) => itemOf(child, -1)),
   });
   const known = flatten([...entries, ...foot, ...groups.modules]);
@@ -138,6 +157,7 @@ export function AppNavigation({ voice, listening, onCommand, children }: AppNavi
       presence="idle"
       onCommand={onCommand}
       more={{
+        onSwipeUp: bar ? () => sheet.show() : undefined,
         foot: foot.map((entry) => itemOf(entry, -1)),
         modules: sidebar
           ? {
@@ -167,7 +187,8 @@ export function AppNavigation({ voice, listening, onCommand, children }: AppNavi
         </View>
         {bar && shown ? nav : null}
       </View>
-      {bar ? <AllSheet onSearch={onCommand} onArgus={voice.onOpenChat} /> : null}
+      {bar ? <AllSheet onArgus={voice.onOpenChat} /> : null}
+      <AttentionProbes />
     </BottomNavShown>
   );
 }

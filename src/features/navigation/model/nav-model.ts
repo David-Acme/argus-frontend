@@ -164,3 +164,24 @@ export function togglePin(saved: readonly string[], module: string, count: numbe
   if (saved.includes(module)) return saved.filter((id) => id !== module);
   return [module, ...saved].slice(0, count);
 }
+
+export const moduleOfKey = (key: string): string | null =>
+  key.startsWith(MODULE_PREFIX) ? key.slice(MODULE_PREFIX.length) : null;
+
+export function hiddenAttention(
+  entries: readonly NavEntry[],
+  counts: ReadonlyMap<string, number>
+): number {
+  const shown = new Set(entries.flatMap((entry) => moduleOfKey(entry.key) ?? []));
+  return [...counts].reduce((sum, [module, count]) => (shown.has(module) ? sum : sum + count), 0);
+}
+
+export function entryCount(
+  entry: NavEntry,
+  entries: readonly NavEntry[],
+  counts: ReadonlyMap<string, number>
+): number {
+  if (entry.key === ALL_KEY) return hiddenAttention(entries, counts);
+  const module = moduleOfKey(entry.key);
+  return module ? (counts.get(module) ?? 0) : 0;
+}

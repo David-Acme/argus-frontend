@@ -27,6 +27,7 @@ export type NavMore = {
   foot?: readonly NavItem[];
   modules?: NavModules;
   fold?: NavFold;
+  onSwipeUp?: () => void;
 };
 
 export type NavVoice = {

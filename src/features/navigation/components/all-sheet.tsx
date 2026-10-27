@@ -1,17 +1,19 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { View } from 'react-native';
+import { useNow } from '@/shared/hooks/use-now';
 import { useTranslation } from '@/shared/hooks/use-translation';
+import { matchesWords, searchWords } from '@/shared/libs/text-search';
 import { useSurfaces } from '@/shared/libs/surfaces';
 import { Avatar } from '@/shared/ui/avatar';
 import { Button } from '@/shared/ui/button';
-import { Icon } from '@/shared/ui/icon';
+import { Field } from '@/shared/ui/field';
 import type { MenuItems } from '@/shared/ui/menu';
-import { PressableSurface } from '@/shared/ui/pressable';
+import { Notice } from '@/shared/ui/notice';
 import { Row } from '@/shared/ui/row';
 import { Section } from '@/shared/ui/section';
 import { Sheet } from '@/shared/ui/sheet';
-import { Text } from '@/shared/ui/text';
+import { useCommandSearch } from '@/features/command';
 import { ModuleTile } from '@/features/navigation/components/module-tile';
 import { useNavPins } from '@/features/navigation/hooks/use-nav-pins';
 import {
@@ -26,7 +28,7 @@ import {
   useAllSheetOpen,
 } from '@/features/navigation/stores/all-sheet.store';
 
-export type AllSheetProps = { onSearch: () => void; onArgus: () => void };
+export type AllSheetProps = { onArgus: () => void };
 
 const GRID_COLUMNS = 4;
 
@@ -36,20 +38,63 @@ function chunk<T>(items: readonly T[], size: number): T[][] {
   );
 }
 
-type SearchRowProps = { onPress: () => void };
+type SearchResultsProps = {
+  query: string;
+  destinations: readonly NavEntry[];
+  onOpen: (entry: NavEntry) => void;
+  onRun: (run: () => void) => void;
+};
 
-function SearchRow({ onPress }: SearchRowProps) {
+const MINUTE_MS = 60_000;
+
+function SearchResults({ query, destinations, onOpen, onRun }: SearchResultsProps) {
   const { t } = useTranslation();
+  const openedAt = useNow(MINUTE_MS);
+  const search = useCommandSearch({ query, scope: 'all', openedAt, enabled: true });
+  const words = searchWords(query);
+  const places = destinations.filter((entry) => matchesWords(t(entry.label), words));
+  const empty = places.length === 0 && search.results.length === 0 && !search.pending;
   return (
-    <PressableSurface
-      a11y={{ label: t('screens.navigation.search'), role: 'button' }}
-      onPress={onPress}
-      className="min-h-command-field px-nav-item-x rounded-control bg-fill flex-row items-center gap-2">
-      <Icon name="search" size="small" tone="text-3" />
-      <Text variant="meta" tone="3" numberOfLines={1}>
-        {t('screens.navigation.search')}
-      </Text>
-    </PressableSurface>
+    <View className="gap-4">
+      {places.length > 0 ? (
+        <Section title={t('screens.navigation.search-dest')}>
+          {places.map((entry) => (
+            <Row
+              key={entry.key}
+              leading={<Avatar icon={entry.icon} size="small" />}
+              title={t(entry.label)}
+              chevron
+              onPress={() => onOpen(entry)}
+            />
+          ))}
+        </Section>
+      ) : null}
+      {search.results.map((group) => (
+        <Section key={group.title} title={group.title}>
+          {group.items.map((item) => (
+            <Row
+              key={item.id}
+              leading={<Avatar icon={item.icon} size="small" />}
+              title={item.label}
+              meta={item.meta}
+              onPress={() => onRun(item.onRun)}
+            />
+          ))}
+        </Section>
+      ))}
+      {search.paging.footer === 'loading' ? (
+        <Button
+          block
+          variant="ghost"
+          label={t('screens.navigation.search-more')}
+          busy={search.paging.loading}
+          onPress={search.paging.onEndReached}
+        />
+      ) : null}
+      {empty ? (
+        <Notice centred icon="search" title={t('screens.navigation.search-none', { query })} />
+      ) : null}
+    </View>
   );
 }
 
@@ -178,7 +223,10 @@ function usePinActions(): (entry: NavEntry) => MenuItems {
   };
 }
 
-export function AllSheet({ onSearch, onArgus }: AllSheetProps) {
+const flatten = (entries: readonly NavEntry[]): NavEntry[] =>
+  entries.flatMap((entry) => [entry, ...flatten(entry.children ?? [])]);
+
+export function AllSheet({ onArgus }: AllSheetProps) {
   const { t } = useTranslation();
   const router = useRouter();
   const open = useAllSheetOpen();
@@ -187,32 +235,49 @@ export function AllSheet({ onSearch, onArgus }: AllSheetProps) {
   const resolved = useSurfaces();
   const pins = useNavPins();
   const actionsOf = usePinActions();
+  const [query, setQuery] = useState('');
   const groups = navGroups(resolved, pins);
   const modules = resolved.modules.map(moduleEntry);
   const general = [...groups.core.filter((entry) => entry.key === 'news'), ...groups.account];
-  const go = (entry: NavEntry) => {
+  const searching = query.trim().length > 0;
+  const shut = () => {
+    setQuery('');
     close();
+  };
+  const go = (entry: NavEntry) => {
+    shut();
     if (entry.argus) onArgus();
     else router.navigate(entry.href);
   };
-  const search = () => {
-    close();
-    onSearch();
+  const run = (action: () => void) => {
+    shut();
+    action();
   };
   return (
     <Sheet
       open={open}
-      onClose={close}
+      onClose={shut}
       title={t('screens.navigation.all')}
       variant="list"
-      long={full}>
+      long={full || searching}>
       <View className="gap-4">
-        <SearchRow onPress={search} />
-        {modules.length > 0 && !full ? (
-          <ModuleGrid modules={modules} actionsOf={actionsOf} onOpen={go} onExpand={expand} />
-        ) : null}
-        {modules.length > 0 && full ? <ModuleList modules={modules} onOpen={go} /> : null}
-        <GeneralList entries={general} onOpen={go} />
+        <Field placeholder={t('screens.navigation.search')} value={query} onChangeText={setQuery} />
+        {searching ? (
+          <SearchResults
+            query={query}
+            destinations={flatten([...groups.core, ...modules, ...groups.account])}
+            onOpen={go}
+            onRun={run}
+          />
+        ) : (
+          <>
+            {modules.length > 0 && !full ? (
+              <ModuleGrid modules={modules} actionsOf={actionsOf} onOpen={go} onExpand={expand} />
+            ) : null}
+            {modules.length > 0 && full ? <ModuleList modules={modules} onOpen={go} /> : null}
+            <GeneralList entries={general} onOpen={go} />
+          </>
+        )}
       </View>
     </Sheet>
   );
