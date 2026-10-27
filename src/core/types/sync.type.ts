@@ -47,3 +47,8 @@ export type SyncUserPatch = {
   role?: UserRole;
   isActive?: boolean;
 };
+
+export type PageLifecycleHandlers = {
+  leave: () => void;
+  back: () => void;
+};

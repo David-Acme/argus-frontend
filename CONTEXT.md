@@ -693,6 +693,15 @@ What this step lands:
   - When a probe moves the route while the sync socket is open on the
     other one, `SyncConnection.followRoute` recycles the socket, for
     instance back to the LAN when the home answers there again.
+  - **The page leaves (web and desktop).** On `pagehide` the sync service
+    disconnects: the socket closes, any pending reconnect is cancelled and
+    nothing reconnects while the page is away. Chromium keeps a page with an
+    open WebSocket in the back-forward cache, and the Tauri socket lives in
+    Rust, so without this a device held its old page's `/sync` socket next to
+    the new page's one (two sockets for one device). A `pageshow` from the
+    cache (`persisted`) reopens the session; a fresh load is left to `bind()`.
+    `sync-page-lifecycle.{web,native}.ts`, tested in
+    `tests/unit/core/services/sync/sync-page-lifecycle.test.ts`.
   - A relocation always checks its candidate on the LAN URL
     (`lanServiceUrl`), never through the relay.
   - None of this needs a network-type module.
