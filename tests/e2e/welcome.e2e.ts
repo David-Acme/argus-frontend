@@ -1,22 +1,34 @@
 import { unpairedDevice } from './support/seed';
 import { expect, openFirst, test } from './support/devices';
 
-const HERO = 'Argus greets you with its modules: Security, Productivity and Agronomy, coming soon.';
-
-test('the first screen greets with one labeled hero and leads to pairing, which waits for a code', async ({ app, browser, screen }) => {
+test('the first screen greets still, and pairing on a network that hides Argus opens the address', async ({
+  app,
+  browser,
+  screen,
+}) => {
   const escapes = await openFirst(browser, app, unpairedDevice('A'));
 
   await expect(screen.getByRole('heading', 'Hi, I am Argus')).toBeVisible({ timeout: 10000 });
-  await expect(screen.getByRole('button', HERO)).toBeVisible();
-  await screen.getByRole('button', HERO).click();
-  await expect(screen.getByRole('button', HERO)).toBeVisible();
+  await expect(screen.getByText('Everything stays in your home', { exact: true })).toBeVisible();
+  await expect(screen.getByText('I have an invitation', { exact: true })).toBeHidden();
 
   await screen.getByText('Get started', { exact: true }).click();
-  await expect(screen.getByRole('heading', 'Link your server')).toBeVisible();
-  const proceed = screen.getByRole('button', 'Continue');
-  await expect(proceed).toBeDisabled();
-  await screen.getByRole('textbox', 'Pairing code').fill('A1B2C3');
-  await expect(proceed).toBeEnabled();
+  await expect(screen.getByRole('heading', 'I cannot find Argus on your network')).toBeVisible({
+    timeout: 10000,
+  });
+  const search = screen.getByRole('button', 'Look at that address');
+  await expect(search).toBeDisabled();
+  await screen.getByRole('textbox', 'Argus address').fill('192.168.1.20');
+  await screen.getByRole('textbox', 'Link code').fill('A1B2C3D4');
+  await expect(search).toBeEnabled();
+
+  await search.click();
+  await expect(screen.getByText(/I could not reach your Argus/)).toBeVisible({ timeout: 10000 });
+
+  await screen.getByText('Search my network again', { exact: true }).click();
+  await expect(screen.getByRole('heading', 'I cannot find Argus on your network')).toBeVisible({
+    timeout: 10000,
+  });
 
   expect(escapes).toEqual([]);
 });

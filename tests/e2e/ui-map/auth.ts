@@ -4,7 +4,7 @@ import { ownerDevice, unpairedDevice } from '../support/seed';
 import type { ShimSeed } from '../support/tauri-shim';
 import { sleep, type Scene } from '../support/ui-map/capture';
 import type { ScreenSpec } from '../support/ui-map/scenario';
-import { button, fill, say, tapText } from '../support/ui-map/text';
+import { button, fill, tap, tapText } from '../support/ui-map/text';
 
 const signedOut = (): ShimSeed => {
   const base = ownerDevice('A');
@@ -82,21 +82,14 @@ const gate = (me: Record<string, unknown>) => ({
 });
 
 const pairingCode = async (scene: Scene, code: string): Promise<void> => {
-  await scene.page
-    .getByPlaceholder(say(scene, 'screens.pairing.code-placeholder'))
-    .first()
-    .fill(code);
-  await sleep(200);
-  await scene.page
-    .getByRole('button', { name: say(scene, 'common.continue'), exact: true })
-    .last()
-    .click();
+  await fill(scene, 'screens.pairing.code-label', code);
+  await tap(scene, 'screens.pairing.not-found.search');
   await sleep(1500);
 };
 
 const toPairing = async (scene: Scene): Promise<void> => {
   await tapText(scene, 'screens.welcome.cta');
-  await sleep(800);
+  await sleep(1500);
 };
 
 export const AUTH: ScreenSpec[] = [
@@ -130,19 +123,10 @@ export const AUTH: ScreenSpec[] = [
         notes: 'reduced motion: the resting pose',
       },
       {
-        state: 'hero-motion-early',
+        state: 'hero-motion',
         seed: unpairedDevice('A'),
         motion: true,
-        notes: 'full motion, captured about 1-4 s after load (later viewports later in the intro)',
-      },
-      {
-        state: 'hero-motion-settled',
-        seed: unpairedDevice('A'),
-        motion: true,
-        act: async () => {
-          await sleep(12500);
-        },
-        notes: 'full motion after the 12 s choreography',
+        notes: 'full motion: Estela at rest, no choreography',
       },
       {
         state: 'hero-signed-in-device',
@@ -155,38 +139,19 @@ export const AUTH: ScreenSpec[] = [
     route: '/welcome/pairing',
     path: '/welcome',
     states: [
-      { state: 'idle', seed: unpairedDevice('A'), act: toPairing, main: true },
       {
-        state: 'address-open',
+        state: 'not-found',
         seed: unpairedDevice('A'),
-        act: async (scene) => {
-          await toPairing(scene);
-          await tapText(scene, 'screens.pairing.address-open');
-        },
-      },
-      {
-        state: 'error-invalid-code',
-        seed: unpairedDevice('A'),
-        act: async (scene) => {
-          await toPairing(scene);
-          await pairingCode(scene, 'A1B2C3');
-        },
-      },
-      {
-        state: 'error-not-found',
-        seed: unpairedDevice('A'),
-        act: async (scene) => {
-          await toPairing(scene);
-          await pairingCode(scene, 'A1B2C3D4');
-        },
+        act: toPairing,
+        main: true,
+        notes: 'the harness discovers nothing, so the address opens',
       },
       {
         state: 'error-invalid-address',
         seed: unpairedDevice('A'),
         act: async (scene) => {
           await toPairing(scene);
-          await tapText(scene, 'screens.pairing.address-open');
-          await fill(scene, 'screens.pairing.address-label', '999.1.1.1');
+          await fill(scene, 'screens.pairing.not-found.label', '999.1.1.1');
           await pairingCode(scene, 'A1B2C3D4');
         },
       },
@@ -195,8 +160,7 @@ export const AUTH: ScreenSpec[] = [
         seed: unpairedDevice('A'),
         act: async (scene) => {
           await toPairing(scene);
-          await tapText(scene, 'screens.pairing.address-open');
-          await fill(scene, 'screens.pairing.address-label', '192.168.1.20');
+          await fill(scene, 'screens.pairing.not-found.label', '192.168.1.20');
           await pairingCode(scene, 'A1B2C3D4');
         },
         notes: 'the shim answers argus_pair with null, which the app reports as a network error',
