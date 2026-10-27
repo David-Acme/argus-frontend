@@ -12,7 +12,6 @@ import {
   isMessageItem,
   keyboardOffsets,
   prewarmScopesOf,
-  stickyKeyboardStep,
   THREAD_GROUP_GAP_MS,
   threadItems,
   TYPING_ITEM_KEY,
@@ -312,16 +311,6 @@ describe('keyboardOffsets', () => {
       sticky: { closed: 0, opened: 0 },
       pill: { closed: 0, opened: 0 },
     });
-  });
-});
-
-describe('the composer after the keyboard', () => {
-  test('it rides the keyboard while it shows, and comes back down when the app resumes without one', () => {
-    expect(stickyKeyboardStep(false, 'show', true)).toBe(true);
-    expect(stickyKeyboardStep(true, 'resume', true)).toBe(true);
-    expect(stickyKeyboardStep(true, 'resume', false)).toBe(false);
-    expect(stickyKeyboardStep(true, 'leave', false)).toBe(false);
-    expect(stickyKeyboardStep(false, 'resume', true)).toBe(false);
   });
 });
 

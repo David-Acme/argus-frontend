@@ -153,18 +153,6 @@ export function keyboardOffsets(bottomInset: number): KeyboardOffsets {
   return { list: inset, sticky, pill: { ...sticky } };
 }
 
-export type StickyKeyboardEvent = 'show' | 'resume' | 'leave';
-
-export function stickyKeyboardStep(
-  enabled: boolean,
-  event: StickyKeyboardEvent,
-  keyboardShown: boolean
-): boolean {
-  if (event === 'show') return true;
-  if (event === 'leave') return false;
-  return enabled && keyboardShown;
-}
-
 export function floatingDayOf(viewable: readonly ThreadItem[]): number | null {
   if (viewable[0]?.type === 'day') return null;
   const first = viewable.find(isMessageItem);

@@ -7922,6 +7922,29 @@ suggestion chips over the field and the microphone as tap-to-talk.
   sends both on `/rtc/token` and `voice:start`. Any other missed call keeps
   the plain call.
 
+## The keyboard after a call (phone run 2 #11, 2026-10-27)
+
+With the Argus thread's keyboard up, an incoming call's activity (or its
+full-screen intent) took the window focus and the keyboard went away, but
+the keyboard events never reached the app: back in the thread the composer
+sat at the keyboard's old height mid-screen. The run 1 fix listened to the
+app going to the background, which a call activity on top does not always
+cause, and on resume it trusted `KeyboardController.isVisible()`, which is
+itself a cache of the same missed events.
+
+`useKeyboardTruth` (`shared/hooks`, native; the web build answers true
+because it has no soft keyboard) is the one answer every keyboard-riding
+surface reads: the composer's and the scroll button's `KeyboardStickyView`
+(`enabled`) and the phone sheet's inset (`useKeyboardInset`). A
+`keyboardWillShow` lifts it; a `keyboardDidHide`, a window focus loss
+(`AppState` `blur`) or the app leaving `active` drops it and dismisses the
+keyboard natively, so the two can not disagree on return; a focus regain or
+a return to `active` keeps what is known and never re-reads the cache. Only
+a fresh show lifts the composer again. `watchKeyboardTruth` and
+`keyboardTruthStep` (`shared/libs/keyboard-truth.ts`) are the pure part,
+tested with fake sources, the path «focus lost while the keyboard is up and
+no hide ever reported» included.
+
 ## No system suggestions (phone run 2 #12, 2026-10-27)
 
 Owner, 2026-10-27: «quita todas las sugerencias del sistema». Every phrase

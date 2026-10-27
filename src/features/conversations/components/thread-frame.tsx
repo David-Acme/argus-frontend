@@ -3,8 +3,8 @@ import type { ReactNode } from 'react';
 import { View } from 'react-native';
 import { KeyboardStickyView } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useKeyboardTruth } from '@/shared/hooks/use-keyboard-truth';
 import { space, useWindowLayout } from '@/shared/theme';
-import { useStickyKeyboard } from '@/features/conversations/hooks/use-sticky-keyboard';
 import { keyboardOffsets } from '@/features/conversations/model/thread-list';
 
 export type ThreadFrameProps = {
@@ -19,7 +19,7 @@ const COMPOSER_ABOVE_LIST = { zIndex: 1 } as const;
 export function ThreadFrame({ phone, header, children, composer }: ThreadFrameProps) {
   const insets = useSafeAreaInsets();
   const capped = useWindowLayout().windowClass !== 'compact';
-  const sticky = useStickyKeyboard();
+  const sticky = useKeyboardTruth();
   const top = { paddingTop: phone ? insets.top : 0 };
   const bottom = { paddingBottom: phone ? Math.max(insets.bottom, space[3]) : space[4] };
   return (
