@@ -1,6 +1,6 @@
 import { clsx } from 'clsx';
 import { View } from 'react-native';
-import { layout, size, useEffects } from '@/shared/theme';
+import { layout, size } from '@/shared/theme';
 import { Icon } from '@/shared/ui/icon';
 import { Presence } from '@/shared/ui/presence';
 import { PressableSurface } from '@/shared/ui/pressable';
@@ -75,16 +75,12 @@ function Command({ label, shortcut, onPress }: CommandProps) {
 
 export function NavSidebar(props: NavProps) {
   const { items, active, onSelect, voice, copy, presence, onCommand, status, settings } = props;
-  const { reduceTransparency } = useEffects();
   const brand = items.find((item) => item.argus);
   return (
     <View
       role="tablist"
       aria-label={copy.navigation}
-      className={clsx(
-        'border-line px-nav-side-x py-nav-side-y gap-nav-side-gap h-full border-r',
-        reduceTransparency ? 'bg-surface' : 'web:glass-side bg-glass-side'
-      )}
+      className="border-line px-nav-side-x py-nav-side-y gap-nav-side-gap bg-surface h-full border-r"
       style={SIDE}>
       <View className="px-nav-brand-x pb-nav-brand-bottom gap-nav-brand-gap flex-row items-center">
         {presence ? <Presence state={presence} size={size.presenceBrand} paused /> : null}

@@ -173,7 +173,7 @@ export const chromeSize = {
 
 export const chromeElevation = {
   light: {
-    bar: 'inset 0px 0px 0px 1px rgba(255,255,255,0.7), 0px 8px 30px 0px rgba(0,0,0,0.12)',
+    bar: '0px 6px 24px 0px rgba(0,0,0,0.1)',
     cap: 'inset 0px 0px 0px 1px rgba(255,255,255,0.7), 0px 1px 2px 0px rgba(0,0,0,0.06), 0px 10px 32px 0px rgba(0,0,0,0.12)',
     listen:
       'inset 0px 0px 0px 2px rgba(131,106,60,0.8), inset 0px 0px 36px 8px rgba(131,106,60,0.45)',
@@ -183,7 +183,7 @@ export const chromeElevation = {
     talk: '0px 0px 0px 10px rgba(64,64,64,0.08)',
   },
   dark: {
-    bar: 'inset 0px 0px 0px 1px rgba(255,255,255,0.08), 0px 8px 30px 0px rgba(0,0,0,0.12)',
+    bar: '0px 6px 24px 0px rgba(0,0,0,0.45)',
     cap: 'inset 0px 0px 0px 1px rgba(255,255,255,0.08), 0px 1px 2px 0px rgba(0,0,0,0.4), 0px 12px 34px 0px rgba(0,0,0,0.55)',
     listen:
       'inset 0px 0px 0px 2px rgba(217,188,133,0.8), inset 0px 0px 36px 8px rgba(217,188,133,0.45)',

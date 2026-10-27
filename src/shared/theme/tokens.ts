@@ -32,7 +32,6 @@ const light = {
   glass: 'rgba(255,255,255,0.66)',
   'glass-line': 'rgba(255,255,255,0.7)',
   'glass-edge': 'rgba(0,0,0,0.06)',
-  'glass-side': 'rgba(255,255,255,0.55)',
   'tab-on': 'rgba(22,22,22,0.09)',
   skel: '#ECE9E4',
   'skel-2': '#F5F3F0',
@@ -76,7 +75,6 @@ const dark = {
   glass: 'rgba(40,38,32,0.66)',
   'glass-line': 'rgba(255,255,255,0.08)',
   'glass-edge': 'rgba(255,255,255,0.06)',
-  'glass-side': 'rgba(36,35,30,0.55)',
   'tab-on': 'rgba(244,239,231,0.09)',
   skel: '#24221F',
   'skel-2': '#2C2A26',
@@ -256,8 +254,6 @@ export const motion = {
 } as const;
 
 export const material = {
-  blur: 22,
-  saturation: 1.7,
   blurControl: 18,
   blurChip: 16,
   blurScrim: 2,
@@ -267,7 +263,6 @@ export const material = {
   blurPalette: 30,
   paletteSurfaceMix: 0.84,
   blurMedia: 10,
-  blurSide: 30,
   blurCap: 20,
   fadeSolid: 0.7,
 } as const;

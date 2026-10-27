@@ -500,7 +500,6 @@
       --color-glass: oklch(1.0000 0 0 / 0.66);
       --color-glass-line: oklch(1.0000 0 0 / 0.7);
       --color-glass-edge: oklch(0.0000 0 0 / 0.06);
-      --color-glass-side: oklch(1.0000 0 0 / 0.55);
       --color-tab-on: oklch(0.2002 0 0 / 0.09);
       --color-skel: oklch(0.9350 0.0074 80.72);
       --color-skel-2: oklch(0.9649 0.0045 78.30);
@@ -544,7 +543,6 @@
       --color-glass: oklch(0.2686 0.0112 91.71 / 0.66);
       --color-glass-line: oklch(1.0000 0 0 / 0.08);
       --color-glass-edge: oklch(1.0000 0 0 / 0.06);
-      --color-glass-side: oklch(0.2554 0.0092 97.71 / 0.55);
       --color-tab-on: oklch(0.9538 0.0119 79.78 / 0.09);
       --color-skel: oklch(0.2530 0.0063 78.21);
       --color-skel-2: oklch(0.2857 0.0077 84.59);
@@ -565,11 +563,6 @@
   }
 }
 
-@utility glass-bar {
-  -webkit-backdrop-filter: blur(22px) saturate(1.7);
-  backdrop-filter: blur(22px) saturate(1.7);
-}
-
 @utility glass-control {
   -webkit-backdrop-filter: blur(18px) saturate(1.6);
   backdrop-filter: blur(18px) saturate(1.6);
@@ -583,11 +576,6 @@
 @utility glass-palette {
   -webkit-backdrop-filter: blur(30px) saturate(1.6);
   backdrop-filter: blur(30px) saturate(1.6);
-}
-
-@utility glass-side {
-  -webkit-backdrop-filter: blur(30px);
-  backdrop-filter: blur(30px);
 }
 
 @utility glass-cap {
