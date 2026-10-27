@@ -31,7 +31,7 @@ export function FloatingDay({ ref, shown, days, atEnd, ready }: FloatingDayProps
       pointerEvents="none"
       aria-hidden
       style={fade}
-      className="bg-bg absolute inset-x-0 top-0 py-1">
+      className="absolute inset-x-0 top-0 py-1">
       <DaySeparator floating label={days.dayLabel(day)} />
     </Animated.View>
   );
