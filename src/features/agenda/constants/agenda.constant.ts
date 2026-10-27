@@ -2,18 +2,15 @@ import type { TranslationKey } from '@/core/types';
 import type { Category } from '@/features/agenda/model/agenda-lines';
 import type { RepeatChoice } from '@/features/agenda/model/item-draft';
 
-export const ARGUS_REMINDERS_SHOWN = true;
-
 export const LIST_DAYS = 7;
 
 export const UPCOMING_DAYS = 3;
 
 export const EVENT_TITLE_MAX = 160;
 
-export const CATEGORIES: readonly Category[] = ['reminder', 'event', 'task', 'shared'];
+export const CATEGORIES: readonly Category[] = ['event', 'task', 'shared'];
 
 export const KIND_LABEL: Record<Category, TranslationKey> = {
-  reminder: 'screens.agenda.kind.reminder',
   event: 'screens.agenda.kind.event',
   task: 'screens.agenda.kind.task',
   shared: 'screens.agenda.kind.shared',

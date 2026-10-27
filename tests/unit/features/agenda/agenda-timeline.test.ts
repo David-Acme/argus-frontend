@@ -1,17 +1,17 @@
 import { describe, expect, test } from 'bun:test';
 import { dayList } from '@/features/agenda/model/agenda-items';
 import { busySpan, dayTimeline, freeSlots } from '@/features/agenda/model/agenda-timeline';
-import { at, entry, items, NOW, prototypeDay, reminder, TODAY } from '../home/agenda-fixtures';
+import { at, entry, items, NOW, prototypeDay, task, TODAY } from '../home/agenda-fixtures';
 import { FREE_SLOT_RULES } from '@/shared/constants';
 
 const HOUR = 3_600_000;
 
 describe('the free slots of the day', () => {
-  test('an event is busy until its end and a reminder for the point length', () => {
-    const [meeting, call] = items(
-      [reminder('call', at(17))],
-      [entry('event:m', at(14, 30), { endsAt: at(16) })]
-    );
+  test('an event is busy until its end and a timed task for the point length', () => {
+    const [meeting, call] = items([
+      task('call', at(17)),
+      entry('event:m', at(14, 30), { endsAt: at(16) }),
+    ]);
     expect(busySpan(meeting!, FREE_SLOT_RULES.pointMs)).toEqual({ from: at(14, 30), to: at(16) });
     expect(busySpan(call!, FREE_SLOT_RULES.pointMs)).toEqual({ from: at(17), to: at(17, 30) });
   });
@@ -57,13 +57,10 @@ describe('the free slots of the day', () => {
 
   test('all-day items lead the day and take no time', () => {
     const timeline = dayTimeline(
-      items(
-        [],
-        [
-          entry('event:all', at(0), { isAllDay: true }),
-          entry('event:x', at(10), { endsAt: at(11) }),
-        ]
-      ),
+      items([
+        entry('event:all', at(0), { isAllDay: true }),
+        entry('event:x', at(10), { endsAt: at(11) }),
+      ]),
       { ...FREE_SLOT_RULES, after: 0 }
     );
     expect(timeline.map((row) => row.type)).toEqual(['item', 'item']);

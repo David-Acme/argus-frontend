@@ -6,7 +6,6 @@ export const SYNC_TABLE_KEYS = [
   'user_invitation',
   'camera',
   'zone',
-  'reminder',
   'calendar_event',
   'calendar_event_share',
   'project',

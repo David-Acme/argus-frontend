@@ -5,7 +5,6 @@ import type { BarLook } from '@/features/agenda/model/agenda-lines';
 export type EventBarProps = { look: BarLook };
 
 const SOLID: Record<Exclude<BarLook, 'series' | 'free'>, string> = {
-  reminder: 'bg-ev1-bar',
   event: 'bg-ev3-bar',
   task: 'bg-ev2-bar',
   shared: 'bg-ev4-bar',

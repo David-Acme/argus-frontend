@@ -1,6 +1,5 @@
 export const agenda = {
   kind: {
-    reminder: 'Recordatorio',
     event: 'Evento',
     task: 'Tarea',
     shared: 'Evento compartido',
@@ -17,7 +16,6 @@ export const agenda = {
     free: 'Libre',
     complete: 'Marcar «{title}» como hecho',
     reopen: 'Marcar «{title}» como pendiente',
-    'ask-reminder': 'Cuéntame del recordatorio «{title}»',
     repeats: 'Se repite',
   },
   page: {
@@ -63,7 +61,6 @@ export const agenda = {
   },
   aside: {
     show: 'Mostrar',
-    'show-reminder': 'Recordatorios',
     'show-event': 'Eventos',
     'show-task': 'Tareas',
     'show-shared': 'Compartido conmigo',
@@ -75,7 +72,6 @@ export const agenda = {
   },
   detail: {
     edit: 'Editar',
-    ask: 'Preguntar a Argus',
     more: 'Más acciones',
     skip: 'Saltar esta vez',
     delete: 'Eliminar',

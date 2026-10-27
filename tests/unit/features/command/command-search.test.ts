@@ -44,11 +44,11 @@ describe('command search', () => {
   test('among equal matches the next upcoming comes first, then the most recent past, then undated', () => {
     const ranked = rankEntries({
       entries: [
-        entry('reminder', 'old', 'Pagar el gas', NOW - 48 * HOUR),
-        entry('reminder', 'none', 'Pagar algo'),
-        entry('reminder', 'later', 'Pagar el agua', NOW + 24 * HOUR),
-        entry('reminder', 'soon', 'Pagar la luz', NOW + 5 * HOUR),
-        entry('reminder', 'recent', 'Pagar el cable', NOW - HOUR),
+        entry('event', 'old', 'Pagar el gas', NOW - 48 * HOUR),
+        entry('event', 'none', 'Pagar algo'),
+        entry('event', 'later', 'Pagar el agua', NOW + 24 * HOUR),
+        entry('event', 'soon', 'Pagar la luz', NOW + 5 * HOUR),
+        entry('event', 'recent', 'Pagar el cable', NOW - HOUR),
       ],
       needle: 'pagar',
       now: NOW,

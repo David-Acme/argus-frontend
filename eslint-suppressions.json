@@ -192,9 +192,6 @@
     }
   },
   "src/core/services/view-cache-coordinator.service.ts": {
-    "max-lines": {
-      "count": 1
-    },
     "max-params": {
       "count": 1
     }

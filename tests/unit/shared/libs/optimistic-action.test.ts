@@ -105,13 +105,13 @@ describe('runOptimistic', () => {
 
   test('a write the server never received is told as a lost change and leaves no row behind', async () => {
     await runOptimistic({
-      intents: [{ table: 'reminder', kind: 'update', recordId: '3', values: { scheduledAt: 1_790_000_000 } }],
+      intents: [{ table: 'calendar_event', kind: 'update', recordId: '3', values: { startsAt: 1_790_000_000 } }],
       call: async () => refused('WRITE_NOT_SENT'),
     });
     expect(optimisticRegistry.snapshot()).toEqual([]);
     expect(shown.at(-1)).toMatchObject({
       intent: 'error',
-      title: 'common.change-failed.reminder',
+      title: 'common.change-failed.calendar-event',
       description: 'common.errors.write-not-sent',
     });
     expect(shown.at(-1)?.action?.label).toBe('common.retry');
@@ -122,10 +122,10 @@ describe('runOptimistic', () => {
       ok: false,
       status: 409,
       info: null,
-      errors: { code: 'CONFLICT', message: 'The reminder is already done' },
+      errors: { code: 'CONFLICT', message: 'The event already moved' },
     };
     await runOptimistic({
-      intents: [{ table: 'reminder', kind: 'update', recordId: '3', values: { scheduledAt: 1_790_000_000 } }],
+      intents: [{ table: 'calendar_event', kind: 'update', recordId: '3', values: { startsAt: 1_790_000_000 } }],
       call: async () => conflict,
       errorTitle: 'Could not snooze',
       refusalNotice: (result) => (result.status === 409 ? { title: 'Already done', description: 'Nothing to snooze' } : null),
@@ -134,7 +134,7 @@ describe('runOptimistic', () => {
     expect(shown.at(-1)).toEqual({ intent: 'info', title: 'Already done', description: 'Nothing to snooze', action: undefined });
 
     await runOptimistic({
-      intents: [{ table: 'reminder', kind: 'update', recordId: '3', values: { scheduledAt: 1_790_000_000 } }],
+      intents: [{ table: 'calendar_event', kind: 'update', recordId: '3', values: { startsAt: 1_790_000_000 } }],
       call: async () => refused('FORBIDDEN'),
       errorTitle: 'Could not snooze',
       refusalNotice: (result) => (result.status === 409 ? { title: 'Already done' } : null),
@@ -275,7 +275,7 @@ describe('a refused change says which change it was', () => {
   test('a refused delete says it was not deleted, never that it was not saved', () => {
     expect(changeTitleKey([{ table: 'calendar_event', kind: 'delete' }])).toBe('common.change-failed.deleted.calendar-event');
     expect(changeTitleKey([{ table: 'project_task', kind: 'delete' }])).toBe('common.change-failed.deleted.project-task');
-    expect(changeTitleKey([{ table: 'unknown_table' as 'reminder', kind: 'delete' }])).toBe(
+    expect(changeTitleKey([{ table: 'unknown_table' as 'project', kind: 'delete' }])).toBe(
       'common.change-failed.deleted.generic',
     );
   });

@@ -65,7 +65,7 @@ const state: State = {
   view: viewFor('owner'),
   hero: hero(),
   household: household(),
-  week: { range: RANGE, stats: { onTime: 2, pending: 1 } },
+  week: { range: RANGE, stats: { done: 2, pending: 1 } },
   pushed: [],
   asked: [],
   signedOut: 0,
@@ -171,7 +171,7 @@ beforeEach(() => {
     view: viewFor('owner'),
     hero: hero(),
     household: household(),
-    week: { range: RANGE, stats: { onTime: 2, pending: 1 } },
+    week: { range: RANGE, stats: { done: 2, pending: 1 } },
     pushed: [],
     asked: [],
     signedOut: 0,
@@ -247,15 +247,15 @@ describe('Tú with panes', () => {
     setWindowWidth(1440);
     render(<ProfileScreen />);
     expect(screen.getByRole('heading', { name: 'Esta semana' })).toBeDefined();
-    expect(screen.getByText('cosas hechas a tiempo')).toBeDefined();
-    expect(screen.getByText('pendiente esta semana')).toBeDefined();
+    expect(screen.getByText('tareas hechas esta semana')).toBeDefined();
+    expect(screen.getByText('tarea pendiente esta semana')).toBeDefined();
     expect(screen.getByText('dispositivos')).toBeDefined();
     expect(screen.getByText('lo último')).toBeDefined();
     expect(screen.getByText('Así te ayuda Argus')).toBeDefined();
   });
 
   test('an empty week explains how Argus helps and asks Argus from a suggestion', () => {
-    state.week = { range: RANGE, stats: { onTime: 0, pending: 0 } };
+    state.week = { range: RANGE, stats: { done: 0, pending: 0 } };
     render(<WeekPane />);
     expect(screen.getByText('Aquí verás tu semana con Argus')).toBeDefined();
     expect(screen.getByText('Cuida tu casa')).toBeDefined();

@@ -8,13 +8,12 @@ import { useTranslation } from '@/shared/hooks/use-translation';
 import { peopleAccessOf } from '@/shared/libs/capabilities';
 import { routeFallback } from '@/shared/libs/route-access';
 import { useAgendaPlan } from '@/features/agenda/hooks/use-agenda-plan';
-import { useArgusDraft } from '@/features/agenda/hooks/use-argus-draft';
 import type { AgendaPlan } from '@/features/agenda/hooks/use-agenda-plan';
 import { useItemActions } from '@/features/agenda/hooks/use-item-actions';
 import { useItemForm } from '@/features/agenda/hooks/use-item-form';
 import type { ItemForm } from '@/features/agenda/hooks/use-item-form';
 import { dayGroups, itemsOf, monthOf } from '@/features/agenda/model/agenda-days';
-import { reminderQuestion, shownItems, toggleShown } from '@/features/agenda/model/agenda-lines';
+import { shownItems, toggleShown } from '@/features/agenda/model/agenda-lines';
 import type { Category } from '@/features/agenda/model/agenda-lines';
 import {
   calendarEntryEditHref,
@@ -35,12 +34,7 @@ function timestampParam(value: string | undefined): number | null {
 }
 
 const editTarget = (items: readonly AgendaItem[], recordId: string): AgendaItem | undefined =>
-  items.find(
-    (item) =>
-      item.origin.kind === 'entry' &&
-      item.kind === 'event' &&
-      calendarEntryRecordId(item.origin.entry) === recordId
-  );
+  items.find((item) => item.kind === 'event' && calendarEntryRecordId(item.entry) === recordId);
 
 type DeepLinkInput = {
   params: AgendaParams;
@@ -80,16 +74,15 @@ function useItemHandlers(plan: AgendaPlan, form: ItemForm, setPicked: (id: strin
   const [sharing, setSharing] = useState<AgendaItem | null>(null);
   const edit = (item: AgendaItem) => {
     setPicked(null);
-    if (item.origin.kind === 'entry' && item.kind === 'task') {
-      const href = calendarEntryEditHref(item.origin.entry);
+    if (item.kind === 'task') {
+      const href = calendarEntryEditHref(item.entry);
       if (href) router.push(href);
       return;
     }
     form.startEdit(item);
   };
   const shareable = (item: AgendaItem): boolean =>
-    item.origin.kind === 'entry' &&
-    canShareCalendarEntry(item.origin.entry, {
+    canShareCalendarEntry(item.entry, {
       userId: plan.viewer,
       canManageShares: peopleAccessOf(capabilities).receivesDirectory,
     });
@@ -121,7 +114,6 @@ export function useAgendaScreen() {
   const [picked, setPicked] = useState<string | null>(null);
   const plan = useAgendaPlan(selected);
   const actions = useItemActions();
-  const ask = useArgusDraft();
   const form = useItemForm();
   const { kinds, project } = useCreateKinds(plan);
   const create = (kind: ItemKind) => form.startNew({ kind, day: selected, project });
@@ -141,8 +133,7 @@ export function useAgendaScreen() {
     t,
     actions,
     selected: chosen?.id ?? null,
-    onOpen: (item) =>
-      item.kind === 'reminder' ? ask?.(reminderQuestion(item, t)) : setPicked(item.id),
+    onOpen: (item) => setPicked(item.id),
   };
   return {
     ...items,

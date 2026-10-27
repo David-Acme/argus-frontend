@@ -533,7 +533,7 @@ core/database  ←  core/services/*.service.ts  ←  view-cache projections  ←
 - **JSON columns** (`capabilities`, `config`, `points`, `file_paths`, `data`) use `@json`
   with the shared sanitizers in `tables/sanitizers.ts` (fail-safe to `[]`/`{}`); hot
   columns (`capabilities`, `points`) pass `{ memo: true }` to skip re-parsing on reads.
-- Relations point at `camera` / `reminder` only. Toward `user`, expose the raw id:
+- Relations point at `camera` / `project` only. Toward `user`, expose the raw id:
   role filtering can leave that row absent locally and `Relation.fetch()` throws.
 - **`DatabaseService<K>`** (`core/services/database.service.ts`) is the base class.
   Query primitives are **`protected`** so `Clause` never crosses the service
@@ -1428,7 +1428,7 @@ WebView: mobile → **Nitro** module, desktop → **Tauri (Rust)** commands.
   nav hides the tabs it refuses. A screen never checks its own role. A role
   whose module is off reaches only Inicio (the calm inactive-role screen,
   `features/access`: the alerts raised for the person (`safety.respond`),
-  panic, the person's own reminders, the module request, profile and sign-out,
+  panic, the module request, profile and sign-out,
   each by its baseline capability) and the profile. `/call` follows
   `calls.join` for that role, so the call an alert rings can be answered.
 - The HTTP DTOs the app reads have zod schemas in `core/contracts/http.contract.ts`,
@@ -1550,10 +1550,10 @@ WebView: mobile → **Nitro** module, desktop → **Tauri (Rust)** commands.
   (`module-privacy`, dropped from the flow and its count when none has
   signals). The name is asked after the face, the first moment a session
   exists for `PATCH /auth/me`.
-- **Reminders and the activity.** Reminders are core: `features/reminders`
-  (Inicio always; `/reminder` HTTP, optimistic, own rows only) and the Owner's
-  `features/activity` (`GET /sync/activity`, keyset paging, filters) are
-  slices of their own.
+- **Reminders and the activity.** Reminders are Argus's server-side memory: the
+  app stores and lists none, asks Argus for them, and calls `/reminder` only to
+  snooze or complete the one a call names. The Owner's `features/activity`
+  (`GET /sync/activity`, keyset paging, filters) is a slice of its own.
 
 
 ## Commands
@@ -1639,7 +1639,6 @@ cd src-tauri && cargo check
 | `src/core/services/modules/` · `src/core/contracts/modules.contract.ts` | Selectable modules: HTTP actions + zod, pure merges, `ModuleEngine` (the catalog from the context, `/sync` op 12 progress, no `GET /modules`), impact and request calls, route/API → module maps |
 | `src/features/modules/` | Modules UI: welcome step with intros, Settings › Modules (impact, uninstall with reassignment), requests, the Owner's Activate action, summary card, home progress chip and getting-started checklist, transition toasts |
 | `src/features/access/` | The calm screen of an inactive role (Inicio when `roleActive` is false) |
-| `src/features/reminders/` | Reminders on Inicio: list, create, edit, complete, delete |
 | `src/features/activity/` | The Owner's activity history |
 | `src/core/services/sync/` | Sync autónomo: bootstrap/altas/bajas (`createdAt`) + parches `audit_log`/`user_audit_log` por id (`audit-log-*`), mappers, DB utils y socket platform-split |
 | `modules/argus-net/` | Nitro module: `ArgusNet` (HTTP) + `ArgusSocket` (WebSocket nativo); `pin` on a request trusts only a chain that leads to the given CA fingerprint and names the given host |

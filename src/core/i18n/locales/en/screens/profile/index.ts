@@ -93,8 +93,8 @@ export const profile = {
   'language-label': 'App language',
   week: {
     title: 'This week',
-    'on-time': { one: 'thing done on time', other: 'things done on time' },
-    pending: { one: 'still to do this week', other: 'still to do this week' },
+    done: { one: 'task done this week', other: 'tasks done this week' },
+    pending: { one: 'task still to do this week', other: 'tasks still to do this week' },
   },
   devices: {
     title: 'Your devices',

@@ -11,7 +11,7 @@ import { EVENT_TITLE_MAX } from '@/features/agenda/constants/agenda.constant';
 
 export type EditScope = 'one' | 'series';
 
-export type ItemKind = Exclude<AgendaKind, 'reminder'>;
+export type ItemKind = AgendaKind;
 
 export type RepeatChoice = 'none' | RecurrenceFrequency;
 
@@ -55,11 +55,9 @@ export function newDraft({ kind, day, at, project }: NewDraftInput, date: DraftD
   };
 }
 
-const notesOf = (item: AgendaItem): string =>
-  item.origin.kind === 'entry' ? (item.origin.entry.description ?? '') : '';
+const notesOf = (item: AgendaItem): string => item.entry.description ?? '';
 
-const projectOf = (item: AgendaItem): string =>
-  item.origin.kind === 'entry' ? (item.origin.entry.projectId ?? '') : '';
+const projectOf = (item: AgendaItem): string => item.entry.projectId ?? '';
 
 const repeatOf = (rule: string | null): RepeatChoice =>
   parseRecurrenceRule(rule)?.frequency ?? 'none';

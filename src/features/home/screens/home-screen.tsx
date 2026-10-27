@@ -10,7 +10,6 @@ import { NowSection } from '@/features/home/components/agenda/now-section';
 import { ProjectsSection } from '@/features/home/components/agenda/projects-section';
 import { TodaySection } from '@/features/home/components/agenda/today-section';
 import { TomorrowSection } from '@/features/home/components/agenda/tomorrow-section';
-import { UpcomingRemindersSection } from '@/features/home/components/agenda/upcoming-reminders-section';
 import { CamerasSection } from '@/features/home/components/cameras/cameras-section';
 import { HappenedSection } from '@/features/home/components/cameras/happened-section';
 import { RecentClipsSection } from '@/features/home/components/cameras/recent-clips-section';
@@ -54,7 +53,6 @@ const SECTIONS: Record<Exclude<InicioSection, 'lead'>, ComponentType> = {
   people: HomePeopleSection,
   projects: ProjectsSection,
   clips: RecentClipsSection,
-  reminders: UpcomingRemindersSection,
   watch: WatchSection,
   system: SystemSection,
   help: HelpSection,

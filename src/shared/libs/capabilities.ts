@@ -77,8 +77,6 @@ const TABLE_MODULES: ReadonlyMap<string, string> = new Map(
   Object.entries(MODULE_SYNC_TABLES).flatMap(([moduleId, tables]) => tables.map((table): [string, string] => [table, moduleId]))
 );
 
-const REMINDER_TABLES: ReadonlySet<string> = new Set<TableName>(['reminder']);
-
 export const moduleOfTable = (table: TableName): string | null => TABLE_MODULES.get(table) ?? null;
 
 export const coreCapabilities = (role: UserRole | null): readonly Capability[] => (role ? (CORE_CAPABILITIES[role] ?? []) : []);
@@ -135,9 +133,6 @@ export function offModuleOfRole(view: AccessView, role: string): string | null {
 }
 
 export function tableAllowed(view: AccessView, table: TableName, permission: Permission): boolean {
-  if (REMINDER_TABLES.has(table)) {
-    return hasCapability(view, permission === 'read' ? CAPABILITY.remindersRead : CAPABILITY.remindersWrite);
-  }
   if (!view.roleActive || view.role === null) return false;
   const moduleId = moduleOfTable(table);
   if (moduleId !== null && !isModuleActive(view, moduleId)) return false;

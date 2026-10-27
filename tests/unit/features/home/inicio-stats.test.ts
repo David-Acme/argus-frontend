@@ -12,7 +12,6 @@ const ALL = { cameras: 5, alerts: 0, detections: 4, pending: 3 };
 const EMPTY = {
   camerasTotal: 0,
   camerasOnline: 0,
-  remindersPending: 0,
   projectsActive: 0,
   tasksOpen: 0,
 };
@@ -86,18 +85,18 @@ describe('the new household', () => {
     expect(isNewHousehold({ ...EMPTY, tasksOpen: 1 })).toBe(false);
   });
 
-  test('the one first step is the camera when cameras can be added, else the reminder', () => {
-    expect(firstStep({ summary: EMPTY, addsCameras: true, addsReminders: true })).toBe('camera');
-    expect(firstStep({ summary: EMPTY, addsCameras: false, addsReminders: true })).toBe('reminder');
-    expect(firstStep({ summary: EMPTY, addsCameras: false, addsReminders: false })).toBeNull();
+  test('the one first step is the camera when cameras can be added, else asking Argus for a reminder', () => {
+    expect(firstStep({ summary: EMPTY, addsCameras: true, asksReminders: true })).toBe('camera');
+    expect(firstStep({ summary: EMPTY, addsCameras: false, asksReminders: true })).toBe('reminder');
+    expect(firstStep({ summary: EMPTY, addsCameras: false, asksReminders: false })).toBeNull();
   });
 
   test('a household with data has no first step', () => {
     expect(
       firstStep({
-        summary: { ...EMPTY, remindersPending: 2 },
+        summary: { ...EMPTY, projectsActive: 2 },
         addsCameras: true,
-        addsReminders: true,
+        asksReminders: true,
       })
     ).toBeNull();
   });
@@ -112,10 +111,9 @@ describe('the SOS on Inicio', () => {
 });
 
 describe('the agenda on Inicio', () => {
-  test('it belongs to Productividad: off, the lines go even for a role that reads reminders', () => {
-    expect(agendaOnInicio({ productivity: true, reminders: true, agenda: true })).toBe(true);
-    expect(agendaOnInicio({ productivity: true, reminders: true, agenda: false })).toBe(true);
-    expect(agendaOnInicio({ productivity: false, reminders: true, agenda: false })).toBe(false);
-    expect(agendaOnInicio({ productivity: true, reminders: false, agenda: false })).toBe(false);
+  test('it belongs to Productividad and needs the agenda: reminders alone show nothing', () => {
+    expect(agendaOnInicio({ productivity: true, agenda: true })).toBe(true);
+    expect(agendaOnInicio({ productivity: false, agenda: true })).toBe(false);
+    expect(agendaOnInicio({ productivity: true, agenda: false })).toBe(false);
   });
 });

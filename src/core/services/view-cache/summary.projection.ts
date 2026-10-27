@@ -7,7 +7,6 @@ import type { ViewWrite } from './projection';
 
 export type SummaryProjectionInput = {
   cameras: readonly Pick<CameraSource, 'isOnline' | 'isEnabled'>[];
-  reminders: readonly { isCompleted: boolean }[];
   projects: readonly Pick<ProjectSource, 'status'>[];
   tasks: readonly Pick<ProjectTaskSource, 'status'>[];
 };
@@ -17,7 +16,6 @@ export function projectSummary(input: SummaryProjectionInput): ViewWrite[] {
   const summary: DashboardSummary = {
     camerasTotal: input.cameras.length,
     camerasOnline: input.cameras.filter((camera) => camera.isEnabled && camera.isOnline).length,
-    remindersPending: input.reminders.filter((reminder) => !reminder.isCompleted).length,
     projectsActive: input.projects.filter((project) => project.status === 'active').length,
     tasksOpen: input.tasks.filter(isOpenTask).length,
   };

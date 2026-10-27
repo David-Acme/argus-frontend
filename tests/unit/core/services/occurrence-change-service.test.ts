@@ -44,7 +44,6 @@ mock.module('@/core/services/database.service', () => ({
 
 const { registerHttpAuth } = await import('@/core/services/http/http-auth');
 const { calendarEventService } = await import('@/core/services/calendar-event.service');
-const { reminderService } = await import('@/core/services/reminder.service');
 
 registerHttpAuth({
   credential: () => ({ accessToken: null, version: 1 }),
@@ -71,15 +70,6 @@ describe('changing one occurrence of a series', () => {
         path: '/calendar-event/9/occurrence',
         body: { occurrence: 1791205200, title: 'Piano tarde', location: 'Casa', startsAt: 1791212400 },
       },
-    ]);
-  });
-
-  test('a reminder occurrence is skipped or moved under the reminder', async () => {
-    await reminderService.changeOccurrence('40', { occurrence: 1790600400, cancelled: true });
-    await reminderService.changeOccurrence('40', { occurrence: 1790600400, startsAt: 1790607600 });
-    expect(sent).toEqual([
-      { method: 'PATCH', path: '/reminder/40/occurrence', body: { occurrence: 1790600400, cancelled: true } },
-      { method: 'PATCH', path: '/reminder/40/occurrence', body: { occurrence: 1790600400, startsAt: 1790607600 } },
     ]);
   });
 });

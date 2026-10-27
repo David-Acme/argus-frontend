@@ -1,6 +1,6 @@
 import { Database } from 'bun:sqlite';
 import { describe, expect, test } from 'bun:test';
-import { tableSchema, type AppSchema } from '@nozbe/watermelondb';
+import { tableSchema, type AppSchema, type ColumnSchema } from '@nozbe/watermelondb';
 import { encodeMigrationSteps, encodeSchema } from '@nozbe/watermelondb/adapters/sqlite/encodeSchema';
 import { stepsForMigration } from '@nozbe/watermelondb/Schema/migrations/stepsForMigration';
 import { migrations } from '@/core/database/migrations';
@@ -8,6 +8,31 @@ import { sanitizeCreatedVia } from '@/core/database/tables/sanitizers';
 import { schema } from '@/core/database/schema';
 import { SCHEMA_VERSION } from '@/shared/constants/database.constant';
 import { parseCameraPrivacyState } from '@/shared/libs/camera-privacy';
+
+const REMINDER_COLUMNS: ColumnSchema[] = [
+  { name: 'created_by', type: 'string', isIndexed: true, isOptional: true },
+  { name: 'target_user_id', type: 'string', isIndexed: true },
+  { name: 'title', type: 'string' },
+  { name: 'description', type: 'string' },
+  { name: 'scheduled_at', type: 'number' },
+  { name: 'recurrence_rule', type: 'string', isOptional: true },
+  { name: 'recurrence_exceptions', type: 'string' },
+  { name: 'is_completed', type: 'boolean' },
+  { name: 'completed_at', type: 'number', isOptional: true },
+  { name: 'created_at', type: 'number' },
+  { name: 'updated_at', type: 'number' },
+];
+
+const reminderTable = (later: readonly string[] = []) =>
+  tableSchema({
+    name: 'reminder',
+    columns: REMINDER_COLUMNS.filter((column) => !later.includes(column.name)),
+  });
+
+const tableNamesOf = (db: Database): string[] =>
+  (db.query("select name from sqlite_master where type = 'table'").all() as { name: string }[]).map(
+    (row) => row.name
+  );
 
 type Step =
   | { type: 'create_table'; schema: { name: string; columnArray: { name: string }[] } }
@@ -284,6 +309,7 @@ describe('the retired camera_stream and reminder_detail tables', () => {
     version: 10,
     tables: {
       ...schema.tables,
+      reminder: reminderTable(['recurrence_exceptions']),
       camera_stream: tableSchema({
         name: 'camera_stream',
         columns: [
@@ -565,7 +591,7 @@ describe('the recurrence exceptions column', () => {
 
   const atVersionFifteen = (): AppSchema => {
     const tables = Object.fromEntries(
-      Object.entries(schema.tables).map(([name, table]) => {
+      Object.entries({ ...schema.tables, reminder: reminderTable() }).map(([name, table]) => {
         if (name !== 'reminder' && name !== 'calendar_event' && name !== 'project_task')
           return [name, table];
         const columns = Object.fromEntries(
@@ -579,10 +605,9 @@ describe('the recurrence exceptions column', () => {
     return { ...schema, version: 15, tables } as AppSchema;
   };
 
-  test('a fresh database has it on reminders and calendar events', () => {
+  test('a fresh database has it on calendar events', () => {
     const db = new Database(':memory:');
     db.exec(encodeSchema(schema));
-    expect(columnsOf(db, 'reminder')).toContain('recurrence_exceptions');
     expect(columnsOf(db, 'calendar_event')).toContain('recurrence_exceptions');
   });
 
@@ -594,7 +619,7 @@ describe('the recurrence exceptions column', () => {
       'insert into reminder (id, _changed, _status, created_by, target_user_id, title, description, scheduled_at, recurrence_rule, is_completed, completed_at, created_at, updated_at) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
     ).run('7', '', 'synced', '1', '1', 'Regar', '', 1, 'FREQ=DAILY', 0, null, 1, 1);
 
-    const steps = stepsForMigration({ migrations, fromVersion: 15, toVersion: SCHEMA_VERSION });
+    const steps = stepsForMigration({ migrations, fromVersion: 15, toVersion: 17 });
     expect(steps).not.toBeNull();
     db.exec(encodeMigrationSteps(steps ?? []));
 
@@ -653,5 +678,50 @@ describe('the created via column', () => {
     };
     expect(row).toEqual({ title: 'Pintar la reja', via: '' });
     expect(sanitizeCreatedVia(row.via)).toBe('app');
+  });
+});
+
+describe('the retired reminder table', () => {
+  const atVersionSeventeen = (): AppSchema => ({
+    ...schema,
+    version: 17,
+    tables: { ...schema.tables, reminder: reminderTable() },
+  } as AppSchema);
+
+  const migrateFromSeventeen = (db: Database) => {
+    const steps = stepsForMigration({ migrations, fromVersion: 17, toVersion: 18 });
+    expect(steps).not.toBeNull();
+    db.exec(encodeMigrationSteps(steps ?? []));
+  };
+
+  test('a fresh database does not create it', () => {
+    const db = new Database(':memory:');
+    db.exec(encodeSchema(schema));
+    expect(Object.keys(schema.tables)).not.toContain('reminder');
+    expect(tableNamesOf(db)).not.toContain('reminder');
+  });
+
+  test('a version 17 database loses the table and its rows, and keeps the rest of its data', () => {
+    const db = new Database(':memory:');
+    db.exec(encodeSchema(atVersionSeventeen()));
+    db.query(
+      'insert into reminder (id, _changed, _status, created_by, target_user_id, title, description, scheduled_at, recurrence_rule, recurrence_exceptions, is_completed, completed_at, created_at, updated_at) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    ).run('7', '', 'synced', '1', '1', 'Regar', '', 1, 'FREQ=DAILY', '[]', 0, null, 1, 1);
+    db.query(
+      'insert into notification (id, _changed, _status, user_id, type, title, body, data, is_read, read_at, created_at) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    ).run('1', '', 'synced', '1', 'reminder', 'Regar', 'Ahora', '{"reminderId":7}', 0, null, 1);
+    expect(tableNamesOf(db)).toContain('reminder');
+
+    migrateFromSeventeen(db);
+
+    expect(tableNamesOf(db)).not.toContain('reminder');
+    expect(db.query('select count(*) as n from notification').get()).toEqual({ n: 1 });
+  });
+
+  test('replaying the drop on a database that never had it is harmless', () => {
+    const db = new Database(':memory:');
+    db.exec(encodeSchema(schema));
+    expect(() => migrateFromSeventeen(db)).not.toThrow();
+    expect(tableNamesOf(db)).not.toContain('reminder');
   });
 });

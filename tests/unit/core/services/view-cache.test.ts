@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, mock, test } from 'bun:test';
+import { RETIRED_VIEW_CACHE_KEYS } from '@/shared/constants';
 
 const memory = new Map<string, string>();
 
@@ -72,6 +73,15 @@ describe('clearing the view cache', () => {
     viewCacheService.writeValue('app.context', { role: 'owner' });
     viewCacheService.clear();
     expect(viewCacheService.readValue('app.context')).toBeNull();
+  });
+
+  test('a retired view is forgotten for every user and nothing else goes', () => {
+    memory.set('view.cache.v2.u1.reminder.list', '[{"id":"1","title":"Regar"}]');
+    memory.set('view.cache.v2.u2.reminder.list', '[]');
+    memory.set('view.cache.v2.u1.reminder.list.old', '[]');
+    viewCacheService.write('project.list', [{ id: '1' }]);
+    viewCacheService.forget(RETIRED_VIEW_CACHE_KEYS);
+    expect([...memory.keys()]).toEqual(['view.cache.v2.u1.project.list']);
   });
 });
 

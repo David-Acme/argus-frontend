@@ -5,7 +5,6 @@ import type {
   IPeopleDirectoryCacheRow,
   IProjectCacheRow,
   IProjectTaskCacheRow,
-  IReminderCacheRow,
 } from '@/core/interfaces';
 import type { TranslationKey } from '@/core/types';
 import { ASSISTANT_THREAD_HREF, VIEW_CACHE_KEYS } from '@/shared/constants';
@@ -45,7 +44,6 @@ export type CommandSourceState = {
 };
 
 const KIND_ICONS: Readonly<Record<SearchKind, IconGlyph>> = {
-  reminder: 'bell',
   event: 'cal',
   task: 'check',
   project: 'grid',
@@ -85,7 +83,6 @@ const CREATE_LABELS = {
 
 function useSearchRows(): SearchRows {
   return {
-    reminders: useViewCacheRows<IReminderCacheRow>(VIEW_CACHE_KEYS.reminderList),
     events: useViewCacheRows<IEventListCacheRow>(VIEW_CACHE_KEYS.eventList),
     tasks: useViewCacheRows<IProjectTaskCacheRow>(VIEW_CACHE_KEYS.taskList),
     projects: useViewCacheRows<IProjectCacheRow>(VIEW_CACHE_KEYS.projectList),

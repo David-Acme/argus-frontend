@@ -8,7 +8,6 @@ import type {
   ProjectMemberModel,
   ProjectModel,
   ProjectTaskModel,
-  ReminderModel,
   UserModel,
   UserInvitationModel,
   ZoneModel,
@@ -57,7 +56,6 @@ export type ModelMap = {
   user_invitation: UserInvitationModel;
   camera: CameraModel;
   zone: ZoneModel;
-  reminder: ReminderModel;
   calendar_event: CalendarEventModel;
   calendar_event_share: CalendarEventShareModel;
   project: ProjectModel;

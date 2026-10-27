@@ -3,7 +3,6 @@ export const agendaSections = {
   today: 'Hoy',
   tomorrow: 'Mañana',
   projects: 'Proyectos',
-  'upcoming-reminders': 'Próximos recordatorios',
   'count-overdue-one': '{count} · 1 atrasado',
   'count-overdue': '{count} · {overdue} atrasados',
   overdue: 'Atrasado · {when}',

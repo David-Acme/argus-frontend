@@ -43,7 +43,6 @@ export type OptimisticAction<R> = {
 };
 
 const CHANGE_TITLES: Readonly<Partial<Record<string, TranslationKey>>> = {
-  reminder: 'common.change-failed.reminder',
   calendar_event: 'common.change-failed.calendar-event',
   calendar_event_share: 'common.change-failed.calendar-event-share',
   camera: 'common.change-failed.camera',
@@ -59,7 +58,6 @@ const CHANGE_TITLES: Readonly<Partial<Record<string, TranslationKey>>> = {
 };
 
 const DELETE_TITLES: Readonly<Partial<Record<string, TranslationKey>>> = {
-  reminder: 'common.change-failed.deleted.reminder',
   calendar_event: 'common.change-failed.deleted.calendar-event',
   calendar_event_share: 'common.change-failed.deleted.calendar-event-share',
   camera: 'common.change-failed.deleted.camera',

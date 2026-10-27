@@ -35,11 +35,9 @@ const MINUTE_MS = 60_000;
 
 const HOUR_MINUTES = 60;
 
-const ownerOf = (item: AgendaItem): string | null =>
-  item.origin.kind === 'entry' ? (item.origin.entry.ownerId ?? null) : null;
+const ownerOf = (item: AgendaItem): string | null => item.entry.ownerId ?? null;
 
-export const madeByArgus = (item: AgendaItem): boolean =>
-  item.origin.kind === 'entry' && item.origin.entry.createdVia === 'assistant';
+export const madeByArgus = (item: AgendaItem): boolean => item.entry.createdVia === 'assistant';
 
 export function categoryOf(item: AgendaItem, viewer: string): Category {
   const owner = ownerOf(item);
@@ -140,6 +138,3 @@ export function dayWord(at: number, { now, date, t }: DayWordContext): string {
   if (relation === 'tomorrow') return t('screens.agenda.page.tomorrow');
   return date.formatWeekday(new Date(at)).toLocaleLowerCase();
 }
-
-export const reminderQuestion = (item: Pick<AgendaItem, 'title'>, t: TranslateFn): string =>
-  t('screens.agenda.line.ask-reminder', { title: item.title });

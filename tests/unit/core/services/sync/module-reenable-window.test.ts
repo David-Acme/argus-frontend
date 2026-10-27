@@ -10,7 +10,7 @@ type Row = { id: number; createdAt: number; name: string };
 
 type AuditEntry = { id: number; table: SyncTableKey; recordId: number; name: string };
 
-const TABLES: SyncTableKey[] = ['camera', 'zone', 'reminder'];
+const TABLES: SyncTableKey[] = ['camera', 'zone', 'notification'];
 
 const MODULE_TABLES = new Set<SyncTableKey>(syncTablesOf(['surveillance']));
 
@@ -131,7 +131,7 @@ function runWindow(repull: boolean) {
   const server = new Server();
   const device = new Device(server);
   const camera = server.create('camera', 'Puerta');
-  const reminder = server.create('reminder', 'Regar');
+  const notification = server.create('notification', 'Regar');
   device.sync();
   const modules = engineFor(device, repull);
 
@@ -139,36 +139,36 @@ function runWindow(repull: boolean) {
   modules.send(false);
   server.rename('camera', camera, 'Puerta principal');
   const added = server.create('camera', 'Patio');
-  server.rename('reminder', reminder, 'Regar las plantas');
+  server.rename('notification', notification, 'Regar las plantas');
   device.sync();
 
   server.enabled = true;
   modules.send(true);
-  return { device, camera, added, reminder };
+  return { device, camera, added, notification };
 }
 
 describe('a module switched off and on again', () => {
   test('changes made while it was off are on the device after it comes back', async () => {
-    const { device, camera, added, reminder } = runWindow(true);
+    const { device, camera, added, notification } = runWindow(true);
     await settle();
     device.sync();
     expect(device.name('camera', camera)).toBe('Puerta principal');
     expect(device.name('camera', added)).toBe('Patio');
-    expect(device.name('reminder', reminder)).toBe('Regar las plantas');
+    expect(device.name('notification', notification)).toBe('Regar las plantas');
   });
 
   test('without the re-pull the update made in that window is lost, which is the hole it closes', async () => {
-    const { device, camera, reminder } = runWindow(false);
+    const { device, camera, notification } = runWindow(false);
     await settle();
     device.sync();
     expect(device.name('camera', camera)).toBe('Puerta');
-    expect(device.name('reminder', reminder)).toBe('Regar las plantas');
+    expect(device.name('notification', notification)).toBe('Regar las plantas');
   });
 
   test('the core tables keep their cursors and the module tables are rebuilt by the re-pull', async () => {
     const { device } = runWindow(true);
     await settle();
-    expect(device.cursors.reminder?.createdStart).toBeGreaterThan(0);
+    expect(device.cursors.notification?.createdStart).toBeGreaterThan(0);
     expect(device.cursors.camera?.createdStart).toBeGreaterThan(0);
   });
 });

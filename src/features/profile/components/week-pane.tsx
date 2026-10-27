@@ -69,11 +69,9 @@ function Tiles({ stats }: TilesProps) {
       <Tile
         icon="check"
         tone="accent"
-        value={stats.onTime}
+        value={stats.done}
         label={t(
-          stats.onTime === 1
-            ? 'screens.profile.week.on-time.one'
-            : 'screens.profile.week.on-time.other'
+          stats.done === 1 ? 'screens.profile.week.done.one' : 'screens.profile.week.done.other'
         )}
       />
       <Tile
@@ -144,7 +142,7 @@ export function WeekPane() {
   const { formatDayRange } = useDateFormatter();
   const { range, stats } = useWeek();
   const userId = useAuthStore((state) => state.user?.id ?? 0);
-  const lively = stats !== null && stats.onTime + stats.pending > 0;
+  const lively = stats !== null && stats.done + stats.pending > 0;
   return (
     <>
       {lively && stats ? (

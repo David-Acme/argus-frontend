@@ -3,7 +3,6 @@ export const agendaSections = {
   today: 'Today',
   tomorrow: 'Tomorrow',
   projects: 'Projects',
-  'upcoming-reminders': 'Upcoming reminders',
   'count-overdue-one': '{count} · 1 overdue',
   'count-overdue': '{count} · {overdue} overdue',
   overdue: 'Overdue · {when}',

@@ -18,7 +18,7 @@ export type WordingDate = Pick<
 
 export type WordingContext = { now: number; date: WordingDate; t: TranslateFn };
 
-export type MetaPlace = 'now' | 'day' | 'upcoming';
+export type MetaPlace = 'now' | 'day';
 
 export type Urgency = 'overdue' | 'now' | 'later';
 
@@ -94,7 +94,6 @@ function timeOf(item: AgendaItem, { date, t }: WordingContext): string {
 
 function whenOf(item: AgendaItem, place: MetaPlace, context: WordingContext): string {
   const { now, date, t } = context;
-  if (place === 'upcoming') return dayAndTime(item.startsAt, context);
   if (place === 'day') return timeOf(item, context);
   if (isOverdue(item, now)) {
     const today = date.sameDay(new Date(item.startsAt), new Date(now));

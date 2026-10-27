@@ -23,5 +23,5 @@ export function systemRows({ modules, cameras }: SystemInput): SystemRow[] {
 }
 
 export function isSparse(summary: DashboardSummary): boolean {
-  return summary.remindersPending + summary.tasksOpen + summary.projectsActive === 0;
+  return summary.tasksOpen + summary.projectsActive === 0;
 }

@@ -18,9 +18,9 @@ const at = (days: number, hours: number) =>
   new Date(today.getFullYear(), today.getMonth(), today.getDate() + days, hours).getTime();
 
 const ROWS: Readonly<Record<string, readonly unknown[]>> = {
-  [VIEW_CACHE_KEYS.reminderList]: [
-    { id: '1', title: 'Pagar la luz', scheduledAt: at(0, 23), isCompleted: false },
-    { id: '2', title: 'Pagar el agua', scheduledAt: at(1, 9), isCompleted: false },
+  [VIEW_CACHE_KEYS.eventList]: [
+    { id: '1', title: 'Pagar la luz', startsAt: at(0, 23), isAllDay: false, recurrenceRule: null },
+    { id: '2', title: 'Pagar el agua', startsAt: at(1, 9), isAllDay: false, recurrenceRule: null },
   ],
   [VIEW_CACHE_KEYS.cameraList]: [{ id: '5', name: 'Cámara del patio' }],
 };

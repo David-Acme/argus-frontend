@@ -153,41 +153,8 @@ export interface ICalendarEventFormRecord {
   recurrenceRule?: string | null;
 }
 
-export interface IReminderCacheSource {
-  id: string;
-  title: string;
-  description: string;
-  scheduledAt: Date;
-  isCompleted: boolean;
-  completedAt: Date | null;
-  recurrenceRule: string | null;
-  recurrenceExceptions?: readonly RecurrenceException[];
-}
-
-export interface IReminderCacheRow {
-  id: string;
-  title: string;
-  description: string;
-  scheduledAt: number;
-  isCompleted: boolean;
-  completedAt: number | null;
-  recurrenceRule: string | null;
-  recurrenceExceptions?: readonly RecurrenceException[];
-}
-
-export interface IReminderCreate {
-  title: string;
-  description: string;
-  scheduledAt: number;
-  recurrenceRule?: string;
-}
-
 export interface IReminderUpdate {
-  title?: string;
-  description?: string | null;
-  scheduledAt?: number;
-  isCompleted?: boolean;
-  recurrenceRule?: string | null;
+  isCompleted: boolean;
 }
 
 export interface IOccurrenceChange {

@@ -41,7 +41,7 @@ describe('the Inicio columns', () => {
       { id: 'cameras', sections: ['cameras', 'happened'], grows: 0 },
       {
         id: 'side',
-        sections: ['people', 'projects', 'clips', 'reminders'],
+        sections: ['people', 'projects', 'clips'],
         grows: -1,
         width: 340,
       },
@@ -157,7 +157,6 @@ describe('night, away and a sparse home', () => {
       'people',
       'projects',
       'clips',
-      'reminders',
       'system',
       'help',
       'try',

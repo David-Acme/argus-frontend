@@ -18,7 +18,6 @@ import { PERSON_SCHEMA, PersonModel } from './person.table';
 import { PROJECT_MEMBER_SCHEMA, ProjectMemberModel } from './project-member.table';
 import { PROJECT_SCHEMA, ProjectModel } from './project.table';
 import { PROJECT_TASK_SCHEMA, ProjectTaskModel } from './project-task.table';
-import { REMINDER_SCHEMA, ReminderModel } from './reminder.table';
 import { USER_SCHEMA, UserModel } from './user.table';
 import { USER_INVITATION_SCHEMA, UserInvitationModel } from './user-invitation.table';
 import { ZONE_SCHEMA, ZoneModel } from './zone.table';
@@ -28,7 +27,6 @@ const TABLES = [
   { schema: USER_INVITATION_SCHEMA, model: UserInvitationModel },
   { schema: CAMERA_SCHEMA, model: CameraModel },
   { schema: ZONE_SCHEMA, model: ZoneModel },
-  { schema: REMINDER_SCHEMA, model: ReminderModel },
   { schema: CALENDAR_EVENT_SCHEMA, model: CalendarEventModel },
   { schema: CALENDAR_EVENT_SHARE_SCHEMA, model: CalendarEventShareModel },
   { schema: PROJECT_SCHEMA, model: ProjectModel },
@@ -53,7 +51,6 @@ export {
   ProjectMemberModel,
   ProjectModel,
   ProjectTaskModel,
-  ReminderModel,
   UserModel,
   UserInvitationModel,
   ZoneModel,

@@ -17,7 +17,6 @@ export {
   ProjectMemberModel,
   ProjectModel,
   ProjectTaskModel,
-  ReminderModel,
   UserModel,
   UserInvitationModel,
   ZoneModel,

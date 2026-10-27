@@ -25,7 +25,6 @@ const date = createDateFormatter('es', {
 });
 
 const rows = (patch: Partial<SearchRows> = {}): SearchRows => ({
-  reminders: [],
   events: [],
   tasks: [],
   projects: [],
@@ -35,13 +34,9 @@ const rows = (patch: Partial<SearchRows> = {}): SearchRows => ({
 });
 
 describe('command entries', () => {
-  test('open reminders, open tasks, active people and every event, project and camera become entries', () => {
+  test('open tasks, active people and every event, project and camera become entries; reminders never do', () => {
     const entries = searchEntries(
       rows({
-        reminders: [
-          { id: '1', title: 'Pagar la luz', scheduledAt: NOW + DAY, isCompleted: false },
-          { id: '2', title: 'Pagado', scheduledAt: NOW, isCompleted: true },
-        ],
         events: [
           { id: '3', title: 'Cena', startsAt: NOW + 2 * DAY, isAllDay: true, recurrenceRule: null },
         ],
@@ -60,7 +55,6 @@ describe('command entries', () => {
       NOW
     );
     expect(entries.map(({ kind, id, title }) => `${kind}:${id}:${title}`)).toEqual([
-      'reminder:1:Pagar la luz',
       'event:3:Cena',
       'task:4:Comprar cajas',
       'project:9:Mudanza',

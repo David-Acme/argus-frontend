@@ -11,7 +11,6 @@ import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useNow } from '@/shared/hooks/use-now';
 import { useOptimisticRows } from '@/shared/hooks/use-optimistic-rows';
 import { personFullName } from '@/shared/libs/sharing';
-import { useReminders } from '@/features/agenda/hooks/use-reminders';
 import { agendaItems, projectNamesOf } from '@/features/agenda/model/agenda-items';
 import { monthOf } from '@/features/agenda/model/agenda-days';
 import { byStart, CALENDAR_LENSES } from '@/features/agenda/model/calendar-optimistic';
@@ -44,7 +43,6 @@ export function useAgendaPlan(selected: number): AgendaPlan {
   const date = useDateFormatter();
   const now = useNow(MINUTE_MS);
   const { has } = useCapabilities();
-  const reminders = useReminders();
   const viewer = String(useAuthStore((state) => state.user?.id ?? ''));
   const month = monthOf(selected);
   const next = date.addMonths(new Date(month), 1);
@@ -63,10 +61,8 @@ export function useAgendaPlan(selected: number): AgendaPlan {
   );
   const projects = useViewCacheRows<DashboardProjectCard>(VIEW_CACHE_KEYS.dashboardProjects);
   const people = useViewCacheRows<IPeopleDirectoryCacheRow>(VIEW_CACHE_KEYS.peopleUsers);
-  const readsReminders = has(CAPABILITY.remindersRead);
   const readsAgenda = has(CAPABILITY.agendaRead);
   const items = agendaItems({
-    reminders: readsReminders ? reminders.rows : NONE,
     entries: readsAgenda ? entries : NONE,
     projectNames: projectNamesOf(projects),
   });
@@ -76,7 +72,7 @@ export function useAgendaPlan(selected: number): AgendaPlan {
   }, [month]);
 
   return {
-    visible: readsReminders || readsAgenda,
+    visible: readsAgenda,
     items,
     now,
     viewer,

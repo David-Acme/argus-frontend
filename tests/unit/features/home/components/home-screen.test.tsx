@@ -24,20 +24,13 @@ const CALM: InicioHero = {
 const state = {
   hero: CALM,
   roleActive: true,
-  granted: new Set([
-    'reminders.read',
-    'agenda.read',
-    'notifications.read',
-    'camera.view',
-    'presence.read',
-  ]),
+  granted: new Set(['agenda.read', 'notifications.read', 'camera.view', 'presence.read']),
   creates: true,
   guardView: true,
   productivity: true,
   summary: {
     camerasTotal: 5,
     camerasOnline: 5,
-    remindersPending: 3,
     projectsActive: 1,
     tasksOpen: 2,
   },
@@ -78,6 +71,9 @@ mock.module('@/features/command', () => ({
     open: () => launched.push('search'),
     openNew: () => launched.push('new'),
   }),
+}));
+mock.module('@/features/home/hooks/use-ask-argus', () => ({
+  useAskArgus: () => (draft: string) => launched.push(draft),
 }));
 
 mock.module('@/features/home/components/hero/inicio-alert', () => ({
@@ -128,9 +124,6 @@ mock.module('@/features/home/components/agenda/tomorrow-section', () => ({
 mock.module('@/features/home/components/agenda/projects-section', () => ({
   ProjectsSection: marker('projects'),
 }));
-mock.module('@/features/home/components/agenda/upcoming-reminders-section', () => ({
-  UpcomingRemindersSection: marker('reminders'),
-}));
 mock.module('@/features/home/components/cameras/cameras-section', () => ({
   CamerasSection: marker('cameras'),
 }));
@@ -169,7 +162,6 @@ const ALL = [
   'people',
   'projects',
   'clips',
-  'reminders',
   'system',
   'help',
   'try',
@@ -185,17 +177,10 @@ afterEach(() => {
     creates: true,
     guardView: true,
     productivity: true,
-    granted: new Set([
-      'reminders.read',
-      'agenda.read',
-      'notifications.read',
-      'camera.view',
-      'presence.read',
-    ]),
+    granted: new Set(['agenda.read', 'notifications.read', 'camera.view', 'presence.read']),
     summary: {
       camerasTotal: 5,
       camerasOnline: 5,
-      remindersPending: 3,
       projectsActive: 1,
       tasksOpen: 2,
     },
@@ -260,7 +245,6 @@ describe('Inicio on a phone', () => {
     state.summary = {
       camerasTotal: 0,
       camerasOnline: 0,
-      remindersPending: 0,
       projectsActive: 0,
       tasksOpen: 0,
     };
@@ -272,18 +256,17 @@ describe('Inicio on a phone', () => {
     expect(routes).toEqual(['/cameras']);
   });
 
-  test('without camera rights the first step is the first reminder', () => {
+  test('without camera rights the first step asks Argus for the first reminder', () => {
     state.creates = false;
     state.summary = {
       camerasTotal: 0,
       camerasOnline: 0,
-      remindersPending: 0,
       projectsActive: 0,
       tasksOpen: 0,
     };
-    state.granted = new Set([...state.granted, 'reminders.write']);
+    state.granted = new Set([...state.granted, 'reminders.write', 'messages.relay']);
     render(<HomeScreen />);
-    expect(screen.getByText('Crea tu primer recordatorio')).toBeDefined();
+    expect(screen.getByText('Pide tu primer recordatorio')).toBeDefined();
     expect(screen.queryByText('Conecta tu primera cámara')).toBeNull();
   });
 
@@ -345,7 +328,7 @@ describe('Inicio at night, away and with little data', () => {
 
   test('a sparse home at 1280 px closes the side column with Estado', () => {
     setWindowWidth(1280);
-    state.summary = { ...state.summary, remindersPending: 0, projectsActive: 0, tasksOpen: 0 };
+    state.summary = { ...state.summary, projectsActive: 0, tasksOpen: 0 };
     render(<HomeScreen />);
     expect(order(['people', 'system', 'help', 'try'])).toEqual(['people', 'system', 'help', 'try']);
   });
@@ -366,7 +349,6 @@ describe('a new household on a tablet', () => {
     state.summary = {
       camerasTotal: 0,
       camerasOnline: 0,
-      remindersPending: 0,
       projectsActive: 0,
       tasksOpen: 0,
     };

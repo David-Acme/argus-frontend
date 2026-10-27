@@ -7,14 +7,15 @@ import { notificationService } from '@/core/services/notification.service';
 import { projectService } from '@/core/services/project.service';
 import { projectMemberService } from '@/core/services/project-member.service';
 import { projectTaskService } from '@/core/services/project-task.service';
-import { reminderService } from '@/core/services/reminder.service';
 import { userInvitationService } from '@/core/services/user-invitation.service';
 import { userService } from '@/core/services/user.service';
+import { viewCacheService } from '@/core/services/view-cache.service';
 import { zoneService } from '@/core/services/zone.service';
 import type { KeysetWindow } from '@/core/types';
 import {
   NOTIFICATION_FEED_SCOPE,
   MODULE_IDS,
+  RETIRED_VIEW_CACHE_KEYS,
   VIEW_CACHE_KEYS,
   VIEW_CACHE_LIST_LIMIT,
 } from '@/shared/constants';
@@ -35,7 +36,6 @@ import { PagedView, type IPagedView, type PageDirection } from './view-cache/pag
 import { sameThreadWindow, type ThreadWindow } from './conversation';
 import { projectPeople } from './view-cache/people.projection';
 import { projectProjects } from './view-cache/project.projection';
-import { projectReminders } from './view-cache/reminder.projection';
 import { startOfNextDay } from './view-cache/dates';
 import { startProjection, type ProjectionContext } from './view-cache/projection';
 import { projectSummary } from './view-cache/summary.projection';
@@ -59,7 +59,6 @@ function sessionSources(userId: string) {
     calendarShares: shared(moduleGate.of(PRODUCTIVITY, calendarEventShareService.observeAll(), [])),
     series: shared(moduleGate.of(PRODUCTIVITY, calendarEventService.observeRecurring(), [])),
     zone: householdZone.asObservable(),
-    reminders: shared(reminderService.observeForUser(userId)),
     unread: shared(notificationService.observeUnreadCountForUser(userId)),
     conversations: shared(conversationService.observeSummaryFacts(userId)),
     users: shared(userService.observeDirectory()),
@@ -101,7 +100,6 @@ function startSessionProjections(sources: SessionSources, ctx: ProjectionContext
       ctx,
     ),
     startProjection({ sources: () => ({ users: sources.users, invitations: sources.invitations }), project: projectPeople }, ctx),
-    startProjection({ sources: () => ({ reminders: sources.reminders }), project: projectReminders }, ctx),
     startProjection(
       {
         sources: () => ({
@@ -122,7 +120,6 @@ function startSessionProjections(sources: SessionSources, ctx: ProjectionContext
       {
         sources: () => ({
           cameras: sources.cameras,
-          reminders: sources.reminders,
           projects: sources.projects,
           tasks: sources.tasks,
         }),
@@ -134,7 +131,6 @@ function startSessionProjections(sources: SessionSources, ctx: ProjectionContext
       {
         sources: () => ({
           events: moduleGate.of(PRODUCTIVITY, calendarEventService.observeRange(from, to), []),
-          reminders: sources.reminders,
           tasks: moduleGate.of(PRODUCTIVITY, projectTaskService.observeDueRange(from, to), []),
           series: sources.series,
           zone: sources.zone,
@@ -222,6 +218,7 @@ class ViewCacheCoordinatorService {
     const nextUserId = String(userId);
     if (this.userId === nextUserId) return;
     this.stop();
+    viewCacheService.forget(RETIRED_VIEW_CACHE_KEYS);
     this.userId = nextUserId;
     const sources = sessionSources(nextUserId);
     this.sources = sources;
@@ -294,7 +291,6 @@ class ViewCacheCoordinatorService {
       {
         sources: () => ({
           events: moduleGate.of(PRODUCTIVITY, calendarEventService.observeRange(window.from, window.to), []),
-          reminders: sources.reminders,
           tasks: moduleGate.of(PRODUCTIVITY, projectTaskService.observeDueRange(window.from, window.to), []),
           series: sources.series,
           zone: sources.zone,

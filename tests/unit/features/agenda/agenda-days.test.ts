@@ -13,19 +13,15 @@ import {
   shiftMonth,
   weekCells,
 } from '@/features/agenda/model/agenda-days';
-import { at, date, entry, items, NOW, reminder } from '../home/agenda-fixtures';
+import { at, date, entry, items, NOW, task } from '../home/agenda-fixtures';
 
 const day = () => [
-  ...items(
-    [
-      reminder('Pagar la luz', at(11)),
-      reminder('Sacar la basura', at(8), { isCompleted: true, completedAt: at(8) }),
-    ],
-    [
-      entry('event:tecnico', at(14, 30), { title: 'Llamar al técnico', endsAt: at(15) }),
-      entry('task:cajas', at(17), { title: 'Comprar cajas', source: 'task', endsAt: at(18) }),
-    ]
-  ),
+  ...items([
+    task('Pagar la luz', at(11)),
+    task('Sacar la basura', at(8), { status: 'complete' }),
+    entry('event:tecnico', at(14, 30), { title: 'Llamar al técnico', endsAt: at(15) }),
+    entry('task:cajas', at(17), { title: 'Comprar cajas', source: 'task', endsAt: at(18) }),
+  ]),
 ];
 
 describe('the week strip and the month grid', () => {

@@ -37,16 +37,6 @@ mock.module('@/core/services/net', () => ({
   },
 }));
 
-mock.module('@/core/services/database.service', () => ({
-  DatabaseService: class {
-    readonly table: string;
-
-    constructor(table: string) {
-      this.table = table;
-    }
-  },
-}));
-
 const { registerHttpAuth } = await import('@/core/services/http/http-auth');
 const { reminderCallService } =
   await import('@/features/voice/services/call-action/call-action.service');

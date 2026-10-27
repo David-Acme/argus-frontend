@@ -1,4 +1,3 @@
-import type { IReminderCacheRow } from '@/core/interfaces';
 import { localeDictionaries } from '@/core/i18n/locales';
 import { translate } from '@/core/i18n/translate';
 import type { AgendaItem, CalendarEntry, TranslateFn } from '@/core/types';
@@ -27,23 +26,6 @@ export const TOMORROW = { from: at(0, 0, 1), to: at(23, 59, 1) + 59_999 };
 
 export const wording: WordingContext = { now: NOW, date, t };
 
-export function reminder(
-  id: string,
-  scheduledAt: number,
-  extra: Partial<IReminderCacheRow> = {}
-): IReminderCacheRow {
-  return {
-    id,
-    title: id,
-    description: '',
-    scheduledAt,
-    isCompleted: false,
-    completedAt: null,
-    recurrenceRule: null,
-    ...extra,
-  };
-}
-
 export function entry(
   id: string,
   startsAt: number,
@@ -61,22 +43,27 @@ export function entry(
   };
 }
 
+export const task = (
+  title: string,
+  startsAt: number,
+  extra: Partial<CalendarEntry> = {}
+): CalendarEntry => entry(`task:${title}`, startsAt, { source: 'task', title, ...extra });
+
 export const items = (
-  reminders: readonly IReminderCacheRow[],
   entries: readonly CalendarEntry[] = [],
   projects: ReadonlyMap<string, string> = new Map()
-): AgendaItem[] => agendaItems({ reminders, entries, projectNames: projects });
+): AgendaItem[] => agendaItems({ entries, projectNames: projects });
 
 export const prototypeDay = (): AgendaItem[] =>
   items(
     [
-      reminder('Yoga', at(7), { isCompleted: true, completedAt: at(8) }),
-      reminder('Llamar al plomero', at(11)),
-      reminder('Pagar la luz', at(17), { recurrenceRule: 'FREQ=MONTHLY' }),
-      reminder('Sacar la basura', at(21)),
-      reminder('Pagar el agua', at(9, 0, 1)),
-    ],
-    [
+      task('Yoga', at(7), { status: 'complete' }),
+      task('Llamar al plomero', at(11)),
+      task('Pagar la luz', at(17), {
+        series: { startsAt: at(17), endsAt: null, rule: 'FREQ=MONTHLY' },
+      }),
+      task('Sacar la basura', at(21)),
+      task('Pagar el agua', at(9, 0, 1)),
       entry('event:arquitecto', at(14, 30), {
         title: 'Reunión con el arquitecto',
         endsAt: at(16),

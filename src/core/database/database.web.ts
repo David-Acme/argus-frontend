@@ -1,9 +1,11 @@
 import { Database } from '@nozbe/watermelondb';
 import LokiJSAdapter from '@nozbe/watermelondb/adapters/lokijs';
-import { DATABASE_NAME } from '@/shared/constants';
+import { DATABASE_NAME, RETIRED_TABLES } from '@/shared/constants';
 import { migrations } from './migrations';
 import { modelClasses, schema } from './schema';
 import { log } from '@/core/services/log';
+
+type LokiStore = { getCollection: (name: string) => { findAndRemove: () => void } | null };
 
 const adapter = new LokiJSAdapter({
   dbName: DATABASE_NAME,
@@ -20,3 +22,11 @@ const adapter = new LokiJSAdapter({
 });
 
 export const database = new Database({ adapter, modelClasses });
+
+const purgeRetired = (loki: LokiStore): void => {
+  RETIRED_TABLES.forEach((name) => loki.getCollection(name)?.findAndRemove());
+};
+
+void database.adapter
+  .unsafeExecute({ loki: purgeRetired })
+  .catch((error: unknown) => log.error('database', 'Retired tables purge failed', error));

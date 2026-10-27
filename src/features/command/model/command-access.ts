@@ -23,7 +23,6 @@ export type CommandAccess = {
   create: readonly CreateKind[];
   sections: readonly SectionJump[];
   asks: boolean;
-  agenda: boolean;
   people: '/users' | '/people' | null;
 };
 
@@ -49,7 +48,6 @@ export function commandAccess(view: AccessView, hasProjects: boolean): CommandAc
   const asks = opens(ASSISTANT_THREAD_HREF);
   const people = PEOPLE_ROUTES.find(opens) ?? null;
   const search = allowedOf<SearchKind>([
-    ['reminder', hasCapability(view, CAPABILITY.remindersRead)],
     ['event', agenda && reads('calendar_event')],
     ['task', projects && reads('project_task')],
     ['project', projects && reads('project')],
@@ -69,19 +67,13 @@ export function commandAccess(view: AccessView, hasProjects: boolean): CommandAc
       shortcut: String(at + 1),
     })),
     asks,
-    agenda,
     people,
   };
 }
 
-export function entryHref(
-  entry: SearchEntry,
-  access: Pick<CommandAccess, 'agenda' | 'people'>
-): Href {
+export function entryHref(entry: SearchEntry, access: Pick<CommandAccess, 'people'>): Href {
   const day = { at: String(entry.at ?? '') };
   switch (entry.kind) {
-    case 'reminder':
-      return access.agenda && entry.at !== null ? { pathname: '/agenda', params: day } : '/';
     case 'event':
       return { pathname: '/agenda', params: day };
     case 'task':

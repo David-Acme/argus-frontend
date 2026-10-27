@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import type { IAuditLogEntry, IAuditLogChange } from '@/core/interfaces';
-import { planAuditEntries, toAuditRemoval } from '@/core/services/sync/audit-log-patch';
+import { planAuditEntries, toAuditPatch, toAuditRemoval } from '@/core/services/sync/audit-log-patch';
 
 const entry = (
   id: number,
@@ -38,8 +38,18 @@ describe('a notification diff that sets deletedAt', () => {
   });
 
   test('of a table whose deletions travel as Delete frames and pulls is never a removal', () => {
-    expect(toAuditRemoval(entry(6, 'reminder', 5, { deletedAt: { previous: null, current: 1 } }))).toBeNull();
+    expect(toAuditRemoval(entry(6, 'camera', 5, { deletedAt: { previous: null, current: 1 } }))).toBeNull();
     expect(toAuditRemoval(entry(7, 'audit_log', 5, { deletedAt: { previous: null, current: 1 } }))).toBeNull();
+  });
+});
+
+describe('an old reminder diff', () => {
+  test('patches nothing and removes nothing, because reminders left the sync', () => {
+    const title = entry(8, 'reminder', 5, { title: { previous: 'Regar', current: 'Regar las plantas' } });
+    const removed = entry(9, 'reminder', 5, { deletedAt: { previous: null, current: 1 } });
+    expect(toAuditPatch(title)).toBeNull();
+    expect(toAuditRemoval(removed)).toBeNull();
+    expect(planAuditEntries([title, removed]).patches.size).toBe(0);
   });
 });
 

@@ -9,6 +9,8 @@ const routes: string[] = [];
 
 const launched: string[] = [];
 
+const asked: string[] = [];
+
 const verdicts: string[] = [];
 
 const access = { watch: true };
@@ -33,6 +35,10 @@ mock.module('@/features/command', () => ({
     open: () => launched.push('search'),
     openNew: () => launched.push('new'),
   }),
+}));
+
+mock.module('@/features/home/hooks/use-ask-argus', () => ({
+  useAskArgus: () => (draft: string) => asked.push(draft),
 }));
 
 mock.module('@/features/home/hooks/use-inicio-stats', () => ({
@@ -97,6 +103,7 @@ afterEach(() => {
   setWindowWidth(360);
   routes.length = 0;
   launched.length = 0;
+  asked.length = 0;
   verdicts.length = 0;
   access.watch = true;
 });
@@ -151,10 +158,12 @@ describe('InicioLead', () => {
     expect(screen.getByText('sos')).toBeDefined();
   });
 
-  test('the reminder first step opens the new-item actions', () => {
+  test('the reminder first step asks Argus for one, never a manual form', () => {
     render(<InicioLead hero={HERO} firstStep="reminder" sos={false} band={false} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Nuevo recordatorio' }));
-    expect(launched).toEqual(['new']);
+    expect(screen.getByText('Pide tu primer recordatorio')).toBeDefined();
+    fireEvent.click(screen.getByRole('button', { name: 'Pedirle a Argus' }));
+    expect(asked).toEqual(['Recuérdame ']);
+    expect(launched).toEqual([]);
   });
 
   test('before the context there is no first step yet', () => {

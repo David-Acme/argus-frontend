@@ -90,9 +90,9 @@ export const home = {
       camera: 'Conecta tu primera cámara',
       'camera-body': 'Argus empieza a cuidar tu casa en cuanto vea una.',
       'camera-action': 'Conectar cámara',
-      reminder: 'Crea tu primer recordatorio',
-      'reminder-body': 'Escríbelo tú o pídeselo a Argus.',
-      'reminder-action': 'Nuevo recordatorio',
+      reminder: 'Pide tu primer recordatorio',
+      'reminder-body': 'Dile a Argus qué y cuándo, y te avisará a tiempo.',
+      'reminder-action': 'Pedirle a Argus',
     },
     watch: {
       tonight: 'Esta noche',

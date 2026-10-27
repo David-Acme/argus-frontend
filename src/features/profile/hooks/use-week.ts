@@ -1,5 +1,5 @@
-import type { IReminderCacheRow } from '@/core/interfaces';
-import { CAPABILITY, VIEW_CACHE_KEYS } from '@/shared/constants';
+import type { IProjectTaskCacheRow } from '@/core/interfaces';
+import { VIEW_CACHE_KEYS } from '@/shared/constants';
 import { useViewCacheRows } from '@/shared/hooks/use-cached-rows';
 import { useCapabilities } from '@/shared/hooks/use-capabilities';
 import { useNow } from '@/shared/hooks/use-now';
@@ -11,9 +11,9 @@ export type Week = { range: WeekRange; stats: WeekStats | null };
 const HOUR_MS = 3_600_000;
 
 export function useWeek(): Week {
-  const { has } = useCapabilities();
+  const { can } = useCapabilities();
   const now = useNow(HOUR_MS);
-  const reminders = useViewCacheRows<IReminderCacheRow>(VIEW_CACHE_KEYS.reminderList);
+  const tasks = useViewCacheRows<IProjectTaskCacheRow>(VIEW_CACHE_KEYS.taskList);
   const range = weekOf(new Date(now));
-  return { range, stats: has(CAPABILITY.remindersRead) ? weekStats(reminders, range) : null };
+  return { range, stats: can('project_task', 'read') ? weekStats(tasks, range) : null };
 }

@@ -435,7 +435,6 @@ describe('summary projection', () => {
         { isOnline: true, isEnabled: true },
         { isOnline: true, isEnabled: false },
       ],
-      reminders: [{ isCompleted: false }, { isCompleted: true }],
       projects: [
         { status: 'active' },
         { status: 'planned' },
@@ -448,7 +447,6 @@ describe('summary projection', () => {
     expect(valueOf(writes, 'dashboard.summary')).toEqual({
       camerasTotal: 2,
       camerasOnline: 1,
-      remindersPending: 1,
       projectsActive: 1,
       tasksOpen: 1,
     });
@@ -471,9 +469,6 @@ describe('calendar projections', () => {
         projectId: null,
       },
     ],
-    reminders: [
-      { id: 'r1', title: 'Pay', scheduledAt: new Date(2026, 9, 15, 18), isCompleted: false },
-    ],
     tasks: [
       { id: 't1', title: 'Fix', dueAt: new Date(2026, 9, 15), status: 'doing', projectId: 'p1' },
     ],
@@ -495,7 +490,7 @@ describe('calendar projections', () => {
       (rowsOf(writes, 'calendar.entries', 'month.2026-10') as { id: string }[]).map(
         (entry) => entry.id
       )
-    ).toEqual(['task:t1', 'reminder:r1']);
+    ).toEqual(['task:t1']);
     expect(calendarMonthScope(now)).toBe('month.2026-10');
   });
 
@@ -504,10 +499,7 @@ describe('calendar projections', () => {
       id: string;
       status: string;
     }[];
-    expect(entries.map((entry) => [entry.id, entry.status])).toEqual([
-      ['task:t1', 'active'],
-      ['reminder:r1', 'upcoming'],
-    ]);
+    expect(entries.map((entry) => [entry.id, entry.status])).toEqual([['task:t1', 'active']]);
   });
 });
 
@@ -549,14 +541,6 @@ describe('calendar entry state', () => {
     expect(calendarEntryState(spanning, at(0, 0, 18))).toBe('ended');
   });
 
-  test('a reminder is upcoming, overdue once past, done when completed', () => {
-    const reminder = entry({ id: 'reminder:1', source: 'reminder', endsAt: null });
-    expect(calendarEntryState(reminder, at(8))).toBe('upcoming');
-    expect(calendarEntryState(reminder, at(9))).toBe('overdue');
-    expect(calendarEntryState({ ...reminder, status: 'complete' }, at(8))).toBe('done');
-    expect(calendarEntryState({ ...reminder, status: 'complete' }, at(12))).toBe('done');
-  });
-
   test('a task keeps its own status whatever the time', () => {
     const task = entry({ id: 'task:1', source: 'task', isAllDay: true, endsAt: null });
     expect(calendarEntryState(task, at(0, 0, 20))).toBe('todo');
@@ -564,13 +548,23 @@ describe('calendar entry state', () => {
     expect(calendarEntryState({ ...task, status: 'complete' }, at(0, 0, 20))).toBe('done');
   });
 
-  test('the projected reminder turns overdue as time passes, with no new projection', () => {
-    const [reminder] = rowsOf(
+  test('the projected event turns ongoing as time passes, with no new projection', () => {
+    const [event] = rowsOf(
       projectAgenda(
         {
-          events: [],
-          reminders: [
-            { id: 'r1', title: 'Pay', scheduledAt: new Date(2026, 9, 15, 18), isCompleted: false },
+          events: [
+            {
+              id: 'e2',
+              ownerId: '1',
+              title: 'Pay',
+              startsAt: new Date(2026, 9, 15, 18),
+              endsAt: null,
+              isAllDay: false,
+              color: '',
+              location: '',
+              description: '',
+              projectId: null,
+            },
           ],
           tasks: [],
         },
@@ -579,8 +573,8 @@ describe('calendar entry state', () => {
       'dashboard.agenda',
       'today'
     ) as CalendarEntry[];
-    if (!reminder) throw new Error('no reminder');
-    expect(calendarEntryState(reminder, at(17))).toBe('upcoming');
-    expect(calendarEntryState(reminder, at(18, 1))).toBe('overdue');
+    if (!event) throw new Error('no event');
+    expect(calendarEntryState(event, at(17))).toBe('upcoming');
+    expect(calendarEntryState(event, at(18, 1))).toBe('ongoing');
   });
 });

@@ -57,7 +57,6 @@ export type {
   AgendaItem,
   AgendaKind,
   AgendaMenuAction,
-  AgendaOrigin,
   AgendaRights,
   DayRange,
   NowList,
