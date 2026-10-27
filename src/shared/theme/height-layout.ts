@@ -1,6 +1,6 @@
 import { useWindowDimensions } from 'react-native';
 import { inset, layout, size, space, typeRoles } from './tokens';
-import type { WindowSize } from './window-layout';
+import { classifyWindowSize, type WindowLayout, type WindowSize } from './window-layout';
 
 export type HeightClass = 'tiny' | 'short' | 'regular';
 
@@ -90,6 +90,15 @@ export function navOffsetsOf({ bar, gap }: NavBarLayout, bottomInset: number): N
 export function useNavBarLayout(): NavBarLayout {
   const { width, height, fontScale } = useWindowDimensions();
   return navBarOf(heightLayoutOf({ width, height }), fontScale);
+}
+
+export function paneSplitOf({ windowClass }: WindowLayout, { landscape }: HeightLayout): boolean {
+  return windowClass !== 'compact' && !landscape;
+}
+
+export function usePaneSplit(): boolean {
+  const { width, height } = useWindowDimensions();
+  return paneSplitOf(classifyWindowSize({ width, height }), heightLayoutOf({ width, height }));
 }
 
 export function paletteTopOf({ heightClass, landscape }: HeightLayout): number {

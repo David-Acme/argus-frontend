@@ -4,7 +4,7 @@ import type { SettingsOwner } from '@/core/types';
 import { useResourceCopy } from '@/shared/hooks/use-resource-copy';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { resourceOf } from '@/shared/libs/remote-resource';
-import { size, useWindowLayout } from '@/shared/theme';
+import { size, usePaneSplit, useWindowLayout } from '@/shared/theme';
 import { Field } from '@/shared/ui/field';
 import { Notice } from '@/shared/ui/notice';
 import { ResourceView, SkeletonRow } from '@/shared/ui/resource-view';
@@ -108,7 +108,7 @@ export default function SettingsScreen() {
   const { service } = useLocalSearchParams<{ service?: string }>();
   const hub = useSettingsHub();
   const [chosen, setChosen] = useState<string | null>(null);
-  const split = windowClass !== 'compact';
+  const split = usePaneSplit();
   const wanted = chosen ?? service ?? null;
   const owner =
     hub.owners.find((candidate) => candidate.service === wanted) ??

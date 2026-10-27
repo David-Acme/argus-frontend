@@ -5,6 +5,7 @@ import {
   navBarOf,
   navOffsetsOf,
   paletteTopOf,
+  paneSplitOf,
   phoneLandscape,
   sheetBodyCapOf,
   sheetCeilingOf,
@@ -14,6 +15,7 @@ import {
   talkSizeOf,
 } from '@/shared/theme/height-layout';
 import { inset, layout, size, space } from '@/shared/theme/tokens';
+import { classifyWindowSize } from '@/shared/theme/window-layout';
 
 describe('responsive by height', () => {
   test('the short-phone viewports are short or tiny, a tall phone is regular', () => {
@@ -115,5 +117,14 @@ describe('responsive by height', () => {
     expect(paletteTopOf(heightLayoutOf({ width: 1280, height: 820 }))).toBe(inset.palette.top);
     expect(paletteTopOf(heightLayoutOf({ width: 360, height: 640 }))).toBe(layout.gutterCompact);
     expect(paletteTopOf(heightLayoutOf({ width: 740, height: 360 }))).toBe(layout.gutterCompact);
+  });
+
+  test('panes split beside each other from tablet width, never on a phone on its side', () => {
+    const split = (width: number, height: number) =>
+      paneSplitOf(classifyWindowSize({ width, height }), heightLayoutOf({ width, height }));
+    expect(split(360, 640)).toBe(false);
+    expect(split(820, 1180)).toBe(true);
+    expect(split(1280, 820)).toBe(true);
+    expect(split(740, 360)).toBe(false);
   });
 });

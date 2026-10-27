@@ -1,10 +1,10 @@
 import { View } from 'react-native';
 import { useTranslation } from '@/shared/hooks/use-translation';
-import { size } from '@/shared/theme';
+import { useHeightLayout } from '@/shared/theme';
 import { Button } from '@/shared/ui/button';
 import { Presence } from '@/shared/ui/presence';
 import { Skeleton } from '@/shared/ui/resource-view';
-import { Status } from '@/shared/ui/status';
+import { heroStepOf, Status } from '@/shared/ui/status';
 import { useCommandLauncher } from '@/features/command';
 import type { InicioHero as Hero } from '@/features/home/hooks/use-inicio-hero';
 import { useInicioStats } from '@/features/home/hooks/use-inicio-stats';
@@ -33,10 +33,11 @@ function NewButton({ onPress }: NewButtonProps) {
 
 function HeroSkeleton() {
   const { t } = useTranslation();
+  const step = heroStepOf({ wide: false, height: useHeightLayout() });
   return (
     <View role="progressbar" aria-label={t('screens.home.inicio.loading')}>
       <View className="gap-status-hero-gap px-status-hero-pad pt-status-hero-pad flex-row items-center">
-        <Presence state="idle" size={size.presenceHero} />
+        <Presence state="idle" size={step.presence} />
         <View className="gap-skeleton-line-gap min-w-0 flex-1">
           <Skeleton shape="title" />
           <Skeleton shape="meta" />

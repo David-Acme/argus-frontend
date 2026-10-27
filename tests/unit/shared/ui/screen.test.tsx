@@ -2,6 +2,7 @@ import { afterEach, describe, expect, test } from 'bun:test';
 import { fireEvent, render, renderHook, screen } from '@testing-library/react';
 import { Text } from 'react-native';
 import { Section } from '@/shared/ui/section/section';
+import { FillScroll } from '@/shared/ui/screen/fill-scroll';
 import { Screen } from '@/shared/ui/screen/screen';
 import { useGrowsInColumn, useInScreenColumn } from '@/shared/ui/screen/screen-column-context';
 import { ScreenColumn, ScreenColumns } from '@/shared/ui/screen/screen-columns';
@@ -9,9 +10,9 @@ import { ScreenScroll } from '@/shared/ui/screen/screen-scroll';
 import { ScreenScroll as NativeScreenScroll } from '@/shared/ui/screen/screen-scroll.native';
 import { ScreenTopBar } from '@/shared/ui/screen/screen-top-bar';
 import { useScreenScroll } from '@/shared/ui/screen/use-screen-scroll';
-import { setWindowWidth } from './window-width';
+import { setWindowSize, setWindowWidth } from './window-width';
 
-afterEach(() => setWindowWidth(360));
+afterEach(() => setWindowSize(360, 800));
 
 describe('Screen', () => {
   test('the top bar carries the title, the back button and the actions', () => {
@@ -109,6 +110,21 @@ describe('Screen', () => {
     render(<Screen columns="panes">{columns}</Screen>);
     expect(screen.getByLabelText('Lista')).toBeDefined();
     expect(screen.getByLabelText('Detalle')).toBeDefined();
+  });
+
+  test('a phone on its side keeps a screen of panes in one scroll, under a top bar that scrolls away', () => {
+    setWindowSize(740, 360);
+    render(
+      <Screen columns="panes" title="Ajustes">
+        <ScreenColumns>
+          <ScreenColumn label="Lista" width={340}>
+            <Text>lista</Text>
+          </ScreenColumn>
+        </ScreenColumns>
+      </Screen>
+    );
+    expect(screen.queryByLabelText('Lista')).toBeNull();
+    expect(screen.getByText('lista')).toBeDefined();
   });
 
   test('a column with a ceiling grows only up to it, and a fixed width wins', () => {
@@ -218,5 +234,14 @@ describe('Screen', () => {
       </Screen>
     );
     expect(screen.queryByLabelText('Lista')).toBeNull();
+  });
+
+  test('a fill scroll lets a stage that does not fit the window scroll to its last control', () => {
+    render(
+      <FillScroll>
+        <Text>Colgar</Text>
+      </FillScroll>
+    );
+    expect(screen.getByText('Colgar')).toBeDefined();
   });
 });

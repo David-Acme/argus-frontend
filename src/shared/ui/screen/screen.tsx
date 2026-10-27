@@ -6,6 +6,7 @@ import { useNavOffsets } from '@/shared/hooks/use-bottom-nav-inset';
 import {
   auraField,
   layout,
+  usePaneSplit,
   useWindowLayout,
   type AuraTone,
   type WindowLayout,
@@ -56,7 +57,8 @@ export function Screen({ aura, refresh, columns, children, ...bar }: ScreenProps
   const desktop = window.windowClass === 'expanded' || window.windowClass === 'wide';
   const header = hasTopBar(bar) ? <ScreenTopBar {...bar} /> : null;
   const field = aura ? <Aura tone={aura} paused={auraHidden} /> : null;
-  const paned = desktop || (columns === 'panes' && window.windowClass === 'medium');
+  const paneSplit = usePaneSplit();
+  const paned = desktop || (columns === 'panes' && paneSplit);
   if (columns && paned)
     return (
       <View className="bg-bg relative min-h-0 flex-1">
