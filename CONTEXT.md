@@ -7859,7 +7859,14 @@ suggestion chips over the field and the microphone as tap-to-talk.
   the `audio` part; a note to Argus then asks for its turn with `voice:text
   {clientId, noteId}` (`AssistantChat.sendNote`). The bubble plays one note
   at a time (`services/note-player`, the one-use grant then the content, kept
-  in memory for the last six notes), 1×/1.5×/2×, the transcript folded. On
+  in memory for the last six notes), 1×/1.5×/2× beside the duration while it
+  plays. The bubble hugs the note (a 36 play button, `compact`, and the
+  waveform; the transcript wraps inside that width); the played part of the
+  waveform takes the accent only during playback (`barToneOf`); the
+  transcript shows two lines, with «Ver más» / «Ver menos» when it is longer
+  (`transcriptFolds`). Argus's reply to a note carries no «Por voz»: it
+  answers the note (`replyToKey` `note-…`, `answersNote`), and «por voz» is
+  kept for lines said in a call (phone run 2 #13). On
   native the bytes play from a data URI: Android's player reads it, iOS's does
   not and would need expo-file-system to write a file first. The speaker is
   the default; the earpiece at the ear needs a proximity sensor package the

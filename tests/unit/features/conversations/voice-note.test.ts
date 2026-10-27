@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { cancelProgress, holdDecision } from '@/features/conversations/model/hold-record';
 import {
+  barToneOf,
   bucketPeaks,
   keepsNote,
   levelOfDecibels,
@@ -9,6 +10,7 @@ import {
   noteFileOf,
   noteMimeOf,
   progressOf,
+  transcriptFolds,
   withLevel,
 } from '@/features/conversations/model/voice-note';
 
@@ -72,5 +74,18 @@ describe('holding the microphone', () => {
     expect(holdDecision({ dx: -20, dy: -20 }, limits)).toBe('hold');
     expect(cancelProgress(-48, 96)).toBe(0.5);
     expect(cancelProgress(30, 96)).toBe(0);
+  });
+});
+
+describe('a voice note bubble', () => {
+  test('the played part takes the accent only while the note plays', () => {
+    expect(barToneOf(3, 10, true)).toBe('played');
+    expect(barToneOf(12, 10, true)).toBe('rest');
+    expect(barToneOf(3, 10, false)).toBe('rest');
+  });
+
+  test('a transcript longer than two lines folds behind «Ver más»', () => {
+    expect(transcriptFolds('Compra pan')).toBe(false);
+    expect(transcriptFolds('Hola, Argus, quería saber qué tengo pendiente para mañana.')).toBe(true);
   });
 });

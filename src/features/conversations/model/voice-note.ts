@@ -97,3 +97,15 @@ export function noteMimeOf(type: string): VoiceNoteMime | null {
 export function keepsNote(durationMs: number, minMs: number): boolean {
   return Number.isFinite(durationMs) && durationMs >= minMs;
 }
+
+export type BarTone = 'played' | 'rest';
+
+export const barToneOf = (index: number, played: number, active: boolean): BarTone =>
+  active && index < played ? 'played' : 'rest';
+
+export const TRANSCRIPT_LINES = 2;
+
+export const TRANSCRIPT_LINE_CHARS = 26;
+
+export const transcriptFolds = (transcript: string): boolean =>
+  transcript.trim().length > TRANSCRIPT_LINES * TRANSCRIPT_LINE_CHARS;

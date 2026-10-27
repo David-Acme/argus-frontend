@@ -1,12 +1,18 @@
 import { View } from 'react-native';
 import type { ConversationVoiceNote } from '@/core/types';
 import { useTranslation } from '@/shared/hooks/use-translation';
+import { size, space } from '@/shared/theme';
 import { Button } from '@/shared/ui/button';
 import { PressableSurface } from '@/shared/ui/pressable';
 import { Text } from '@/shared/ui/text';
-import { NoteWave } from '@/features/conversations/components/note-wave';
+import { NOTE_WAVE_WIDTH, NoteWave } from '@/features/conversations/components/note-wave';
 import { useNotePlayback } from '@/features/conversations/hooks/use-note-playback';
-import { noteClock, progressOf } from '@/features/conversations/model/voice-note';
+import {
+  noteClock,
+  progressOf,
+  TRANSCRIPT_LINES,
+  transcriptFolds,
+} from '@/features/conversations/model/voice-note';
 
 export type VoiceNoteBubbleProps = {
   note: ConversationVoiceNote;
@@ -14,6 +20,8 @@ export type VoiceNoteBubbleProps = {
   expanded: boolean;
   onExpand: (expanded: boolean) => void;
 };
+
+const NOTE_BODY = { width: size.wellSmall + space[2] + NOTE_WAVE_WIDTH } as const;
 
 type TranscriptProps = {
   transcript: string;
@@ -24,24 +32,23 @@ type TranscriptProps = {
 function Transcript({ transcript, expanded, onExpand }: TranscriptProps) {
   const { t } = useTranslation();
   if (transcript.trim().length === 0) return null;
-  if (expanded)
-    return (
-      <PressableSurface
-        a11y={{ label: t('screens.conversations.note.hide-transcript'), role: 'button' }}
-        onPress={() => onExpand(false)}>
-        <Text variant="meta" tone="2">
-          {transcript}
-        </Text>
-      </PressableSurface>
-    );
+  const toggle = expanded ? t('screens.conversations.note.less') : t('screens.conversations.note.more');
   return (
-    <PressableSurface
-      a11y={{ label: t('screens.conversations.note.show-transcript'), role: 'button' }}
-      onPress={() => onExpand(true)}>
-      <Text variant="caption" tone="2">
-        {t('screens.conversations.note.show-transcript')}
+    <View className="gap-1">
+      <Text variant="meta" tone="2" numberOfLines={expanded ? undefined : TRANSCRIPT_LINES}>
+        {transcript}
       </Text>
-    </PressableSurface>
+      {transcriptFolds(transcript) ? (
+        <PressableSurface
+          a11y={{ label: toggle, role: 'button' }}
+          onPress={() => onExpand(!expanded)}
+          className="self-start">
+          <Text variant="caption" tone="accent">
+            {toggle}
+          </Text>
+        </PressableSurface>
+      ) : null}
+    </View>
   );
 }
 
@@ -55,10 +62,11 @@ export function VoiceNoteBubble({ note, transcript, expanded, onExpand }: VoiceN
   );
 
   return (
-    <View className="gap-1">
+    <View className="gap-1" style={NOTE_BODY}>
       <View className="flex-row items-center gap-2">
         <Button
           iconOnly
+          compact
           icon={playback.playing ? 'pause' : 'play'}
           label={`${playback.playing ? t('screens.conversations.note.pause') : t('screens.conversations.note.play')}. ${t('screens.conversations.note.position', { clock })}`}
           onPress={playback.toggle}
@@ -66,7 +74,7 @@ export function VoiceNoteBubble({ note, transcript, expanded, onExpand }: VoiceN
           disabled={!stored}
         />
         <View className="gap-1">
-          <NoteWave peaks={note.peaks} progress={progress} />
+          <NoteWave peaks={note.peaks} progress={progress} active={playback.active} />
           <View className="flex-row items-center justify-between">
             <Text variant="caption" tone={playback.failed ? 'alert' : '2'}>
               {playback.failed ? t('screens.conversations.note.failed') : clock}

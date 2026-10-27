@@ -105,6 +105,18 @@ describe('bubbleNoteOf', () => {
       )
     ).toBeNull();
   });
+
+  test('the reply to a voice note says nothing about voice: the note already shows it was spoken', () => {
+    expect(
+      bubbleNoteOf(
+        message({ id: '2', direction: 'in', via: 'voice', replyToKey: `note-7-${'a'.repeat(32)}` }),
+        t
+      )
+    ).toBeNull();
+    expect(bubbleNoteOf(message({ id: '3', direction: 'in', via: 'voice', replyToKey: null }), t)).toBe(
+      'screens.conversations.by-voice'
+    );
+  });
 });
 
 describe('dayKindOf', () => {
