@@ -15,6 +15,7 @@ export const settings = {
     'line-recommended': '{name} · recomendado para este equipo',
     'line-other': '{name} · elegido por ti',
     'line-custom': 'A tu medida · ajustado a mano',
+    'line-adjusted': '{name} · con algún ajuste cambiado',
     'needs-host': 'Este perfil necesita instalar algo en el equipo de Argus',
     response: 'Responde',
     memory: 'Memoria',

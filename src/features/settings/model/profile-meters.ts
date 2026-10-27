@@ -1,8 +1,10 @@
-import type { SettingsProfiles } from '@/core/types';
+import type { FirstRunState, SettingsProfiles } from '@/core/types';
 
 export type ProfileLevel = 'performance' | 'balanced' | 'quality';
 
-export type ProfileLine = 'recommended' | 'other' | 'custom';
+export type ProfileLine = 'recommended' | 'other' | 'adjusted' | 'custom';
+
+export const FIRST_RUN_UNDO_MS = 24 * 60 * 60 * 1000;
 
 const LEVELS: readonly ProfileLevel[] = ['performance', 'balanced', 'quality'];
 
@@ -18,6 +20,10 @@ export function currentProfileId(profiles: SettingsProfiles): string | null {
 
 export function profileLineOf(profiles: SettingsProfiles): ProfileLine {
   const current = currentProfileId(profiles);
-  if (current === null) return 'custom';
+  if (current === null) return profiles.firstRun?.state === 'applied' ? 'adjusted' : 'custom';
   return current === profiles.recommendation.profile ? 'recommended' : 'other';
+}
+
+export function firstRunUndoable(run: FirstRunState | null | undefined, nowMs: number): boolean {
+  return run?.state === 'applied' && nowMs - run.appliedAt * 1000 < FIRST_RUN_UNDO_MS;
 }

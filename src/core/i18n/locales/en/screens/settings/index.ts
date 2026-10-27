@@ -15,6 +15,7 @@ export const settings = {
     'line-recommended': '{name} · recommended for this machine',
     'line-other': '{name} · your choice',
     'line-custom': 'Your own · tuned by hand',
+    'line-adjusted': '{name} · with some settings changed',
     'needs-host': 'This profile needs something installed on the Argus machine',
     response: 'Responds',
     memory: 'Memory',

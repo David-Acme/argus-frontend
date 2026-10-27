@@ -1,6 +1,7 @@
 import { View } from 'react-native';
 import type { SettingsProfile, SettingsProfiles } from '@/core/types';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
+import { useNow } from '@/shared/hooks/use-now';
 import { useResourceCopy } from '@/shared/hooks/use-resource-copy';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { resourceOf } from '@/shared/libs/remote-resource';
@@ -18,6 +19,7 @@ import { LEVEL_LABEL, METER_LABEL, METERS } from '@/features/settings/constants/
 import type { useSettingsProfiles } from '@/features/settings/hooks/use-settings-profiles';
 import {
   currentProfileId,
+  firstRunUndoable,
   isProfileLevel,
   levelFraction,
   profileLineOf,
@@ -33,10 +35,14 @@ type BodyProps = { data: SettingsProfiles; profiles: Profiles };
 
 type MetersProps = { data: SettingsProfiles };
 
+const MINUTE_MS = 60_000;
+
 function useLine(data: SettingsProfiles): string {
   const { t } = useTranslation();
   const line = profileLineOf(data);
   const current = data.profiles.find((profile) => profile.current);
+  if (line === 'adjusted' && data.firstRun)
+    return t('screens.settings.how.line-adjusted', { name: profileName(data.firstRun.profile) });
   if (line === 'custom' || !current) return t('screens.settings.how.line-custom');
   const name = profileName(current.labelKey);
   return line === 'recommended'
@@ -66,6 +72,7 @@ function Meters({ data }: MetersProps) {
 function FirstRun({ data, profiles }: BodyProps) {
   const { t } = useTranslation();
   const { formatDayMonth } = useDateFormatter();
+  const now = useNow(MINUTE_MS);
   const run = data.firstRun;
   if (run?.state !== 'applied') return null;
   return (
@@ -75,13 +82,15 @@ function FirstRun({ data, profiles }: BodyProps) {
         date: formatDayMonth(new Date(run.appliedAt * 1000)),
       })}
       trailing={
-        <Button
-          compact
-          variant="ghost"
-          label={t('screens.settings.first-run.revert')}
-          busy={profiles.reverting}
-          onPress={() => profiles.revert()}
-        />
+        firstRunUndoable(run, now) ? (
+          <Button
+            compact
+            variant="ghost"
+            label={t('screens.settings.first-run.revert')}
+            busy={profiles.reverting}
+            onPress={() => profiles.revert()}
+          />
+        ) : undefined
       }
     />
   );
