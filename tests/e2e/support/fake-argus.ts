@@ -169,8 +169,15 @@ export class FakeArgus {
         );
         return;
       default:
+        if (message.type?.startsWith('voice:')) this.record(`WS ${message.type}`, JSON.stringify(message.payload ?? null), socket.data.device);
         return;
     }
+  }
+
+  private record(request: string, body: string, device: string): void {
+    const line = `${request}${device ? ` @${device}` : ''}`;
+    this.requests.push(line);
+    if (body) this.bodies[line] = body;
   }
 
   context(): Record<string, unknown> {
@@ -246,9 +253,7 @@ export class FakeArgus {
   }
 
   async api(method: string, path: string, body: string, device: string): Promise<Response> {
-    const line = `${method} ${path}${device ? ` @${device}` : ''}`;
-    this.requests.push(line);
-    if (body) this.bodies[line] = body;
+    this.record(`${method} ${path}`, body, device);
     if (this.isDown(device)) return envelope(503, null, { code: 'SERVICE_UNAVAILABLE', message: 'the e2e backend is down' });
     const bare = path.split('?')[0] ?? path;
     const spec =

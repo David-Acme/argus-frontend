@@ -970,7 +970,7 @@ export const HOUSEHOLD_SCREENS: ScreenSpec[] = [
           })
         ),
         notes:
-          'voice:result is the assumed result frame (P5 adapter); the offer is answered aloud in the call',
+          'voice:result is the turn result the backend sends (VoiceResult = 16, argus.result in a call); the offer is answered by its buttons as voice:confirm or aloud',
       },
       {
         state: 'result-agenda-list',
