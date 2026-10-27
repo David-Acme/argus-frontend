@@ -39,10 +39,10 @@ export function ToastCard({ item, dismissLabel, onDismiss, onAct }: ToastCardPro
   const swipe = Gesture.Pan()
     .onUpdate((event) => {
       offsetX.value = event.translationX;
-      offsetY.value = Math.min(0, event.translationY);
+      offsetY.value = Math.max(0, event.translationY);
     })
     .onEnd((event) => {
-      if (event.translationY < -TOAST_SWIPE_PX || Math.abs(event.translationX) > TOAST_SWIPE_PX) {
+      if (event.translationY > TOAST_SWIPE_PX || Math.abs(event.translationX) > TOAST_SWIPE_PX) {
         scheduleOnRN(onDismiss, item.id);
         return;
       }
@@ -72,7 +72,7 @@ export function ToastCard({ item, dismissLabel, onDismiss, onAct }: ToastCardPro
               {item.title}
             </Text>
             {item.description ? (
-              <Text variant="caption" className="text-foreground-secondary mt-0.5" numberOfLines={3}>
+              <Text variant="caption" className="text-foreground-secondary mt-0.5">
                 {item.description}
               </Text>
             ) : null}
