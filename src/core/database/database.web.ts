@@ -20,3 +20,31 @@ const adapter = new LokiJSAdapter({
 });
 
 export const database = new Database({ adapter, modelClasses });
+
+type DatabaseSave = (done: (error?: unknown) => void) => void;
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+function savingOf(driver: unknown): DatabaseSave | null {
+  if (!isRecord(driver) || !isRecord(driver.loki)) return null;
+  const { loki } = driver;
+  const save = loki.saveDatabase;
+  if (typeof save !== 'function') return null;
+  return (done) => {
+    Reflect.apply(save, loki, [done]);
+  };
+}
+
+export const flushDatabase = (): Promise<void> =>
+  new Promise((resolve, reject) => {
+    const driver: unknown = adapter._driver;
+    const save = savingOf(driver);
+    if (!save) {
+      resolve();
+      return;
+    }
+    save((error) =>
+      error ? reject(new Error('The local database was not saved', { cause: error })) : resolve()
+    );
+  });

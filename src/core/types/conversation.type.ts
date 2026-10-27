@@ -37,13 +37,6 @@ export type ConversationMessage = {
   deletedAt: number | null;
 };
 
-export type ConversationSummary = {
-  counterpartId: number;
-  counterpartName: string;
-  unread: number;
-  last: ConversationMessage;
-};
-
 export type ConversationReadResult = {
   updated: number;
 };

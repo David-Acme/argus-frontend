@@ -1,4 +1,4 @@
-import { database } from '@/core/database';
+import { database, flushDatabase } from '@/core/database';
 import { netService } from '@/core/services/net';
 import { viewCacheService } from '@/core/services/view-cache.service';
 import type { useAuthStore as UseAuthStoreHook } from '@/core/stores/auth.store';
@@ -80,7 +80,10 @@ class SynchronizeService {
   private readonly userSessionsChangedListeners = new Set<(userId: number) => void>();
 
   constructor() {
-    this.cursors = new SyncCursorStore(() => String(this.authStore?.getState().user?.id ?? ''));
+    this.cursors = new SyncCursorStore(
+      () => String(this.authStore?.getState().user?.id ?? ''),
+      flushDatabase
+    );
     this.connection = new SyncConnection({
       openSocket,
       accessToken: () => this.authStore?.getState().accessToken,

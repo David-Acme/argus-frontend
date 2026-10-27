@@ -11,10 +11,6 @@ import type { BiometricErasure } from '@/core/types';
 const USER_PATH = '/user';
 
 class UserManagementService {
-  list(): Promise<IServiceResponse<IUserManagementRecord[]>> {
-    return httpService.get<IUserManagementRecord[]>(USER_PATH);
-  }
-
   update(
     id: number,
     input: IUserManagementUpdate,
