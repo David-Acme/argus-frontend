@@ -1,5 +1,4 @@
 import type { TranslateFn, VoiceActionRecord, VoicePhase } from '@/core/types';
-import type { IconGlyph } from '@/shared/ui/icon';
 import type { PresenceState } from '@/shared/ui/presence';
 import { CALL_ENDED_SUMMARY_ITEMS } from '@/features/voice/constants/call.constant';
 import type { CallKind } from '@/features/voice/model/incoming-surface';
@@ -18,12 +17,6 @@ export type StagePresenceInput = {
   kind: CallKind;
 };
 
-export type CallResult = {
-  action: VoiceActionRecord;
-  icon: IconGlyph;
-  opensCamera: boolean;
-};
-
 const PHASE_PRESENCE: Readonly<Record<VoicePhase, PresenceState>> = {
   idle: 'listen',
   connecting: 'listen',
@@ -33,12 +26,6 @@ const PHASE_PRESENCE: Readonly<Record<VoicePhase, PresenceState>> = {
   speaking: 'speak',
   done: 'idle',
   error: 'error',
-};
-
-const RESULT_ICONS: Readonly<Record<VoiceActionRecord['name'], IconGlyph>> = {
-  'app.show_camera': 'cam',
-  'app.open': 'up',
-  'app.set_guard_mode': 'shield',
 };
 
 const LIVE_PHASES: ReadonlySet<VoicePhase> = new Set(['listening', 'thinking', 'speaking']);
@@ -57,19 +44,6 @@ export function stagePresenceOf({ moment, phase, kind }: StagePresenceInput): Pr
 
 export function isLivePhase(phase: VoicePhase): boolean {
   return LIVE_PHASES.has(phase);
-}
-
-export function callResultOf(
-  actions: readonly VoiceActionRecord[],
-  liveCameraId: string | null
-): CallResult | null {
-  const action = actions.at(-1);
-  if (!action) return null;
-  return {
-    action,
-    icon: RESULT_ICONS[action.name],
-    opensCamera: action.name === 'app.show_camera' && liveCameraId !== null,
-  };
 }
 
 export function endedSummaryOf(actions: readonly VoiceActionRecord[]): VoiceActionRecord[] {

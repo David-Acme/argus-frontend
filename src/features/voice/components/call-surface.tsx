@@ -7,11 +7,9 @@ import { Text } from '@/shared/ui/text';
 import { CallCaptions } from '@/features/voice/components/call-captions';
 import { EndedSummary, StageTop, WaitingCard } from '@/features/voice/components/call-notes';
 import { CallPanel } from '@/features/voice/components/call-panel';
-import { CallResultCard } from '@/features/voice/components/call-result-card';
 import { CallStage } from '@/features/voice/components/call-stage';
 import { useCallClock } from '@/features/voice/hooks/use-call-clock';
 import {
-  callResultOf,
   stageHintOf,
   stageLineOf,
   stageMomentOf,
@@ -31,9 +29,9 @@ type CallSurfaceProps = {
   reason?: string | null;
   notice?: string | null;
   waitingReason?: string | null;
-  liveCameraId?: string | null;
   header?: ReactNode;
   situation?: ReactNode;
+  results?: ReactNode;
   footnote?: ReactNode;
   endedDurationMs?: number | null;
   onAnswerWaiting?: () => void;
@@ -58,9 +56,9 @@ export function CallSurface({
   reason = null,
   notice = null,
   waitingReason = null,
-  liveCameraId = null,
   header,
   situation,
+  results,
   footnote,
   endedDurationMs = null,
   onAnswerWaiting,
@@ -86,7 +84,6 @@ export function CallSurface({
     endedDurationMs,
   });
   const hint = moment === 'ended' ? null : stageHintOf({ t, phase, error, muted, notice });
-  const result = callResultOf(actions, liveCameraId);
   return (
     <CallStage
       kind={moment === 'ended' ? 'reminder' : kind}
@@ -119,7 +116,7 @@ export function CallSurface({
             </Text>
           ) : null}
           {situation}
-          {result ? <CallResultCard result={result} onView={onViewCamera} /> : null}
+          {results}
         </View>
       )}
       <View className="flex-1" />

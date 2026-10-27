@@ -8,7 +8,31 @@ export { MissedCallCard } from './components/missed-call-card';
 export { VoiceWebNotice } from './components/voice-web-notice';
 export { callLockedId } from './model/call-lock';
 export { currentCallLockRedirect, outsideCallLockId } from './model/call-lock-state';
-export { useArgusVoice, type ArgusVoice } from './hooks/use-argus-voice';
+export {
+  useArgusTalk,
+  useArgusVoice,
+  type ArgusTalk,
+  type ArgusVoice,
+} from './hooks/use-argus-voice';
+export { useArgusResults } from './hooks/use-argus-results';
+export { useResultActions, type ResultActions } from './hooks/use-result-actions';
+export { useVoiceHeard } from './hooks/use-voice-heard';
+export { useResultLine } from './hooks/use-result-line';
+export { useResultWhen } from './hooks/use-result-when';
+export { ArgusResultCard } from './components/results/argus-result-card';
+export {
+  doneResults,
+  liveCameraResultId,
+  shownResults,
+  type ArgusResult,
+} from './model/argus-result';
+export {
+  HOLD_FAILURE_SHOWN_MS,
+  holdTalkFailureOf,
+  type HoldTalkFailure,
+  type HoldTalkStage,
+} from './model/hold-talk';
+export { HOLD_FAILURE_WORDS } from './constants/hold.constant';
 export { useCall } from './hooks/use-call';
 export { useCallPush } from './hooks/use-call-push';
 export { useDesktopBridge } from './hooks/use-desktop-bridge';

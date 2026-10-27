@@ -3,6 +3,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 import type { ReactElement } from 'react';
 import type { CallAudioDevice, VoiceActionRecord } from '@/core/types';
 import { callScaleOf } from '@/shared/theme/call-scale';
+import { Text } from '@/shared/ui/text';
 import '../../shared/ui/translation-stub';
 
 const devices: { list: CallAudioDevice[] } = { list: [] };
@@ -92,8 +93,7 @@ describe('CallSurface', () => {
     expect(hangUp).toHaveBeenCalledTimes(1);
   });
 
-  test('the captions keep the last two lines and the result card opens the camera', async () => {
-    const view = mock(noop);
+  test('the captions keep the last two lines and the result sits under them', async () => {
     await show(
       <CallSurface
         {...base}
@@ -103,17 +103,15 @@ describe('CallSurface', () => {
           { id: 'b', role: 'assistant', text: 'Hay una persona en el patio.' },
           { id: 'c', role: 'user', text: 'Muéstramela.' },
         ]}
-        actions={[CAMERA]}
-        liveCameraId="cam-1"
-        onViewCamera={view}
+        results={<Text>Patio trasero en vivo</Text>}
       />
     );
     expect(screen.queryByText('Hola.')).toBeNull();
     expect(screen.getByText('Hay una persona en el patio.')).toBeDefined();
     expect(screen.getByText('«Muéstramela.»')).toBeDefined();
-    expect(screen.getByText('Cámara Patio trasero')).toBeDefined();
-    fireEvent.click(screen.getByRole('button', { name: 'Ver' }));
-    expect(view).toHaveBeenCalledTimes(1);
+    const caption = screen.getByText('«Muéstramela.»');
+    const card = screen.getByText('Patio trasero en vivo');
+    expect(caption.compareDocumentPosition(card) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   test('the speaker toggles to the speaker route', async () => {

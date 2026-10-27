@@ -9,6 +9,7 @@ import {
   HOLD_SETTLE_MS,
   holdTalkCanListen,
   holdTalkFailureOf,
+  holdTalkInline,
   holdTalkLive,
   holdTalkMutes,
   holdTalkSessionEnds,
@@ -276,5 +277,12 @@ describe('holdTalkStartOptions', () => {
   test('a device that captures its own microphone holds over the socket leg, others over WebRTC', () => {
     expect(holdTalkStartOptions(true)).toEqual({ socket: true });
     expect(holdTalkStartOptions(false)).toEqual({});
+  });
+
+  test('on the thread the hold draws inline, so its floating cards stay away', () => {
+    expect(holdTalkInline('/conversations/0')).toBe(true);
+    expect(holdTalkInline('/conversations')).toBe(true);
+    expect(holdTalkInline('/')).toBe(false);
+    expect(holdTalkInline('/conversationsx')).toBe(false);
   });
 });

@@ -24,6 +24,15 @@ import type { NavVoice } from '@/shared/ui/nav';
 
 export type ArgusVoice = { voice: NavVoice; listening: boolean };
 
+export type ArgusTalk = {
+  stage: HoldTalkStage;
+  error: string | null;
+  canListen: boolean;
+  start: () => void;
+  finish: (send: boolean) => void;
+  dismiss: () => void;
+};
+
 function useHoldTalkSession(stage: HoldTalkStage): void {
   const dispatch = useHoldTalkStore((state) => state.dispatch);
 
@@ -55,29 +64,41 @@ function useHoldTalkSession(stage: HoldTalkStage): void {
   }, [stage, dispatch]);
 }
 
-export function useArgusVoice(): ArgusVoice {
-  const router = useRouter();
+export function useArgusTalk(): ArgusTalk {
   const { has } = useCapabilities();
   const hold = useHoldTalkStore((state) => state.hold);
   const dispatch = useHoldTalkStore((state) => state.dispatch);
   const live = holdTalkLive(hold);
   const callActive = useVoiceCallActive();
-  useHoldTalkSession(hold.stage);
-
-  const voice: NavVoice = {
-    onOpenChat: () => router.navigate(ASSISTANT_THREAD_HREF),
+  return {
+    stage: hold.stage,
+    error: hold.error,
     canListen: holdTalkCanListen({
       allowed: has(CAPABILITY.assistantVoice),
       supported: argusCallSupported(),
       callActive,
       live,
     }),
-    onListenStart: () => {
+    start: () => {
       dispatch({ type: 'start' });
       if (live) voiceService.stop();
       void voiceService.start(holdTalkStartOptions(voiceCallSupported()));
     },
-    onListenEnd: (send) => dispatch({ type: 'release', send, at: Date.now() }),
+    finish: (send) => dispatch({ type: 'release', send, at: Date.now() }),
+    dismiss: () => dispatch({ type: 'dismiss' }),
   };
-  return { voice, listening: hold.stage === 'listening' };
+}
+
+export function useArgusVoice(): ArgusVoice {
+  const router = useRouter();
+  const talk = useArgusTalk();
+  useHoldTalkSession(talk.stage);
+
+  const voice: NavVoice = {
+    onOpenChat: () => router.navigate(ASSISTANT_THREAD_HREF),
+    canListen: talk.canListen,
+    onListenStart: talk.start,
+    onListenEnd: talk.finish,
+  };
+  return { voice, listening: talk.stage === 'listening' };
 }

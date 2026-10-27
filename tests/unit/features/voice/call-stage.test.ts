@@ -3,7 +3,6 @@ import { localeDictionaries } from '@/core/i18n/locales';
 import { translate } from '@/core/i18n/translate';
 import type { TranslateFn, VoiceActionRecord } from '@/core/types';
 import {
-  callResultOf,
   endedSummaryOf,
   formatCallClock,
   isLivePhase,
@@ -87,22 +86,6 @@ describe('the moment the call stage shows', () => {
 });
 
 describe('what the call shows Argus did', () => {
-  test('the result card is the latest action, and only a shown camera offers Ver', () => {
-    expect(callResultOf([], null)).toBeNull();
-    const camera = action('2', 'done', 'app.show_camera');
-    expect(callResultOf([action('1', 'done'), camera], 'cam-1')).toEqual({
-      action: camera,
-      icon: 'cam',
-      opensCamera: true,
-    });
-    expect(callResultOf([camera], null)?.opensCamera).toBe(false);
-    expect(callResultOf([action('3', 'pending')], 'cam-1')).toEqual({
-      action: action('3', 'pending'),
-      icon: 'shield',
-      opensCamera: false,
-    });
-  });
-
   test('the ended summary lists the last two things that were done', () => {
     const done = [
       action('1', 'done'),

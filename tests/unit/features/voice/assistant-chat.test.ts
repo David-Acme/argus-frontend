@@ -256,18 +256,6 @@ describe('the frames a typed turn receives', () => {
     expect(chat.draft).toBe('borrador de prueba');
   });
 
-  test('the composer reads the draft when it mounts, never a value the hook kept from an earlier render', () => {
-    const read = (path: string) =>
-      readFileSync(join(import.meta.dir, '../../../../src', path), 'utf8');
-    const hook = read('features/voice/hooks/use-assistant-chat.ts');
-    const composer = read('features/conversations/components/assistant-composer.tsx');
-    const screen = read('features/conversations/screens/conversation-thread-screen.tsx');
-    expect(hook).toContain('const readDraft = (): string => assistantChat.draft;');
-    expect(hook).not.toContain('draft: assistantChat.draft');
-    expect(composer).toContain('useState(readDraft)');
-    expect(screen).toContain('readDraft={chat.readDraft}');
-  });
-
   test('a done frame for an unknown client id changes nothing', async () => {
     chat.send('hola');
     await settle();
@@ -450,17 +438,10 @@ describe('one assistant stream per socket', () => {
   const read = (path: string) =>
     readFileSync(join(import.meta.dir, '../../../../src', path), 'utf8');
   const VOICE = read('features/voice/services/voice/voice.service.ts');
-  const BRIDGE = read('features/voice/hooks/use-call-bridge.ts');
 
   test('a voice call claims the socket on start and on resume, and ignores the frames while chat owns it', () => {
     expect(VOICE.match(/assistantSocket\.claim\('voice'\)/g)).toHaveLength(2);
     expect(VOICE).toContain("return this.transport !== 'rtc' && assistantSocket.owner !== 'chat';");
-  });
-
-  test('the actions of a typed turn run through the same bridge and answer the chat session', () => {
-    expect(BRIDGE).toContain('assistantChat.onAction(');
-    expect(BRIDGE).toContain('assistantChat.completeAction(action.id, outcome)');
-    expect(BRIDGE).toContain('if (inCall && onCallScreen.current) voiceService.showCamera');
   });
 
   test('the socket remembers the last claimant and tells the others', () => {

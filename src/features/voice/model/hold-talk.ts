@@ -168,3 +168,9 @@ export function holdTalkCanListen({
 export function holdTalkStartOptions(socketMicrophone: boolean): VoiceStartOptions {
   return socketMicrophone ? { socket: true } : {};
 }
+
+const INLINE_PATH = /^\/conversations(\/|$)/;
+
+export function holdTalkInline(pathname: string): boolean {
+  return INLINE_PATH.test(pathname);
+}

@@ -1,76 +1,44 @@
-import { usePathname, useRouter } from 'expo-router';
 import { useEffect, useRef, useSyncExternalStore } from 'react';
 import type { ICameraCacheRow, INotificationPreviewCacheRow } from '@/core/interfaces';
 import { guardService } from '@/core/services/guard.service';
 import { viewCacheService } from '@/core/services/view-cache.service';
-import { voiceService } from '@/features/voice/services/voice';
-import { assistantChat } from '@/features/voice/services/chat';
 import { useAuthStore } from '@/core/stores';
-import type {
-  CalendarEntry,
-  GuardEnvironment,
-  GuardMode,
-  VoiceAction,
-  VoiceActionOutcome,
-  VoiceContext,
-} from '@/core/types';
-import { CAPABILITY, GUARD_MODES, VIEW_CACHE_KEYS } from '@/shared/constants';
-import { serviceErrorKey } from '@/shared/libs/service-error';
-import { toast } from '@/shared/libs/toast';
+import type { CalendarEntry, GuardEnvironment, VoiceContext } from '@/core/types';
+import { CAPABILITY, VIEW_CACHE_KEYS } from '@/shared/constants';
+import { useCapabilities } from '@/shared/hooks/use-capabilities';
+import { useTranslation } from '@/shared/hooks/use-translation';
 import {
   CALL_SITUATION_AGENDA_ITEMS,
   CALL_SITUATION_DEBOUNCE_MS,
   CALL_SITUATION_EVENTS,
 } from '@/features/voice/constants/voice';
-import { buildCallSituation, spokenDetail, type CallSituationEvent } from '@/features/voice/model/call-situation';
-import {
-  callCameraEvent,
-  cameraViewOf,
-  detectedClasses,
-  resolveCameraId,
-  routeForScreen,
-} from '@/features/voice/model/voice-actions';
-import { useAccessView, useCapabilities } from '@/shared/hooks/use-capabilities';
-import { useTranslation } from '@/shared/hooks/use-translation';
+import { useBridgeActions } from '@/features/voice/hooks/use-bridge-actions';
 import { useVoiceSession } from '@/features/voice/hooks/use-voice-session';
-import { matchEnvironment } from '@/features/security';
+import { buildCallSituation } from '@/features/voice/model/call-situation';
+import type { CallSituationEvent } from '@/features/voice/model/call-situation';
 import { contextTarget } from '@/features/voice/model/context-target';
+import { callCameraEvent, detectedClasses } from '@/features/voice/model/voice-actions';
+import { assistantChat } from '@/features/voice/services/chat';
+import { voiceService } from '@/features/voice/services/voice';
 
 const RECENT_NOTIFICATIONS = 5;
-const CALL_ROUTE = '/call';
 
 const subscribeChat = (listener: () => void): (() => void) => assistantChat.subscribe(listener);
 
 const chatOpenNow = (): boolean => assistantChat.snapshot.open;
 
-const isGuardMode = (mode: unknown): mode is GuardMode =>
-  typeof mode === 'string' && (GUARD_MODES as readonly string[]).includes(mode);
-
 export function useCallBridge(): void {
-  const router = useRouter();
-  const pathname = usePathname();
   const { t, tk } = useTranslation();
   const user = useAuthStore((state) => state.user);
-  const view = useAccessView();
   const { cameraActions, guard: guardAccess, has } = useCapabilities();
   const watchesCameras = cameraActions.watch;
   const readsGuard = guardAccess.view;
-  const setsGuardMode = guardAccess.setMode;
   const readsAgenda = has(CAPABILITY.agendaRead);
-  const accessRef = useRef(view);
   const { isActive } = useVoiceSession();
   const chatOpen = useSyncExternalStore(subscribeChat, chatOpenNow, chatOpenNow);
   const target = contextTarget({ voiceActive: isActive, chatOpen });
   const lastEventCamera = useRef<string | null>(null);
-  const onCallScreen = useRef(pathname === CALL_ROUTE);
-
-  useEffect(() => {
-    onCallScreen.current = pathname === CALL_ROUTE;
-  }, [pathname]);
-
-  useEffect(() => {
-    accessRef.current = view;
-  }, [view]);
+  useBridgeActions(lastEventCamera);
 
   useEffect(() => {
     if (target === null || !user) return;
@@ -101,7 +69,10 @@ export function useCallBridge(): void {
 
     const guard = (): readonly GuardEnvironment[] => {
       if (!readsGuard) return [];
-      return viewCacheService.readValue<GuardEnvironment[]>(VIEW_CACHE_KEYS.guardEnvironments) ?? fetchedGuard;
+      return (
+        viewCacheService.readValue<GuardEnvironment[]>(VIEW_CACHE_KEYS.guardEnvironments) ??
+        fetchedGuard
+      );
     };
 
     const pushSituation = () => {
@@ -110,7 +81,9 @@ export function useCallBridge(): void {
       const text = buildCallSituation({
         t,
         guard: guard(),
-        agenda: readsAgenda ? viewCacheService.read<CalendarEntry>(VIEW_CACHE_KEYS.dashboardAgenda, 'today') : [],
+        agenda: readsAgenda
+          ? viewCacheService.read<CalendarEntry>(VIEW_CACHE_KEYS.dashboardAgenda, 'today')
+          : [],
         agendaItems: CALL_SITUATION_AGENDA_ITEMS,
         events,
         offlineCameras: cameras()
@@ -137,7 +110,12 @@ export function useCallBridge(): void {
         if (seen.has(row.id)) continue;
         seen.add(row.id);
         if (!primed) continue;
-        const event = callCameraEvent({ type: row.type, body: row.body, data: row.data, cameras: cameras() });
+        const event = callCameraEvent({
+          type: row.type,
+          body: row.body,
+          data: row.data,
+          cameras: cameras(),
+        });
         if (!event) continue;
         if (event.cameraId) lastEventCamera.current = event.cameraId;
         const classes = detectedClasses(row.data ?? {}).map((name) => {
@@ -145,9 +123,14 @@ export function useCallBridge(): void {
           return tk(key) === key ? name : tk(key);
         });
         const what =
-          event.guardCopy ?? (classes.length > 0 ? classes.join(', ') : t('screens.voice.objects.something-moving'));
+          event.guardCopy ??
+          (classes.length > 0 ? classes.join(', ') : t('screens.voice.objects.something-moving'));
         sendContext({ kind: 'cameraEvent', camera: event.camera, text: what });
-        events.push({ camera: event.camera, what: event.guardCopy ? row.title : what, at: Date.now() });
+        events.push({
+          camera: event.camera,
+          what: event.guardCopy ? row.title : what,
+          at: Date.now(),
+        });
         if (events.length > CALL_SITUATION_EVENTS) events.shift();
         changed = true;
       }
@@ -157,7 +140,10 @@ export function useCallBridge(): void {
 
     announce();
     pushSituation();
-    if (readsGuard && !viewCacheService.readValue<GuardEnvironment[]>(VIEW_CACHE_KEYS.guardEnvironments)) {
+    if (
+      readsGuard &&
+      !viewCacheService.readValue<GuardEnvironment[]>(VIEW_CACHE_KEYS.guardEnvironments)
+    ) {
       void guardService.environments().then((result) => {
         if (!live || !result.ok || !result.info) return;
         fetchedGuard = result.info;
@@ -182,83 +168,4 @@ export function useCallBridge(): void {
       for (const unsubscribe of unsubscribers) unsubscribe();
     };
   }, [target, user, t, tk, watchesCameras, readsGuard, readsAgenda]);
-
-  useEffect(() => {
-    if (!user) return;
-    const failed = (detail: string): VoiceActionOutcome => ({ ok: false, detail: spokenDetail(detail) });
-    const run = async (action: VoiceAction, inCall: boolean): Promise<VoiceActionOutcome> => {
-      if (action.name === 'app.show_camera') {
-        if (!watchesCameras) return failed(t('screens.voice.actions.detail.no-access'));
-        const id = resolveCameraId({
-          requested: typeof action.arguments.camera === 'string' ? action.arguments.camera : '',
-          cameras: viewCacheService.read<ICameraCacheRow>(VIEW_CACHE_KEYS.cameraList),
-          lastEventCameraId: lastEventCamera.current,
-        });
-        if (!id) {
-          toast.error(t('screens.voice.actions.camera-missing'));
-          return failed(t('screens.voice.actions.detail.camera-missing'));
-        }
-        if (inCall && onCallScreen.current) voiceService.showCamera(id, cameraViewOf(action.arguments.view));
-        else router.push(`/cameras/${id}`);
-        return { ok: true, detail: null };
-      }
-      if (action.name === 'app.open') {
-        const route = routeForScreen(
-          String(action.arguments.screen ?? ''),
-          accessRef.current,
-          typeof action.arguments.module === 'string' ? action.arguments.module : undefined
-        );
-        if (!route) return failed(t('screens.voice.actions.detail.no-access'));
-        router.push(route as never);
-        return { ok: true, detail: null };
-      }
-      if (!setsGuardMode) return failed(t('screens.voice.actions.detail.no-access'));
-      const mode = action.arguments.mode;
-      if (!isGuardMode(mode)) return failed(t('screens.voice.actions.detail.bad-mode'));
-      const hint = typeof action.arguments.environment === 'string' ? action.arguments.environment : '';
-      let environments = viewCacheService.readValue<GuardEnvironment[]>(VIEW_CACHE_KEYS.guardEnvironments);
-      if (hint && !environments) {
-        const listed = await guardService.environments();
-        environments = listed.info;
-      }
-      const match = matchEnvironment(environments ?? [], hint);
-      if (match.kind === 'unknown') {
-        const names = (environments ?? []).map((environment) => environment.name).join(', ');
-        return failed(t('screens.voice.actions.detail.unknown-environment', { names }));
-      }
-      const target = match.kind === 'one' ? match.environment : undefined;
-      const result = await guardService.setMode(mode, target?.id);
-      if (!result.ok || !result.info) {
-        const message = t(serviceErrorKey(result.errors));
-        toast.error(message);
-        return failed(message);
-      }
-      viewCacheService.writeValue(VIEW_CACHE_KEYS.guardEnvironments, result.info);
-      const label = t(`screens.security.mode.${mode}`);
-      toast.success(
-        target
-          ? t('screens.voice.actions.guard-mode-place', { name: target.name, mode: label })
-          : t('screens.voice.actions.guard-mode', { mode: label })
-      );
-      return { ok: true, detail: null };
-    };
-    let queue = Promise.resolve();
-    const unsubscribers = [
-      voiceService.onAction((action) => {
-        queue = queue.then(async () => {
-          const outcome = await run(action, true).catch(() => failed(t('screens.voice.actions.detail.failed')));
-          voiceService.completeAction(action.id, outcome);
-        });
-      }),
-      assistantChat.onAction((action) => {
-        queue = queue.then(async () => {
-          const outcome = await run(action, false).catch(() => failed(t('screens.voice.actions.detail.failed')));
-          assistantChat.completeAction(action.id, outcome);
-        });
-      }),
-    ];
-    return () => {
-      for (const unsubscribe of unsubscribers) unsubscribe();
-    };
-  }, [router, setsGuardMode, t, user, watchesCameras]);
 }

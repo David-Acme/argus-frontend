@@ -1,26 +1,29 @@
 import { clsx } from 'clsx';
-import { useRouter } from 'expo-router';
-import { useEffect, useSyncExternalStore, type ReactNode } from 'react';
+import { usePathname, useRouter } from 'expo-router';
+import { useEffect } from 'react';
+import type { ReactNode } from 'react';
 import { View } from 'react-native';
-import type { TranslationKey, VoiceActionRecord } from '@/core/types';
-import { voiceService } from '@/features/voice/services/voice';
-import { useHoldTalkStore } from '@/features/voice/stores/hold-talk.store';
-import {
-  HOLD_FAILURE_SHOWN_MS,
-  holdTalkFailureOf,
-  type HoldTalkAnswer,
-  type HoldTalkFailure,
-} from '@/features/voice/model/hold-talk';
-import { voiceActionLabel } from '@/features/voice/model/voice-action-label';
+import type { VoiceActionRecord } from '@/core/types';
 import { ASSISTANT_THREAD_HREF } from '@/shared/constants';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { layout, size, useEffects, useThemeTokens, useWindowLayout } from '@/shared/theme';
-import { Chip, type ChipTone } from '@/shared/ui/chip';
+import { Chip } from '@/shared/ui/chip';
+import type { ChipTone } from '@/shared/ui/chip';
 import { Icon } from '@/shared/ui/icon';
 import { Presence } from '@/shared/ui/presence';
 import { PressableSurface } from '@/shared/ui/pressable';
 import { Text } from '@/shared/ui/text';
 import { ToastCard } from '@/shared/ui/toast';
+import { HOLD_FAILURE_WORDS } from '@/features/voice/constants/hold.constant';
+import { useVoiceHeard } from '@/features/voice/hooks/use-voice-heard';
+import {
+  HOLD_FAILURE_SHOWN_MS,
+  holdTalkFailureOf,
+  holdTalkInline,
+} from '@/features/voice/model/hold-talk';
+import type { HoldTalkAnswer } from '@/features/voice/model/hold-talk';
+import { voiceActionLabel } from '@/features/voice/model/voice-action-label';
+import { useHoldTalkStore } from '@/features/voice/stores/hold-talk.store';
 
 type SlotProps = { above?: boolean; children: ReactNode };
 
@@ -29,26 +32,6 @@ type HeardProps = { text: string };
 type AnswerProps = { answer: HoldTalkAnswer; onOpen: () => void };
 
 type FailureProps = { error: string | null };
-
-type Words = { title: TranslationKey; body: TranslationKey | null };
-
-const RETRY = 'screens.voice.hold.retry-hint';
-
-const FAILURE_WORDS: Readonly<Record<HoldTalkFailure, Words>> = {
-  'not-heard': {
-    title: 'screens.voice.hold.errors.not-heard',
-    body: 'screens.voice.hold.errors.not-heard-hint',
-  },
-  'no-reply': { title: 'screens.voice.hold.errors.no-reply', body: RETRY },
-  connection: { title: 'screens.voice.hold.errors.connection', body: RETRY },
-  permission: {
-    title: 'screens.voice.hold.errors.permission',
-    body: 'screens.voice.hold.errors.permission-hint',
-  },
-  session: { title: 'screens.voice.errors.session-revoked', body: null },
-  account: { title: 'screens.voice.errors.account-disabled', body: null },
-  generic: { title: 'screens.voice.hold.errors.generic', body: RETRY },
-};
 
 const ACTION_TONE: Readonly<Record<VoiceActionRecord['status'], ChipTone>> = {
   pending: 'default',
@@ -59,10 +42,6 @@ const ACTION_TONE: Readonly<Record<VoiceActionRecord['status'], ChipTone>> = {
 const CARD = { maxWidth: layout.dialog };
 
 const OUTSIDE_ID = 'argus-listening-outside';
-
-const subscribeVoice = (listener: () => void): (() => void) => voiceService.subscribe(listener);
-
-const heardNow = (): string => voiceService.sttTextValue;
 
 function Slot({ above = false, children }: SlotProps) {
   const { navigation } = useWindowLayout();
@@ -174,7 +153,7 @@ function Answer({ answer, onOpen }: AnswerProps) {
 function Failure({ error }: FailureProps) {
   const { t } = useTranslation();
   const dispatch = useHoldTalkStore((state) => state.dispatch);
-  const words = FAILURE_WORDS[holdTalkFailureOf(error)];
+  const words = HOLD_FAILURE_WORDS[holdTalkFailureOf(error)];
 
   useEffect(() => {
     const timer = setTimeout(() => dispatch({ type: 'dismiss' }), HOLD_FAILURE_SHOWN_MS);
@@ -197,15 +176,17 @@ function Failure({ error }: FailureProps) {
 
 export function ArgusListening() {
   const router = useRouter();
+  const pathname = usePathname();
   const hold = useHoldTalkStore((state) => state.hold);
   const dispatch = useHoldTalkStore((state) => state.dispatch);
-  const heard = useSyncExternalStore(subscribeVoice, heardNow, heardNow);
+  const heard = useVoiceHeard();
 
   const open = () => {
     dispatch({ type: 'dismiss' });
     router.navigate(ASSISTANT_THREAD_HREF);
   };
 
+  if (holdTalkInline(pathname)) return null;
   if (hold.stage === 'listening') return <Heard text={heard} />;
   if (hold.stage === 'sending') return <Sending text={heard} />;
   if (hold.stage === 'answered' && hold.answer) {
