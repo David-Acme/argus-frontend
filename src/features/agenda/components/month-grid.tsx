@@ -50,27 +50,29 @@ function numberVariant(cell: DayButtonProps['cell'], look: DayButtonProps['look'
 
 export function DayButton({ cell, names, onPick, look }: DayButtonProps) {
   return (
-    <PressableSurface
-      a11y={{ label: names.full(cell.at), role: 'button', selected: cell.selected }}
-      onPress={() => onPick(cell.at)}
-      pressed={{ scale: 'icon' }}
-      className="flex-1 items-center gap-1 py-1">
-      <View
-        style={RING}
-        className={clsx('items-center justify-center rounded-full', DISC[look], discClass(cell))}>
-        <Text variant={numberVariant(cell, look)} tone={numberTone(cell)}>
-          {names.number(cell.at)}
-        </Text>
-      </View>
-      {look === 'week' ? (
+    <View className="flex-1">
+      <PressableSurface
+        a11y={{ label: names.full(cell.at), role: 'button', selected: cell.selected }}
+        onPress={() => onPick(cell.at)}
+        pressed={{ scale: 'icon' }}
+        className="items-center gap-1 py-1">
         <View
-          className={clsx(
-            'size-1.5 rounded-full',
-            cell.marked ? 'bg-accent-fill' : 'bg-transparent'
-          )}
-        />
-      ) : null}
-    </PressableSurface>
+          style={RING}
+          className={clsx('items-center justify-center rounded-full', DISC[look], discClass(cell))}>
+          <Text variant={numberVariant(cell, look)} tone={numberTone(cell)}>
+            {names.number(cell.at)}
+          </Text>
+        </View>
+        {look === 'week' ? (
+          <View
+            className={clsx(
+              'size-1.5 rounded-full',
+              cell.marked ? 'bg-accent-fill' : 'bg-transparent'
+            )}
+          />
+        ) : null}
+      </PressableSurface>
+    </View>
   );
 }
 
