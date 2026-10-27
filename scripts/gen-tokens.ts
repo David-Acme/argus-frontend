@@ -197,7 +197,6 @@ export function tokensCss(): string {
     '',
     ...glass('sheet', material.blurSheet, material.saturationControl),
     '',
-    ...glass('palette', material.blurPalette, material.saturationControl),
     '',
     ...blurOnly('cap', material.blurCap),
     '',
