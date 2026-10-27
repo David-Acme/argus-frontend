@@ -21,7 +21,7 @@ describe('Text', () => {
     render(
       <Text variant="body">
         Hola
-        <Text variant="caption" tone="clear">
+        <Text variant="caption" clear>
           {' 21:54'}
         </Text>
       </Text>

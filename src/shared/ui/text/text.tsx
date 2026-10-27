@@ -12,16 +12,7 @@ import {
 export type TextVariant = TypeStep | keyof typeof typeRoles;
 
 export type TextTone =
-  | 'default'
-  | '2'
-  | '3'
-  | 'ok'
-  | 'attn'
-  | 'alert'
-  | 'accent'
-  | 'on-ink'
-  | 'on-media'
-  | 'clear';
+  'default' | '2' | '3' | 'ok' | 'attn' | 'alert' | 'accent' | 'on-ink' | 'on-media';
 
 export type HeadingLevel = 1 | 2 | 3 | 4;
 
@@ -30,6 +21,7 @@ export type TextProps = {
   tone?: TextTone;
   heading?: HeadingLevel;
   struck?: boolean;
+  clear?: boolean;
   underline?: boolean;
   align?: 'start' | 'center';
   numberOfLines?: number;
@@ -100,7 +92,6 @@ const TONE_CLASS: Record<TextTone, string> = {
   accent: 'text-accent',
   'on-ink': 'text-on-ink',
   'on-media': 'text-on-media',
-  clear: 'text-transparent',
 };
 
 const DEFAULT_TONE: Partial<Record<TextVariant, TextTone>> = {
@@ -147,6 +138,7 @@ export function Text({
   tone,
   heading,
   struck,
+  clear,
   underline,
   align = 'start',
   numberOfLines,
@@ -156,9 +148,11 @@ export function Text({
 }: TextProps) {
   const spec = SPECS[variant];
   const { style } = useTypeScale(variant);
-  const toneClass = struck
-    ? 'text-text-3 line-through'
-    : TONE_CLASS[tone ?? DEFAULT_TONE[variant] ?? 'default'];
+  const toneClass = clear
+    ? 'text-transparent'
+    : struck
+      ? 'text-text-3 line-through'
+      : TONE_CLASS[tone ?? DEFAULT_TONE[variant] ?? 'default'];
   return (
     <NativeText
       role={heading ? 'heading' : undefined}

@@ -63,7 +63,7 @@ function BubbleText({ body, time, note, status }: BubbleTextProps) {
     <View className="min-w-0 shrink">
       <Text variant="body">
         {body}
-        <Text variant="caption" tone="clear">
+        <Text variant="caption" clear>
           {reserve}
         </Text>
       </Text>
