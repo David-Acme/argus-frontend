@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import {
+  agendaEmpty,
   dayGroup,
   dayGroups,
   dayRange,
@@ -78,5 +79,18 @@ describe('the day list', () => {
     const rest = restOfDay(list, first, date).map((item) => item.title);
     expect(rest).toHaveLength(3);
     expect(rest).not.toContain(first.title);
+  });
+});
+
+describe('when the agenda shows its empty state', () => {
+  const range = { from: 100, to: 200 };
+
+  test('the list is empty when its first day has nothing, the day view when nothing starts that day', () => {
+    expect(agendaEmpty({ day: false, groups: [{ entries: [] }], items: [], range })).toBe(true);
+    expect(agendaEmpty({ day: false, groups: [], items: [], range })).toBe(true);
+    expect(
+      agendaEmpty({ day: true, groups: [{ entries: [] }], items: [{ startsAt: 150 }], range })
+    ).toBe(false);
+    expect(agendaEmpty({ day: true, groups: [], items: [{ startsAt: 250 }], range })).toBe(true);
   });
 });

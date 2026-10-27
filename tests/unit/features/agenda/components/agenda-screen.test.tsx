@@ -286,11 +286,12 @@ describe('Agenda on a phone', () => {
     expect(screen.getByText('07:00')).toBeDefined();
   });
 
-  test('with no data the day says so, offers an event and asks Argus for reminders, and the next days are free', () => {
+  test('with no data the day says so, offers an event without the floating +, and asks Argus for reminders', () => {
     state.items = [];
     render(<AgendaScreen />);
     expect(screen.getByText('Nada para hoy')).toBeDefined();
     expect(screen.getByRole('button', { name: 'Nuevo evento' })).toBeDefined();
+    expect(screen.queryByRole('button', { name: 'Nuevo evento o tarea' })).toBeNull();
     fireEvent.click(
       screen.getByRole('button', { name: 'Pedirle a Argus: Recuérdame pagar la luz el lunes' })
     );

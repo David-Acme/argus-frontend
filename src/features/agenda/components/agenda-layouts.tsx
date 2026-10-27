@@ -11,7 +11,13 @@ import { Sheet } from '@/shared/ui/sheet';
 import type { AgendaScreenState } from '@/features/agenda/hooks/use-agenda-screen';
 import { useCalendarCells, useMonthShift } from '@/features/agenda/hooks/use-calendar-cells';
 import { useDayNames } from '@/features/agenda/hooks/use-day-names';
-import { dayGroup, dayRange, nextDays, restOfDay } from '@/features/agenda/model/agenda-days';
+import {
+  agendaEmpty,
+  dayGroup,
+  dayRange,
+  nextDays,
+  restOfDay,
+} from '@/features/agenda/model/agenda-days';
 import { calendarEntryRecordId } from '@/features/agenda/model/calendar-entry-actions';
 import { asideBlocks } from '@/features/agenda/components/agenda-aside';
 import { AgendaBody, AgendaHead } from '@/features/agenda/components/agenda-body';
@@ -29,8 +35,15 @@ type NewButtonProps = AgendaLayoutProps & { phone: boolean };
 function NewButton({ state, phone }: NewButtonProps) {
   const { t } = useTranslation();
   const bottom = useBottomNavInset();
+  const date = useDateFormatter();
   const [first] = state.kinds;
-  if (!first) return null;
+  const empty = agendaEmpty({
+    day: state.view === 'day',
+    groups: state.groups,
+    items: state.visible,
+    range: dayRange(state.selected, date),
+  });
+  if (!first || empty) return null;
   const place = phone ? { bottom } : undefined;
   return (
     <View className={phone ? 'absolute right-4' : 'absolute right-6 bottom-6'} style={place}>
