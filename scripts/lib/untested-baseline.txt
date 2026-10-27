@@ -157,7 +157,6 @@ src/shared/components/ui/morph-icon/morph-icon.web.tsx
 src/shared/components/ui/native-only-animated-view.tsx
 src/shared/components/ui/option-row.tsx
 src/shared/components/ui/orbit-hero.tsx
-src/shared/components/ui/overlay-body.tsx
 src/shared/components/ui/panel.tsx
 src/shared/components/ui/permission-list.tsx
 src/shared/components/ui/popover.tsx

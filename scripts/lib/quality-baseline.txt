@@ -15,5 +15,5 @@ source-text-test 5
 legacy-token-class 738
 manual-memo 360
 shared-value-dot-value 105
-untested-component-or-screen 177
-scanned-files 2041
+untested-component-or-screen 176
+scanned-files 2046

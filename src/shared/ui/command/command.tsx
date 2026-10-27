@@ -2,6 +2,7 @@ import * as DialogPrimitive from '@rn-primitives/dialog';
 import { useEffect, useEffectEvent } from 'react';
 import { Pressable } from 'react-native';
 import { useTranslation } from '@/shared/hooks/use-translation';
+import { paletteTopOf, useHeightLayout } from '@/shared/theme';
 import { CommandPalette } from './command-palette';
 import { CommandPanel } from './command-panel';
 import type { CommandIntent, CommandProps } from './command-types';
@@ -20,6 +21,7 @@ function Body({ onClose, source, onAsk, initialQuery }: BodyProps) {
 
 export function Command({ open, onClose, ...body }: CommandProps) {
   const { t } = useTranslation();
+  const top = { paddingTop: paletteTopOf(useHeightLayout()) };
   return (
     <DialogPrimitive.Root
       open={open}
@@ -27,7 +29,9 @@ export function Command({ open, onClose, ...body }: CommandProps) {
         if (!next) onClose();
       }}>
       <DialogPrimitive.Portal>
-        <DialogPrimitive.Overlay className="bg-scrim-soft pt-palette-top px-palette-group fixed inset-0 items-center">
+        <DialogPrimitive.Overlay
+          style={top}
+          className="bg-scrim-soft px-palette-group fixed inset-0 items-center">
           <Pressable focusable={false} onPress={onClose} className="absolute inset-0" />
           <DialogPrimitive.Content className="max-w-full">
             <DialogPrimitive.Title className="sr-only">

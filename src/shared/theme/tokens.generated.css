@@ -132,6 +132,7 @@
   --spacing-nav-bar-x: 12px;
   --spacing-nav-bar-pad: 6px;
   --spacing-nav-bar-bottom: 26px;
+  --spacing-nav-bar-bottom-short: 8px;
   --spacing-nav-tab-gap: 2px;
   --spacing-nav-cap-bottom: 110px;
   --spacing-nav-cap-x: 16px;
@@ -233,6 +234,9 @@
   --spacing-presence-hero-dense: 58px;
   --spacing-presence-band: 64px;
   --spacing-presence-tab: 36px;
+  --spacing-presence-tab-short: 28px;
+  --spacing-tab-bar-short: 48px;
+  --spacing-tab-short: 40px;
   --spacing-presence-brand: 30px;
   --spacing-presence-ask: 20px;
   --spacing-presence-notice: 52px;

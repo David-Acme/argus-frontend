@@ -8,6 +8,7 @@ import { space } from '@/shared/theme';
 import { Aura } from '@/shared/ui/aura';
 import { Icon } from '@/shared/ui/icon';
 import type { PresenceState } from '@/shared/ui/presence';
+import { FillScroll } from '@/shared/ui/screen';
 import { Text } from '@/shared/ui/text';
 import { CallAvatar } from '@/features/voice/components/call-avatar';
 import { CALL_STAGE_MAX_WIDTH } from '@/features/voice/constants/call.constant';
@@ -44,32 +45,34 @@ export function CallStage({
     <ScopedTheme theme="dark">
       <View className="bg-bg flex-1 overflow-hidden" style={frame}>
         {kind === 'alert' ? <Aura tone="alert" /> : null}
-        <View className="w-full flex-1 items-center self-center px-4" style={COLUMN}>
-          <View className="min-h-12 w-full justify-center">{top}</View>
-          <View className="items-center gap-1">
-            <View className="flex-row items-center gap-1">
-              <Icon name="lock" size="small" tone="text-2" />
-              <Text variant="caption" tone="2">
-                {t('screens.voice.stage.private')}
+        <FillScroll>
+          <View className="w-full flex-1 items-center self-center px-4" style={COLUMN}>
+            <View className="min-h-12 w-full justify-center">{top}</View>
+            <View className="items-center gap-1">
+              <View className="flex-row items-center gap-1">
+                <Icon name="lock" size="small" tone="text-2" />
+                <Text variant="caption" tone="2">
+                  {t('screens.voice.stage.private')}
+                </Text>
+              </View>
+              <Text variant="heroCompact" heading={1} align="center">
+                {t('screens.voice.argus')}
+              </Text>
+              <Text variant="meta" tone="2" align="center" numberOfLines={2}>
+                {line}
               </Text>
             </View>
-            <Text variant="heroCompact" heading={1} align="center">
-              {t('screens.voice.argus')}
-            </Text>
-            <Text variant="meta" tone="2" align="center" numberOfLines={2}>
-              {line}
-            </Text>
+            <View style={gap}>
+              <CallAvatar
+                state={presence}
+                size={ended ? scale.endedAvatar : scale.avatar}
+                level={level}
+                label={t('screens.voice.stage.estela')}
+              />
+            </View>
+            {children}
           </View>
-          <View style={gap}>
-            <CallAvatar
-              state={presence}
-              size={ended ? scale.endedAvatar : scale.avatar}
-              level={level}
-              label={t('screens.voice.stage.estela')}
-            />
-          </View>
-          {children}
-        </View>
+        </FillScroll>
       </View>
     </ScopedTheme>
   );

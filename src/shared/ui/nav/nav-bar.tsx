@@ -1,9 +1,8 @@
 import { clsx } from 'clsx';
-import { useContext } from 'react';
-import { useWindowDimensions, View } from 'react-native';
+import { View } from 'react-native';
 import Animated, { useAnimatedStyle, withSpring } from 'react-native-reanimated';
-import { SafeAreaInsetsContext } from 'react-native-safe-area-context';
-import { inset, motion, typeRoles, useEffects, useThemeTokens } from '@/shared/theme';
+import { useNavOffsets } from '@/shared/hooks/use-bottom-nav-inset';
+import { motion, useEffects, useNavBarLayout, useThemeTokens } from '@/shared/theme';
 import { Aura } from '@/shared/ui/aura';
 import { Icon } from '@/shared/ui/icon';
 import { Text } from '@/shared/ui/text';
@@ -12,18 +11,18 @@ import { ArgusTab, NavTab } from './nav-tab';
 import type { NavProps } from './nav-types';
 import { useHoldToTalk } from './use-hold-to-talk';
 
-type ListenCapProps = { label: string; solid: boolean };
+type ListenCapProps = { label: string; solid: boolean; bottom: number };
 
 const COLLAPSED_SCALE = 0.9;
 
-const COLLAPSED_DROP = inset.nav.barBottom / 2;
-
-function ListenCap({ label, solid }: ListenCapProps) {
+function ListenCap({ label, solid, bottom }: ListenCapProps) {
   const { elevation } = useThemeTokens();
   const pill = { boxShadow: elevation.cap };
+  const place = { bottom };
   return (
     <View
-      className="bottom-nav-cap-bottom pointer-events-none absolute inset-x-0 items-center"
+      className="pointer-events-none absolute inset-x-0 items-center"
+      style={place}
       accessibilityLiveRegion="polite">
       <View
         className={clsx(
@@ -38,12 +37,12 @@ function ListenCap({ label, solid }: ListenCapProps) {
   );
 }
 
-function useCollapse() {
+function useCollapse(gap: number) {
   const { reduceMotion } = useEffects();
   return useAnimatedStyle(() => {
     const collapsed = reduceMotion ? 0 : navCollapse.get();
     const scale = 1 - (1 - COLLAPSED_SCALE) * collapsed;
-    const drop = COLLAPSED_DROP * collapsed;
+    const drop = (gap / 2) * collapsed;
     return {
       transform: [
         { translateY: withSpring(drop, motion.spring.gentle) },
@@ -56,12 +55,13 @@ function useCollapse() {
 export function NavBar({ items, active, onSelect, voice, copy, presence, listening }: NavProps) {
   const { reduceTransparency } = useEffects();
   const { elevation } = useThemeTokens();
-  const insets = useContext(SafeAreaInsetsContext);
+  const layout = useNavBarLayout();
+  const offsets = useNavOffsets();
   const { mode, target, handlers } = useHoldToTalk(voice);
-  const collapse = useCollapse();
-  const labelled = useWindowDimensions().fontScale <= typeRoles.tab.maxScale;
+  const collapse = useCollapse(layout.gap);
   const frame = {
-    bottom: Math.max(insets?.bottom ?? 0, inset.nav.barBottom),
+    height: layout.bar,
+    bottom: offsets.footprint - layout.bar,
     boxShadow: elevation.bar,
   };
   return (
@@ -69,14 +69,14 @@ export function NavBar({ items, active, onSelect, voice, copy, presence, listeni
       {mode === 'off' && !listening ? null : (
         <>
           <Aura tone="listen" mode="edge" />
-          <ListenCap label={copy.listening} solid={reduceTransparency} />
+          <ListenCap label={copy.listening} solid={reduceTransparency} bottom={offsets.cap} />
         </>
       )}
       <Animated.View
         role="tablist"
         aria-label={copy.navigation}
         className={clsx(
-          'h-tab-bar inset-x-nav-bar-x px-nav-bar-pad absolute flex-row items-center justify-center rounded-full',
+          'inset-x-nav-bar-x px-nav-bar-pad absolute flex-row items-center justify-center rounded-full',
           reduceTransparency ? 'bg-surface' : 'web:glass-bar bg-glass'
         )}
         style={[frame, collapse]}>
@@ -87,7 +87,7 @@ export function NavBar({ items, active, onSelect, voice, copy, presence, listeni
               item={item}
               selected={active === item.key}
               hint={copy.argusHint}
-              labelled={labelled}
+              layout={layout}
               listening={mode !== 'off' || Boolean(listening)}
               target={target}
               handlers={handlers}
@@ -98,7 +98,7 @@ export function NavBar({ items, active, onSelect, voice, copy, presence, listeni
               key={item.key}
               item={item}
               selected={active === item.key}
-              labelled={labelled}
+              layout={layout}
               onSelect={onSelect}
             />
           )

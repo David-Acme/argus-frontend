@@ -2,10 +2,11 @@ import { clsx } from 'clsx';
 import { useContext, type ReactNode } from 'react';
 import { View } from 'react-native';
 import { SafeAreaInsetsContext } from 'react-native-safe-area-context';
+import { useNavOffsets } from '@/shared/hooks/use-bottom-nav-inset';
 import {
   auraField,
-  inset,
   layout,
+  usePaneSplit,
   useWindowLayout,
   type AuraTone,
   type WindowLayout,
@@ -29,12 +30,12 @@ const CAP = {
   desktop: { maxWidth: layout.textMax },
 } as const;
 
-function contentStyleOf({ windowClass, navigation }: WindowLayout, top: number) {
+function contentStyleOf({ windowClass, navigation }: WindowLayout, top: number, clearance: number) {
   return {
     flexGrow: 1,
     paddingTop: top,
     paddingHorizontal: windowClass === 'compact' ? layout.gutterCompact : layout.gutterMedium,
-    paddingBottom: navigation === 'bar' ? inset.screen.bodyBottom : layout.gutterMedium,
+    paddingBottom: navigation === 'bar' ? clearance : layout.gutterMedium,
   };
 }
 
@@ -51,11 +52,13 @@ export function Screen({ aura, refresh, columns, children, ...bar }: ScreenProps
   const window = useWindowLayout();
   const insets = useContext(SafeAreaInsetsContext);
   const top = insets?.top ?? 0;
+  const { clearance } = useNavOffsets();
   const { onScroll, auraHidden } = useScreenScroll(auraField.height);
   const desktop = window.windowClass === 'expanded' || window.windowClass === 'wide';
   const header = hasTopBar(bar) ? <ScreenTopBar {...bar} /> : null;
   const field = aura ? <Aura tone={aura} paused={auraHidden} /> : null;
-  const paned = desktop || (columns === 'panes' && window.windowClass === 'medium');
+  const paneSplit = usePaneSplit();
+  const paned = desktop || (columns === 'panes' && paneSplit);
   if (columns && paned)
     return (
       <View className="bg-bg relative min-h-0 flex-1">
@@ -72,7 +75,7 @@ export function Screen({ aura, refresh, columns, children, ...bar }: ScreenProps
       <ScreenScroll
         onScroll={onScroll}
         refresh={refresh}
-        contentStyle={contentStyleOf(window, top)}>
+        contentStyle={contentStyleOf(window, top, clearance)}>
         <View
           className={clsx('w-full', window.windowClass !== 'compact' && 'self-center')}
           style={capOf(window.windowClass, desktop)}>

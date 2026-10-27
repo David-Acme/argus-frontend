@@ -1,5 +1,5 @@
 import type { ComponentType, ReactNode } from 'react';
-import { View } from 'react-native';
+import { ScrollView, useWindowDimensions, View } from 'react-native';
 import { layout, useThemeTokens } from '@/shared/theme';
 import { PressableSurface } from '@/shared/ui/pressable';
 import { Text } from '@/shared/ui/text';
@@ -52,7 +52,12 @@ export function ConfirmBox({
   Description = Plain,
 }: ConfirmBoxProps) {
   const { elevation } = useThemeTokens();
-  const frame = { boxShadow: elevation.float, maxWidth: layout.dialog };
+  const { height } = useWindowDimensions();
+  const frame = {
+    boxShadow: elevation.float,
+    maxWidth: layout.dialog,
+    maxHeight: height - layout.gutterMedium * 2,
+  };
   return (
     <View
       style={frame}
@@ -60,11 +65,11 @@ export function ConfirmBox({
       <Heading>
         <Text variant="title">{title}</Text>
       </Heading>
-      <View className="mt-dialog-body-top">
+      <ScrollView className="mt-dialog-body-top min-h-0 shrink grow-0">
         <Description>
           <Text tone="2">{body}</Text>
         </Description>
-      </View>
+      </ScrollView>
       <View className="mt-dialog-actions-top gap-dialog-actions-gap flex-row justify-end">
         <Act label={cancelLabel} onPress={onCancel} />
         <Act label={confirmLabel} alert={destructive} busy={busy} onPress={onConfirm} />

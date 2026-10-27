@@ -14,6 +14,7 @@ import {
   OVERLAY_CHROME_HEIGHT,
   OVERLAY_RING_GUTTER,
 } from '@/shared/constants';
+import { heightLayoutOf } from '@/shared/theme/height-layout';
 import { cn } from '@/shared/libs/utils';
 
 type ScrollListener = (offsetY: number) => void;
@@ -36,12 +37,19 @@ type ScrollableNode = { scrollHeight: number; clientHeight: number };
 
 const OverlayBodyContext = createContext<OverlayBodyContextValue | null>(null);
 
-function useOverlayBodyHeight(): number {
-  const { height } = useWindowDimensions();
+function overlayBodyHeightOf(width: number, height: number): number {
   const available = height - OVERLAY_CHROME_HEIGHT;
-  return Math.round(
-    Math.max(OVERLAY_BODY_MIN_HEIGHT, Math.min(height * OVERLAY_BODY_HEIGHT_RATIO, available))
-  );
+  const { heightClass, landscape } = heightLayoutOf({ width, height });
+  const room =
+    heightClass === 'regular' && !landscape
+      ? Math.min(height * OVERLAY_BODY_HEIGHT_RATIO, available)
+      : available;
+  return Math.round(Math.max(OVERLAY_BODY_MIN_HEIGHT, room));
+}
+
+function useOverlayBodyHeight(): number {
+  const { width, height } = useWindowDimensions();
+  return overlayBodyHeightOf(width, height);
 }
 
 function scrollableNode(scroll: RNScrollView | null): ScrollableNode | null {
@@ -126,4 +134,4 @@ function OverlayBody({ children, inset, onOverflowChange, className }: OverlayBo
   );
 }
 
-export { OverlayBody, OverlayBodyContext, type OverlayBodyContextValue };
+export { OverlayBody, OverlayBodyContext, overlayBodyHeightOf, type OverlayBodyContextValue };

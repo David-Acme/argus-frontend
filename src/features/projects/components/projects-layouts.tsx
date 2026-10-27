@@ -29,7 +29,7 @@ type FabProps = ProjectsLayoutProps & { phone: boolean };
 function TaskFab({ state, phone }: FabProps) {
   const { t } = useTranslation();
   const bottom = useBottomNavInset();
-  if (!state.newTask) return null;
+  if (!state.newTask || !state.view?.tasks.rows.length) return null;
   return (
     <View
       className={phone ? 'absolute right-4' : 'absolute right-6 bottom-6'}

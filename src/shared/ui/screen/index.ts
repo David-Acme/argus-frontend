@@ -1,3 +1,4 @@
+export { FillScroll, type FillScrollProps } from './fill-scroll';
 export { Screen, type ScreenProps } from './screen';
 export { useGrowsInColumn, useInScreenColumn, usePanes } from './screen-column-context';
 export {

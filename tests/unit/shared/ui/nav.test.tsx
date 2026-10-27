@@ -10,7 +10,8 @@ import { NavStatus } from '@/shared/ui/nav/nav-status';
 import { ArgusTab, NavTab } from '@/shared/ui/nav/nav-tab';
 import type { NavProps } from '@/shared/ui/nav/nav-types';
 import { inside, useHoldToTalk } from '@/shared/ui/nav/use-hold-to-talk';
-import { setWindowWidth } from './window-width';
+import { navBarOf, heightLayoutOf } from '@/shared/theme/height-layout';
+import { setWindowSize, setWindowWidth } from './window-width';
 
 const ITEMS = [
   { key: 'home', label: 'Inicio', icon: 'home', shortcut: '1' },
@@ -45,7 +46,11 @@ function setup(overrides: Partial<NavProps> = {}) {
   return { log, props };
 }
 
-afterEach(() => setWindowWidth(360));
+const TALL = navBarOf(heightLayoutOf({ width: 360, height: 800 }), 1);
+
+const BARE = { ...TALL, labelled: false };
+
+afterEach(() => setWindowSize(360, 800));
 
 describe('Nav', () => {
   test('a phone gets the floating bar with five tabs and the selected one marked', () => {
@@ -130,7 +135,12 @@ describe('Nav', () => {
   test('a tab and a key hint render alone', () => {
     const picked: string[] = [];
     render(
-      <NavTab item={ITEMS[0]} selected={false} labelled onSelect={(key) => void picked.push(key)} />
+      <NavTab
+        item={ITEMS[0]}
+        selected={false}
+        layout={TALL}
+        onSelect={(key) => void picked.push(key)}
+      />
     );
     fireEvent.click(screen.getByRole('tab', { name: 'Inicio' }));
     expect(picked).toEqual(['home']);
@@ -140,7 +150,7 @@ describe('Nav', () => {
   });
 
   test('past the label scale cap a tab keeps its icon and its accessible name, without the label', () => {
-    render(<NavTab item={ITEMS[3]} selected labelled={false} onSelect={() => undefined} />);
+    render(<NavTab item={ITEMS[3]} selected layout={BARE} onSelect={() => undefined} />);
     expect(screen.getByRole('tab', { name: 'Agenda' })).toBeDefined();
     expect(screen.queryByText('Agenda')).toBeNull();
   });
@@ -159,7 +169,7 @@ describe('Nav', () => {
         item={ITEMS[2]}
         selected={false}
         hint={COPY.argusHint}
-        labelled
+        layout={TALL}
         listening={false}
         target={{ current: null }}
         handlers={handlers}
@@ -169,6 +179,27 @@ describe('Nav', () => {
     fireEvent.click(screen.getByRole('tab', { name: COPY.argusHint }));
     expect(calls).toContain('press');
     expect(container.querySelector('canvas')?.style.width).toBe('36px');
+  });
+
+  test('a short phone gets a 48 bar with small icons, a tiny one and a phone on its side drop the labels', () => {
+    const { props } = setup();
+    setWindowSize(360, 640);
+    const { unmount } = render(<Nav {...props} />);
+    const bar = screen.getByRole('tablist', { name: 'Principal' }) as HTMLElement;
+    expect(bar.style.height).toBe('48px');
+    expect(bar.style.bottom).toBe('8px');
+    expect(screen.getByText('Inicio')).toBeDefined();
+    unmount();
+    for (const [width, height] of [
+      [320, 568],
+      [740, 360],
+    ] as const) {
+      setWindowSize(width, height);
+      const view = render(<Nav {...props} />);
+      expect(screen.getAllByRole('tab').length).toBe(5);
+      expect(screen.queryByText('Inicio')).toBeNull();
+      view.unmount();
+    }
   });
 
   test('the scroll handler and the collapse value exist for Screen to drive', () => {

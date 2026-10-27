@@ -1,6 +1,6 @@
 import { clsx } from 'clsx';
 import { Pressable, View } from 'react-native';
-import { size } from '@/shared/theme';
+import type { NavBarLayout } from '@/shared/theme';
 import { Icon } from '@/shared/ui/icon';
 import { Presence, useCentrePresence, type PresenceState } from '@/shared/ui/presence';
 import { PressableSurface } from '@/shared/ui/pressable';
@@ -13,7 +13,7 @@ type HoldTalk = ReturnType<typeof useHoldToTalk>;
 type TabProps = {
   item: NavItem;
   selected: boolean;
-  labelled: boolean;
+  layout: NavBarLayout;
   onSelect: (key: string) => void;
 };
 
@@ -23,7 +23,7 @@ type ArgusTabProps = {
   item: NavItem;
   selected: boolean;
   hint: string;
-  labelled: boolean;
+  layout: NavBarLayout;
   listening: boolean;
   target: HoldTalk['target'];
   handlers: HoldTalk['handlers'];
@@ -32,9 +32,11 @@ type ArgusTabProps = {
 
 const SLOT = 'max-w-tab-max-width flex-1';
 
-const FRAME = 'h-tab w-full items-center justify-center gap-nav-tab-gap rounded-full';
+const FRAME = 'w-full items-center justify-center gap-nav-tab-gap rounded-full';
 
-const SLOP = (size.tabBar - size.tab) / 2;
+const frameOf = ({ tab }: NavBarLayout) => ({ height: tab });
+
+const slopOf = ({ bar, tab }: NavBarLayout) => (bar - tab) / 2;
 
 const ACTIONS = [{ name: 'longpress' as const }];
 
@@ -49,7 +51,7 @@ function TabLabel({ label, labelled, dim }: TabLabelProps) {
   );
 }
 
-export function NavTab({ item, selected, labelled, onSelect }: TabProps) {
+export function NavTab({ item, selected, layout, onSelect }: TabProps) {
   return (
     <View className={SLOT}>
       <PressableSurface
@@ -57,10 +59,11 @@ export function NavTab({ item, selected, labelled, onSelect }: TabProps) {
         onPress={() => onSelect(item.key)}
         haptic="selection"
         pressed={{ scale: 'icon' }}
-        hitSlop={SLOP}
+        hitSlop={slopOf(layout)}
+        style={frameOf(layout)}
         className={clsx(FRAME, selected && 'bg-tab-on')}>
-        <Icon name={item.icon} tone={selected ? 'text' : 'text-3'} />
-        <TabLabel label={item.label} labelled={labelled} dim={!selected} />
+        <Icon name={item.icon} size={layout.icon} tone={selected ? 'text' : 'text-3'} />
+        <TabLabel label={item.label} labelled={layout.labelled} dim={!selected} />
       </PressableSurface>
     </View>
   );
@@ -70,7 +73,7 @@ export function ArgusTab({
   item,
   selected,
   hint,
-  labelled,
+  layout,
   listening,
   target,
   handlers,
@@ -88,22 +91,19 @@ export function ArgusTab({
         onAccessibilityAction={handlers.onAccessibilityAction}
         delayLongPress={HOLD_DELAY}
         pressRetentionOffset={SLIDE_SLOP}
-        hitSlop={SLOP}
+        hitSlop={slopOf(layout)}
+        style={frameOf(layout)}
         onPressIn={handlers.onPressIn}
         onLongPress={handlers.onLongPress}
         onPressOut={handlers.onPressOut}
         onPress={handlers.onPress}
         className={clsx('web:focus-ring', FRAME, selected && 'bg-tab-on')}>
         {presence ? (
-          <Presence
-            state={listening ? 'listen' : presence}
-            size={size.presenceTab}
-            paused={still}
-          />
+          <Presence state={listening ? 'listen' : presence} size={layout.presence} paused={still} />
         ) : (
-          <Icon name={item.icon} />
+          <Icon name={item.icon} size={layout.icon} />
         )}
-        <TabLabel label={item.label} labelled={labelled} />
+        <TabLabel label={item.label} labelled={layout.labelled} />
       </Pressable>
     </View>
   );

@@ -3,6 +3,16 @@ import { useRouter } from 'expo-router';
 import { useEffect, useSyncExternalStore, type ReactNode } from 'react';
 import { View } from 'react-native';
 import type { TranslationKey, VoiceActionRecord } from '@/core/types';
+import { ASSISTANT_THREAD_HREF } from '@/shared/constants';
+import { useNavOffsets } from '@/shared/hooks/use-bottom-nav-inset';
+import { useTranslation } from '@/shared/hooks/use-translation';
+import { layout, size, useEffects, useThemeTokens, useWindowLayout } from '@/shared/theme';
+import { Chip, type ChipTone } from '@/shared/ui/chip';
+import { Icon } from '@/shared/ui/icon';
+import { Presence } from '@/shared/ui/presence';
+import { PressableSurface } from '@/shared/ui/pressable';
+import { Text } from '@/shared/ui/text';
+import { ToastCard } from '@/shared/ui/toast';
 import { voiceService } from '@/features/voice/services/voice';
 import { useHoldTalkStore } from '@/features/voice/stores/hold-talk.store';
 import {
@@ -12,15 +22,6 @@ import {
   type HoldTalkFailure,
 } from '@/features/voice/model/hold-talk';
 import { voiceActionLabel } from '@/features/voice/model/voice-action-label';
-import { ASSISTANT_THREAD_HREF } from '@/shared/constants';
-import { useTranslation } from '@/shared/hooks/use-translation';
-import { layout, size, useEffects, useThemeTokens, useWindowLayout } from '@/shared/theme';
-import { Chip, type ChipTone } from '@/shared/ui/chip';
-import { Icon } from '@/shared/ui/icon';
-import { Presence } from '@/shared/ui/presence';
-import { PressableSurface } from '@/shared/ui/pressable';
-import { Text } from '@/shared/ui/text';
-import { ToastCard } from '@/shared/ui/toast';
 
 type SlotProps = { above?: boolean; children: ReactNode };
 
@@ -66,13 +67,16 @@ const heardNow = (): string => voiceService.sttTextValue;
 
 function Slot({ above = false, children }: SlotProps) {
   const { navigation } = useWindowLayout();
+  const offsets = useNavOffsets();
   const bar = navigation === 'bar';
+  const place = bar ? { bottom: above ? offsets.cap : offsets.toast } : undefined;
   return (
     <View
       pointerEvents="box-none"
+      style={place}
       className={clsx(
         'px-toast-edge absolute inset-x-0 items-center',
-        bar ? (above ? 'bottom-nav-cap-bottom pb-12' : 'bottom-toast-offset') : 'bottom-toast-edge'
+        bar ? above && 'pb-12' : 'bottom-toast-edge'
       )}>
       <View pointerEvents="box-none" className="w-full items-center" style={CARD}>
         {children}

@@ -7420,3 +7420,45 @@ density and components.
   (`project.list`, `project.tasks.<id>`, `project.members.<id>`,
   `people.users`) with the optimistic lenses, so the screen paints from local
   data and follows `/sync` live.
+
+## Responsive by height: the shared pieces (R-height, 2026-10-26)
+
+Owner rule in AGENTS.md › "Responsive by height as well as width". The height classes stay the
+ones the Cámara track added (`shared/theme/height-layout.ts`: tiny < 600, short < 760, regular,
+landscape when a phone lies on its side); every decision below is a pure function there, tested in
+`tests/unit/shared/theme/height-layout.test.ts`.
+
+- **Tab bar.** `navBarOf(heightLayout, fontScale)` answers the bar, tab, gap, icon and Estela
+  sizes. Regular keeps the prototype (72 bar, 62 tab, 26 above the bottom). Short, tiny and
+  landscape use `tabBarShort` 48, `tabShort` 40 and `barBottomShort` 8, so the bar's footprint is
+  56. Labels stay on short windows with the small icon; below 600 of height or in landscape the
+  bar keeps icons only. The label scale cap still drops labels past 1.15×.
+- **What clears the bar.** `navOffsetsOf(bar, bottomInset)` gives the footprint and keeps the
+  prototype's distances above it for the screen's bottom padding (`bodyBottom`), the listening cap
+  and the toast; `useNavOffsets`/`useBottomNavInset` (`shared/hooks`) read it, and so do `Screen`,
+  the toasters, the hold-to-talk overlays and the call pill. Nothing reads `tabBar` + `barBottom`
+  by hand any more.
+- **Phone sheet.** The detents are the Agenda track's `sheetDetentsOf({long, form})`: a long
+  sheet, or a form sheet on a short window, opens at the large detent and scrolls; anything else is
+  `auto`. An `auto` sheet's body is now a `ScrollView` capped by `sheetBodyCapOf` (window minus the
+  top inset, the ceiling gap, the measured header and the open keyboard). Before, a View body taller
+  than the cap was clipped by TrueSheet with no way to scroll. `TrueSheet`'s `scrollable` makes its
+  container `absoluteFill`, which breaks `auto`, so the capped `ScrollView` is the only way to have
+  a content-sized sheet that still scrolls.
+- **Legacy `AdaptiveDialog` sheet.** `overlayBodyHeightOf` keeps the 62 % share on regular
+  windows and gives the body all the room the sheet chrome leaves on short ones.
+- **Heroes.** `heroStepOf` (`shared/ui/status/status-scale.ts`) steps the sentence down to
+  `heroSecondary` and the Estela to `presenceHeroSmall` on short, tiny and landscape windows; the
+  Inicio skeleton reads the same step so nothing jumps when data arrives.
+- **Overlays.** The command palette's top gap is `paletteTopOf` (110 on regular windows, the
+  gutter otherwise). The confirm box is capped at the window height and its body scrolls. The call
+  stage scrolls when its column does not fit (phone landscape).
+- **UI-map gate.** `ARGUS_UI_MAP_VIEWPORTS=height` captures 320×568, 360×640, 375×667, 360×740,
+  390×844 and 740×360 in light Spanish without full-page captures, and every capture records a
+  `height` audit (`tests/e2e/support/ui-map/height-audit.ts`): the floating bar's footprint plus a
+  top bar that does not scroll, the first content below the top bar and the hero sentence row
+  (`testID` `screen-top-bar` and `status-hero`; the hero's stat chips count as content), the
+  largest empty band in an open dialog, and interactive elements under the bar or below the window
+  that no scroll can bring out. `bun run ui-map:audit` (`scripts/ui-map-audit.ts`, `--table` for
+  the numbers) fails on chrome over 22 %, first content below 40 %, an empty band over 25 % or any
+  hidden control.
