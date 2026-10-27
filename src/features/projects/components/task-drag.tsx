@@ -1,5 +1,7 @@
-import { createContext, useCallback, useContext, useMemo, type ReactNode } from 'react';
-import { View, type LayoutChangeEvent } from 'react-native';
+import { createContext, useContext } from 'react';
+import type { ReactNode } from 'react';
+import { View } from 'react-native';
+import type { LayoutChangeEvent } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   useAnimatedStyle,
@@ -7,10 +9,11 @@ import Animated, {
   useSharedValue,
   withSpring,
   withTiming,
-  type SharedValue,
 } from 'react-native-reanimated';
+import type { SharedValue } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 import { IS_NATIVE } from '@/shared/constants';
+import { motion } from '@/shared/theme';
 import { laneAtPosition } from '@/features/projects/model/task-lanes';
 
 export type TaskGhostRect = {
@@ -62,7 +65,7 @@ type TaskGhostLayerProps = {
 
 const LONG_PRESS_MS = 280;
 const POINTER_SLOP = 6;
-const SETTLE_SPRING = { damping: 22, stiffness: 260, mass: 0.8 };
+const SETTLE_SPRING = motion.spring.gentle;
 
 const TaskDragContext = createContext<TaskDragState | null>(null);
 
@@ -80,14 +83,6 @@ export function createPressGuard(windowMs: number): PressGuard {
 
 export const TaskDragProvider = TaskDragContext.Provider;
 
-export function useTaskPressGuard(): (action?: () => void) => void {
-  const drag = useContext(TaskDragContext);
-  return (action) => {
-    if (drag && !drag.pressAllowed()) return;
-    action?.();
-  };
-}
-
 export function TaskDropZone({ index, children }: TaskDropZoneProps) {
   const drag = useContext(TaskDragContext);
   const reduceMotion = useReducedMotion();
@@ -98,7 +93,9 @@ export function TaskDropZone({ index, children }: TaskDropZoneProps) {
     const active =
       drag != null && drag.hoverLane.value === index && drag.sourceLane.value !== index;
     return {
-      opacity: reduceMotion ? Number(active) : withTiming(Number(active), { duration: 140 }),
+      opacity: reduceMotion
+        ? Number(active)
+        : withTiming(Number(active), { duration: motion.duration.fast }),
     };
   });
 
@@ -108,7 +105,7 @@ export function TaskDropZone({ index, children }: TaskDropZoneProps) {
       <Animated.View
         pointerEvents="none"
         style={ringStyle}
-        className="border-legacy-accent bg-legacy-accent/5 absolute inset-0 rounded-3xl border-2"
+        className="border-accent rounded-card absolute inset-0 border-2"
       />
     </Animated.View>
   );
@@ -141,73 +138,69 @@ export function DraggableTask({ taskId, lane, disabled = false, children }: Drag
   const enabled = drag != null && !disabled;
   const hidden = drag?.ghostTaskId === taskId;
 
-  const liftRow = useCallback(
-    (x: number, y: number, width: number) => drag?.lift({ taskId, node: children, x, y, width }),
-    [children, drag, taskId]
-  );
+  const liftRow = (x: number, y: number, width: number) =>
+    drag?.lift({ taskId, node: children, x, y, width });
 
   const measure = (event: LayoutChangeEvent) => {
     rowWidth.value = event.nativeEvent.layout.width;
   };
 
-  const gesture = useMemo(() => {
-    const pan = Gesture.Pan().enabled(enabled);
-    const activated = IS_NATIVE
-      ? pan.activateAfterLongPress(LONG_PRESS_MS)
-      : pan.minDistance(POINTER_SLOP);
-    return activated
-      .onStart((event) => {
-        if (!drag) return;
-        dragging.value = true;
+  const pan = Gesture.Pan().enabled(enabled);
+  const activated = IS_NATIVE
+    ? pan.activateAfterLongPress(LONG_PRESS_MS)
+    : pan.minDistance(POINTER_SLOP);
+  const gesture = activated
+    .onStart((event) => {
+      if (!drag) return;
+      dragging.value = true;
+      drag.ghostX.value = 0;
+      drag.ghostY.value = 0;
+      drag.sourceLane.value = lane;
+      scheduleOnRN(liftRow, event.absoluteX - event.x, event.absoluteY - event.y, rowWidth.value);
+      scheduleOnRN(drag.markDrag);
+    })
+    .onUpdate((event) => {
+      if (!drag) return;
+      drag.ghostX.value = event.translationX;
+      drag.ghostY.value = event.translationY;
+      drag.hoverLane.value = laneAtPosition(
+        event.absoluteX,
+        drag.origin.value,
+        drag.span.value,
+        drag.lanes
+      );
+    })
+    .onEnd((event) => {
+      if (!drag) return;
+      const target = laneAtPosition(
+        event.absoluteX,
+        drag.origin.value,
+        drag.span.value,
+        drag.lanes
+      );
+      if (target >= 0 && target !== lane) {
+        scheduleOnRN(drag.drop, taskId, target);
+        scheduleOnRN(drag.settle, taskId);
+        return;
+      }
+      if (reduceMotion) {
         drag.ghostX.value = 0;
         drag.ghostY.value = 0;
-        drag.sourceLane.value = lane;
-        scheduleOnRN(liftRow, event.absoluteX - event.x, event.absoluteY - event.y, rowWidth.value);
-        scheduleOnRN(drag.markDrag);
-      })
-      .onUpdate((event) => {
-        if (!drag) return;
-        drag.ghostX.value = event.translationX;
-        drag.ghostY.value = event.translationY;
-        drag.hoverLane.value = laneAtPosition(
-          event.absoluteX,
-          drag.origin.value,
-          drag.span.value,
-          drag.lanes
-        );
-      })
-      .onEnd((event) => {
-        if (!drag) return;
-        const target = laneAtPosition(
-          event.absoluteX,
-          drag.origin.value,
-          drag.span.value,
-          drag.lanes
-        );
-        if (target >= 0 && target !== lane) {
-          scheduleOnRN(drag.drop, taskId, target);
-          scheduleOnRN(drag.settle, taskId);
-          return;
-        }
-        if (reduceMotion) {
-          drag.ghostX.value = 0;
-          drag.ghostY.value = 0;
-          scheduleOnRN(drag.settle, taskId);
-          return;
-        }
-        drag.ghostX.value = withSpring(0, SETTLE_SPRING);
-        drag.ghostY.value = withSpring(0, SETTLE_SPRING, (finished) => {
-          if (finished) scheduleOnRN(drag.settle, taskId);
-        });
-      })
-      .onFinalize(() => {
-        if (!drag || !dragging.value) return;
-        dragging.value = false;
-        scheduleOnRN(drag.markDrag);
-        drag.hoverLane.value = -1;
-        drag.sourceLane.value = -1;
+        scheduleOnRN(drag.settle, taskId);
+        return;
+      }
+      drag.ghostX.value = withSpring(0, SETTLE_SPRING);
+      drag.ghostY.value = withSpring(0, SETTLE_SPRING, (finished) => {
+        if (finished) scheduleOnRN(drag.settle, taskId);
       });
-  }, [drag, dragging, enabled, lane, liftRow, reduceMotion, rowWidth, taskId]);
+    })
+    .onFinalize(() => {
+      if (!drag || !dragging.value) return;
+      dragging.value = false;
+      scheduleOnRN(drag.markDrag);
+      drag.hoverLane.value = -1;
+      drag.sourceLane.value = -1;
+    });
 
   if (!drag) return children;
 

@@ -5,6 +5,7 @@ const ALLOWED_PATHS: readonly RegExp[] = [
   /^\/(agenda|projects|cameras|people|users|profile|security|settings|call|notification|watch|conversations)$/,
   /^\/settings\/(modules|activity)$/,
   /^\/cameras\/\d+$/,
+  /^\/projects\/\d+$/,
   /^\/conversations\/\d{1,19}$/,
 ];
 
@@ -28,7 +29,9 @@ export function deepLinkPath(link: string): string {
   if (path === CALL_PATH) {
     const callId = CALL_ID.exec(link)?.[1];
     if (!callId) return path;
-    return OUTSIDE.test(link) ? `${CALL_PATH}?callId=${callId}&outside=1` : `${CALL_PATH}?callId=${callId}`;
+    return OUTSIDE.test(link)
+      ? `${CALL_PATH}?callId=${callId}&outside=1`
+      : `${CALL_PATH}?callId=${callId}`;
   }
   if (path === NOTIFICATION_PATH) {
     const notificationId = NOTIFICATION_ID.exec(link)?.[1];

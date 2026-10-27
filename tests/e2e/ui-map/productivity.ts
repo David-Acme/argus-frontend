@@ -81,6 +81,14 @@ const crowdedDay: Row[] = Array.from({ length: 32 }, (_, index) =>
 
 const AGENDA_ROWS: Row[] = [...PRODUCTIVITY, ...busyDay, share(1400, 900, 2, 'edit')];
 
+const openMore = async (scene: Scene): Promise<void> => {
+  await scene.page
+    .getByLabel(say(scene, 'screens.projects.more', { name: 'Mudanza' }))
+    .first()
+    .click({ timeout: 8000 });
+  await sleep(800);
+};
+
 const openNew = click('screens.agenda.page.new', 'last');
 
 const openDetail = clickText('Reunión con el arquitecto');
@@ -255,8 +263,39 @@ export const PRODUCTIVITY_SCREENS: ScreenSpec[] = [
           ...Array.from({ length: 12 }, (_, index) =>
             project(1500 + index, index % 2 ? `Proyecto ${index}` : LONG_TEXT, {
               description: LONG_TEXT,
+              status: index % 4 === 0 ? 'done' : 'active',
             })
           ),
+        ],
+      },
+      { state: 'new-project-form', rows: PRODUCTIVITY, act: click('screens.projects.new-project') },
+      {
+        state: 'new-project-errors',
+        rows: PRODUCTIVITY,
+        act: async (scene) => {
+          await click('screens.projects.new-project')(scene);
+          await button(scene, 'screens.projects.sheet.save').last().click();
+          await sleep(700);
+        },
+      },
+    ],
+  },
+  {
+    screen: 'project',
+    inApp: true,
+    route: '/projects/[id]',
+    path: '/projects/700',
+    routes: BASELINE,
+    states: [
+      { state: 'populated', rows: PRODUCTIVITY, main: true },
+      {
+        state: 'no-tasks',
+        rows: [...HOUSEHOLD, project(700, 'Mudanza')],
+      },
+      {
+        state: 'many-long',
+        rows: [
+          ...PRODUCTIVITY,
           ...Array.from({ length: 18 }, (_, index) =>
             task(1600 + index, 700, index % 3 ? `Tarea ${index}` : LONG_TEXT, {
               status: ['todo', 'doing', 'done'][index % 3],
@@ -266,11 +305,8 @@ export const PRODUCTIVITY_SCREENS: ScreenSpec[] = [
         ],
       },
       {
-        state: 'coming-up-empty',
-        rows: [...HOUSEHOLD, project(700, 'Mudanza'), task(800, 700, 'Comprar cajas')],
-      },
-      {
         state: 'view-only-member',
+        path: '/projects/710',
         rows: [
           ...HOUSEHOLD,
           project(710, 'Casa de playa', { ownerId: 2 }),
@@ -278,33 +314,24 @@ export const PRODUCTIVITY_SCREENS: ScreenSpec[] = [
           task(730, 710, 'Pintar la reja', { status: 'doing' }),
         ],
       },
-      { state: 'status-menu', rows: PRODUCTIVITY, act: click('screens.projects.select-status') },
-      { state: 'new-project-form', rows: PRODUCTIVITY, act: click('screens.projects.new-project') },
       {
-        state: 'new-project-errors',
-        rows: PRODUCTIVITY,
-        act: async (scene) => {
-          await click('screens.projects.new-project')(scene);
-          await button(scene, 'common.save').last().click();
-          await sleep(700);
-        },
-      },
-      { state: 'edit-project-form', rows: PRODUCTIVITY, act: click('common.edit') },
-      {
-        state: 'delete-project-confirm',
-        rows: PRODUCTIVITY,
-        act: async (scene) => {
-          await click('common.edit')(scene);
-          await button(scene, 'common.delete').last().click();
-          await sleep(700);
-        },
+        state: 'more-menu',
+        rows: [...PRODUCTIVITY, member(740, 700, 2, 'edit')],
+        act: openMore,
       },
       { state: 'new-task-form', rows: PRODUCTIVITY, act: click('screens.projects.new-task') },
       { state: 'edit-task-form', rows: PRODUCTIVITY, act: clickText('Llamar a la mudanza') },
       {
         state: 'members-dialog',
         rows: [...PRODUCTIVITY, member(740, 700, 2, 'edit')],
-        act: click('screens.projects.members'),
+        act: async (scene) => {
+          await openMore(scene);
+          await scene.page
+            .getByRole('menuitem', { name: say(scene, 'screens.projects.members') })
+            .first()
+            .click();
+          await sleep(800);
+        },
       },
       {
         state: 'save-error-toast',
@@ -320,10 +347,10 @@ export const PRODUCTIVITY_SCREENS: ScreenSpec[] = [
         act: async (scene) => {
           await click('screens.projects.new-task')(scene);
           await scene.page
-            .getByRole('textbox', { name: say(scene, 'screens.projects.task-title') })
+            .getByRole('textbox', { name: say(scene, 'screens.projects.sheet.title') })
             .first()
             .fill('Contratar pintor');
-          await button(scene, 'common.save').last().click();
+          await button(scene, 'screens.projects.sheet.save').last().click();
           await sleep(1500);
         },
       },

@@ -40,7 +40,7 @@ mock.module('react-native-gesture-handler', async () => {
   return {
     Pressable: web.Pressable,
     ScrollView: web.ScrollView,
-    Gesture: { LongPress: chain },
+    Gesture: { LongPress: chain, Pan: chain },
     GestureDetector: ({ children }: { children: ReactNode }) => children,
   };
 });
@@ -92,6 +92,7 @@ mock.module('react-native-reanimated', async () => {
     useAnimatedScrollHandler: () => () => undefined,
     useAnimatedReaction: () => undefined,
     useAnimatedStyle: <T>(build: () => T) => build(),
+    useReducedMotion: () => false,
     withSpring: <T>(target: T) => target,
     withTiming: <T>(target: T, _config?: unknown, done?: (finished: boolean) => void) => {
       done?.(true);

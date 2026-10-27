@@ -4,8 +4,8 @@ import { useForm, useWatch } from 'react-hook-form';
 import type { UseFormReturn } from 'react-hook-form';
 import type { ICameraCacheRow, ICameraCatalogModel } from '@/core/interfaces';
 import { cameraService } from '@/core/services/camera.service';
-import { useFormSubmit } from '@/shared/hooks/use-form-submit';
 import { useTranslation } from '@/shared/hooks/use-translation';
+import { useFormSubmit } from '@/features/cameras/hooks/use-form-submit';
 import {
   cameraFormDefaults,
   cameraFormSchema,

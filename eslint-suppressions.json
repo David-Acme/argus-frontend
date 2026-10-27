@@ -438,6 +438,11 @@
       "count": 6
     }
   },
+  "src/features/cameras/hooks/use-form-submit.ts": {
+    "argus/http-home": {
+      "count": 1
+    }
+  },
   "src/features/cameras/model/camera-address.ts": {
     "complexity": {
       "count": 1
@@ -756,107 +761,8 @@
       "count": 5
     }
   },
-  "src/features/projects/components/project-board-header.tsx": {
-    "argus/no-inline-size": {
-      "count": 1
-    },
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/projects/components/project-card-row.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 1
-    },
-    "argus/no-inline-size": {
-      "count": 1
-    },
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 2
-    }
-  },
-  "src/features/projects/components/project-form.tsx": {
-    "@typescript-eslint/no-misused-promises": {
-      "count": 3
-    },
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/projects/components/project-switcher.tsx": {
-    "i18next/no-literal-string": {
-      "count": 1
-    }
-  },
-  "src/features/projects/components/task-board.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 1
-    },
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 2
-    },
-    "i18next/no-literal-string": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/projects/components/task-drag.tsx": {
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/projects/components/task-form.tsx": {
-    "@typescript-eslint/no-misused-promises": {
-      "count": 2
-    },
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/projects/components/task-lane.tsx": {
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 1
-    }
-  },
-  "src/features/projects/components/task-priority-mark.tsx": {
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 2
-    }
-  },
-  "src/features/projects/components/task-row.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 1
-    },
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 1
-    }
-  },
-  "src/features/projects/components/upcoming-tasks-panel.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 1
-    }
-  },
   "src/features/projects/model/task-lanes.ts": {
     "max-params": {
-      "count": 1
-    }
-  },
-  "src/features/projects/screens/projects-screen.tsx": {
-    "complexity": {
-      "count": 1
-    },
-    "max-lines": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 1
-    },
-    "max-statements": {
       "count": 1
     }
   },
@@ -1499,11 +1405,6 @@
       "count": 2
     }
   },
-  "src/shared/components/ui/form-scroll-view.tsx": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
   "src/shared/components/ui/form.tsx": {
     "@typescript-eslint/no-unnecessary-type-assertion": {
       "count": 1
@@ -1609,11 +1510,6 @@
   "src/shared/constants/index.ts": {
     "argus/no-export-all": {
       "count": 26
-    }
-  },
-  "src/shared/hooks/use-form-submit.ts": {
-    "argus/http-home": {
-      "count": 1
     }
   },
   "src/shared/hooks/use-infinite-list.ts": {

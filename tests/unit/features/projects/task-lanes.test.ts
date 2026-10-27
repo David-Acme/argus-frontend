@@ -5,7 +5,8 @@ import {
   laneAtPosition,
   laneOf,
   statusForLane,
-  upcomingTasks,
+  taskLayoutOf,
+  toggledStatus,
 } from '@/features/projects/model/task-lanes';
 
 const task = (
@@ -13,62 +14,52 @@ const task = (
   status: string,
   priority = 'none',
   dueAt: number | null = null
-): IProjectTaskCacheRow => ({
-  id,
-  projectId: '1',
-  title: `Task ${id}`,
-  status,
-  priority,
-  dueAt,
-});
+): IProjectTaskCacheRow => ({ id, projectId: '1', title: `Task ${id}`, status, priority, dueAt });
 
 describe('task lanes', () => {
-  test('every status belongs to exactly one lane', () => {
-    expect(['backlog', 'todo', 'doing', 'done', 'canceled'].map(laneOf)).toEqual([
-      'open',
-      'open',
+  test('every status belongs to Por hacer, En curso or Hechas, and an unknown one is to do', () => {
+    expect(['backlog', 'todo', 'doing', 'done', 'canceled', 'archived'].map(laneOf)).toEqual([
+      'todo',
+      'todo',
       'doing',
-      'finished',
-      'finished',
+      'done',
+      'done',
+      'todo',
     ]);
-    expect(laneOf('archived')).toBeNull();
   });
 
-  test('a lane lists its tasks by status order, then by priority', () => {
+  test('a lane lists its tasks by status, then priority, then the nearest date', () => {
     const lanes = groupTasksByLane([
       task('1', 'backlog', 'urgent'),
-      task('2', 'todo', 'low'),
+      task('2', 'todo', 'low', 200),
+      task('6', 'todo', 'low', 100),
       task('3', 'todo', 'urgent'),
       task('4', 'canceled'),
       task('5', 'done'),
     ]);
-    expect(lanes.open.map((entry) => entry.id)).toEqual(['3', '2', '1']);
+    expect(lanes.todo.map((entry) => entry.id)).toEqual(['3', '6', '2', '1']);
     expect(lanes.doing).toEqual([]);
-    expect(lanes.finished.map((entry) => entry.id)).toEqual(['5', '4']);
+    expect(lanes.done.map((entry) => entry.id)).toEqual(['5', '4']);
   });
 
-  test('dropping into a lane keeps a status the lane already holds', () => {
-    expect(statusForLane('open', 'backlog')).toBe('backlog');
-    expect(statusForLane('finished', 'canceled')).toBe('canceled');
+  test('moving into a lane keeps a status the lane already holds', () => {
+    expect(statusForLane('todo', 'backlog')).toBe('backlog');
+    expect(statusForLane('done', 'canceled')).toBe('canceled');
     expect(statusForLane('doing', 'backlog')).toBe('doing');
-    expect(statusForLane('finished', 'doing')).toBe('done');
-    expect(statusForLane('open', 'done')).toBe('todo');
+    expect(statusForLane('done', 'doing')).toBe('done');
+    expect(statusForLane('todo', 'done')).toBe('todo');
   });
 
-  test('upcoming lists open dated tasks soonest first', () => {
-    const upcoming = upcomingTasks(
-      [
-        task('1', 'todo', 'none', 300),
-        task('2', 'done', 'none', 100),
-        task('3', 'doing', 'none', 200),
-        task('4', 'todo'),
-      ],
-      5
-    );
-    expect(upcoming.map((entry) => entry.id)).toEqual(['3', '1']);
-    expect(
-      upcomingTasks([task('1', 'todo', 'none', 1), task('2', 'todo', 'none', 2)], 1)
-    ).toHaveLength(1);
+  test('the check finishes an open task and reopens a done one', () => {
+    expect(toggledStatus('todo')).toBe('done');
+    expect(toggledStatus('doing')).toBe('done');
+    expect(toggledStatus('done')).toBe('todo');
+  });
+
+  test('the board needs a wide window, the grouped list serves the rest', () => {
+    expect(taskLayoutOf(360)).toBe('groups');
+    expect(taskLayoutOf(1024)).toBe('groups');
+    expect(taskLayoutOf(1280)).toBe('board');
   });
 
   test('a pointer position maps onto the lane under it, clamped to the board', () => {

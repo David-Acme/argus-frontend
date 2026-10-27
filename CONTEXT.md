@@ -5660,6 +5660,8 @@ many files; the reason names that cause.
 | `scripts/lib/bundle-baseline.txt` | `dist-bytes` | `p2/bundle` (T9) merged with redesign/main cde97d12, whose own export, measured the same day, is entry 7,434,450 B and `dist/` 8,914,334 B above the recorded 7,379,320 and 8,906,690 B (the hold-to-talk merge has no row of its own). With the route screens lazy the entry is 6,493,364 B (−941,086 against that tree) and `dist/` 8,920,271 B (+5,937): each of the 29 route chunks carries its own Metro module wrappers, and the entry gains the async-import paths that name them and `lazyScreen`; on 9b3757c, before the merge, the same change measured `dist/` 8,905,970 B. The entry baseline is lowered with it. | 2026-10-26 |
 | `scripts/lib/bundle-baseline.txt` | `dist-bytes` | `p2/bundle` follow-up: `expo-camera` and `qrcode` load on use (rule 30) from their own `expo-camera` and `qr-code` chunks instead of `__common`. Measured on the same tree, redesign/main 090f5f6: entry 6,493,364 → 6,444,328 B (−49,036) and `dist/` 8,920,271 → 8,922,342 B (+2,071): the two chunks' own Metro wrappers, the `DeviceCamera` and `LazyQrCode` wrappers and the async-import paths. The entry baseline is lowered with it. | 2026-10-26 |
 | `scripts/lib/bundle-baseline.txt` | `entry-chunk-bytes`, `dist-bytes` | Lead merge of `p2/inicio` (a22c419e), measured on the integrated tree: entry 6,444,328 → 6,502,624 B (+58,296) and `dist/` 8,922,342 → 8,945,214 B (+22,872). Inicio is the eager first screen, so its new composition, hero, states, «Esta noche», Estado and the help/try sections load with the entry; the entry stays 97,376 B under R-D36's 6,600,000 B ceiling. | 2026-10-26 |
+| `eslint-suppressions.json` | `src/features/cameras/hooks/use-form-submit.ts argus/http-home` | `p4/proyectos`: the old project and task forms were the other consumers of `shared/hooks/use-form-submit.ts`; with them gone the camera setup is its only reader, so the hook moves into `features/cameras` (the 2+ rule) with its one existing `http-home` suppression, unchanged in count. | 2026-10-26 |
+| `scripts/lib/quality-baseline.txt` | `is-flag-in-features` | The same move: the hook's existing `IS_WEB` check (no keyboard to dismiss on the web) now counts as a feature's. Nothing new is branched; the shared count falls by the same one. | 2026-10-26 |
 
 
 ## The overlay components, Phase 1 (2026-10-20, p1/ds-d)
@@ -7379,3 +7381,42 @@ v2). What was decided while building it:
   identity/privacy_choice) and `PUT`. Modules and Listo: the module catalog
   view cache and its `ModuleUpdate` frames. Sign-in QR, approval and
   invitation: HTTP only, short-lived challenges with no local copy.
+
+## Proyectos (2026-10-26, Phase 4, p4/proyectos)
+
+Spec §9.5 and R-D7, with no prototype frame of its own: it takes the Agenda's
+density and components.
+
+- **Routes.** `/projects` is the list and `/projects/[id]` the project; both
+  render `ProjectsScreen`, and the old query links (`/projects?id=…&task=…`,
+  `?new=project|task` from Command) still work, so Inicio, Agenda and Command
+  keep their hrefs. Phone: the list, and a pushed project whose back returns to
+  the list (or the Agenda from the list). Tablet and desktop: `Screen
+  columns="panes"`, the list (`size.columnAside`) beside the selected project,
+  which starts at the first one.
+- **The list** is two sections, «En marcha» and «Terminados». A row
+  (`ProjectLine`, a feature composition like the Agenda's line, because `Row`
+  is at its ten-prop budget) reads «Ana, Luis · 3 de 8 hechas» under the name
+  and a `Meter` below; a project with no tasks reads «Aún no hay tareas» and
+  has no bar (W36). Each row reads its own scoped caches.
+- **The project.** Title, then the meta line, the bar, the description and,
+  for a view-only member, an inline notice. Miembros, Editar proyecto and
+  Pedir a Argus live in the «⋯» `Menu` (a single item shows as its own icon
+  button). Nueva tarea is the ink «+». Tasks are grouped Por hacer · En curso
+  · Hechas, Hechas collapsed behind «Mostrar N»; the board with the three
+  lanes appears only when the window is at least `BOARD_MIN_WIDTH` (1280),
+  where three lanes still fit beside the list, and keeps drag between lanes.
+  A task's `Check` completes or reopens it with Deshacer; a long press (touch)
+  or right click opens its menu (Pasar a…, Editar, Borrar); a tap edits.
+- **Sheets.** One task sheet and one project sheet on the redesign's `Sheet`
+  (title + ✕, one Guardar, no Cancelar; Borrar keeps its words as a danger row
+  inside the body). The state is a three-way `Choice` over the lanes; saving
+  keeps a «Pendiente» or «Cancelada» task's status when its lane did not change.
+- **Argus.** The empty list and the empty project offer suggestion chips that
+  open the thread with a draft (the Agenda's `Ideas`, now exported and fed
+  translated text). «por Argus» is not shown: `project_task.created_by` is the
+  user Argus acted for, and no column says a row came from Argus.
+- **Data.** Everything is the view cache projected from WatermelonDB
+  (`project.list`, `project.tasks.<id>`, `project.members.<id>`,
+  `people.users`) with the optimistic lenses, so the screen paints from local
+  data and follows `/sync` live.

@@ -63,7 +63,7 @@ export function useFormSubmit<TValues extends FieldValues, TResult>({
       }
 
       const fields = Object.fromEntries(
-        Object.entries(response.errors?.fields ?? {}).filter(([name]) => name in form.getValues()),
+        Object.entries(response.errors?.fields ?? {}).filter(([name]) => name in form.getValues())
       );
       if (Object.keys(fields).length > 0) {
         for (const [name, messages] of Object.entries(fields)) {

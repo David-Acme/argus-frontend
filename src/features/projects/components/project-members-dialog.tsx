@@ -1,7 +1,10 @@
 import type { IPeopleDirectoryCacheRow, IProjectMemberCacheRow } from '@/core/interfaces';
 import { projectMemberService } from '@/core/services/project-member.service';
 import type { ShareAccess } from '@/core/types';
-import { ShareMembersDialog, type ShareDialogLabels } from '@/shared/components/sharing/share-members-dialog';
+import {
+  ShareMembersDialog,
+  type ShareDialogLabels,
+} from '@/shared/components/sharing/share-members-dialog';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { runOptimistic } from '@/shared/libs/optimistic-action';
 import { personFullName } from '@/shared/libs/sharing';
@@ -66,7 +69,9 @@ export function ProjectMembersDialog({
 
   const changeAccess = (member: IProjectMemberCacheRow, next: ShareAccess) => {
     void runOptimistic({
-      intents: [{ table: 'project_member', kind: 'update', recordId: member.id, values: { access: next } }],
+      intents: [
+        { table: 'project_member', kind: 'update', recordId: member.id, values: { access: next } },
+      ],
       call: () => projectMemberService.setAccess(member.id, next),
       success: t('screens.projects.member-saved'),
     });
