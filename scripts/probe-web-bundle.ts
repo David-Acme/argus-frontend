@@ -22,7 +22,10 @@ const BUNDLE_BASELINE = join(ROOT, 'scripts', 'lib', 'bundle-baseline.txt');
 
 const checkBudget = (): boolean => {
   const sizes = measureBundle(DIST);
-  const failures = budgetFailures(parseBundleBaseline(readFileSync(BUNDLE_BASELINE, 'utf8')), sizes);
+  const failures = budgetFailures(
+    parseBundleBaseline(readFileSync(BUNDLE_BASELINE, 'utf8')),
+    sizes
+  );
   for (const failure of failures) console.error(`probe-web-bundle: ${failure}`);
   console.log(`probe-web-bundle: entry chunk ${sizes.entryBytes} B, dist/ ${sizes.distBytes} B`);
   return failures.length === 0;
@@ -48,9 +51,9 @@ const runExport = async (): Promise<void> => {
 };
 
 const contentPolicy = (): string => {
-  const config = JSON.parse(
-    readFileSync(join(ROOT, 'src-tauri', 'tauri.conf.json'), 'utf8')
-  ) as { app?: { security?: { csp?: Record<string, string> } } };
+  const config = JSON.parse(readFileSync(join(ROOT, 'src-tauri', 'tauri.conf.json'), 'utf8')) as {
+    app?: { security?: { csp?: Record<string, string> } };
+  };
   const csp = config.app?.security?.csp;
   if (!csp) throw new Error('tauri.conf.json declares no app.security.csp');
   return Object.entries(csp)
@@ -69,9 +72,7 @@ const bundleServer = (csp: string) =>
           headers: { 'Content-Security-Policy': csp },
         });
       const path = normalize(decodeURIComponent(new URL(request.url).pathname));
-      const target = extname(path)
-        ? resolve(DIST_ROOT, `.${path}`)
-        : join(DIST_ROOT, 'index.html');
+      const target = extname(path) ? resolve(DIST_ROOT, `.${path}`) : join(DIST_ROOT, 'index.html');
       if (target !== DIST_ROOT && !target.startsWith(`${DIST_ROOT}${sep}`)) return notFound();
       const file = Bun.file(target);
       if (!(await file.exists())) return notFound();
@@ -83,19 +84,25 @@ const bundleServer = (csp: string) =>
 
 const WELCOME_LOCALES = [welcomeEn, welcomeEs] as const;
 
-const heroFailures = async (page: Page): Promise<string[]> => {
+const welcomeFailures = async (page: Page): Promise<string[]> => {
   const tree = await page.locator('#root').ariaSnapshot();
-  const locale = WELCOME_LOCALES.find((strings) => tree.includes(strings['hero-label']));
-  if (!locale) return [`the welcome hero exposes no element named by its label: ${excerpt(tree)}`];
+  const locale = WELCOME_LOCALES.find((strings) => tree.includes(strings.title));
+  if (!locale)
+    return [`the welcome screen exposes no heading named by its title: ${excerpt(tree)}`];
   const failures: string[] = [];
-  const named = await page.getByRole('button', { name: locale['hero-label'], exact: true }).count();
-  if (named !== 1) failures.push(`the welcome hero has ${named} buttons named by its label, not one`);
-  if (tree.includes(locale.modules.soon)) {
-    failures.push('the welcome hero exposes its decorative chips to assistive technology');
-  }
-  if (tree.includes(locale.hello)) {
-    failures.push('the welcome hero exposes its speech bubble to assistive technology');
-  }
+  const heading = await page
+    .getByRole('heading', { name: locale.title, level: 1, exact: true })
+    .count();
+  if (heading !== 1)
+    failures.push(
+      `the welcome screen has ${heading} level-one headings named by its title, not one`
+    );
+  const estela = await page.getByRole('img', { name: locale['estela-label'], exact: true }).count();
+  if (estela !== 1)
+    failures.push(`the welcome screen has ${estela} images named for Estela, not one`);
+  const start = await page.getByRole('button', { name: locale.cta, exact: true }).count();
+  if (start !== 1)
+    failures.push(`the welcome screen has ${start} buttons named by its call to action, not one`);
   return failures;
 };
 
@@ -123,7 +130,7 @@ const main = async (): Promise<void> => {
     let rendered = '';
     try {
       await page.waitForFunction(
-        () => ((document.getElementById('root')?.innerText ?? '').trim().length > 0),
+        () => (document.getElementById('root')?.innerText ?? '').trim().length > 0,
         undefined,
         { timeout: READY_TIMEOUT_MS }
       );
@@ -132,8 +139,7 @@ const main = async (): Promise<void> => {
     }
     await page.waitForTimeout(SETTLE_MS);
     rendered =
-      rendered ||
-      (await page.evaluate(() => document.getElementById('root')?.innerText ?? ''));
+      rendered || (await page.evaluate(() => document.getElementById('root')?.innerText ?? ''));
 
     const unexpected = consoleErrors.filter(
       (text) => !ALLOWED.some((allowed) => allowed.match.test(text))
@@ -146,7 +152,7 @@ const main = async (): Promise<void> => {
       failures.push(`the root shows the error boundary: ${excerpt(rendered)}`);
     }
     for (const text of unexpected) failures.push(`console.error: ${excerpt(text)}`);
-    if (failures.length === 0) failures.push(...(await heroFailures(page)));
+    if (failures.length === 0) failures.push(...(await welcomeFailures(page)));
 
     if (failures.length > 0) {
       for (const failure of failures) console.error(`probe-web-bundle: ${failure}`);
