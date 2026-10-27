@@ -140,6 +140,13 @@ paired → `/login` (desktop QR or mobile face login). Screens never redirect
 on auth themselves. Each screen lays itself out with `AppScreen` (scroll,
 max width, aside, bottom-nav claim) and, for detail screens, `ScreenHeader`.
 
+The cold-start splash (`expo-splash-screen` in `app.config.ts`) shows Estela's still pose on
+the light (`#F4F1ED`) and dark (`#181816`) backgrounds: `src/assets/images/splash.png` and
+`splash-dark.png`, rendered once from the prototype's own Estela renderer (the particle still
+frame, cropped and centred at 600 of 1024 px on a transparent canvas). Until the phone run
+(finding #36) both splash and launcher icons were the template's atom; the launcher icon
+(`icon.png`, `adaptive-icon.png`) and `src-tauri/icons` still are, and wait for the owner's mark.
+
 - **Routes** (`src/app/`): `/` (entry router + dashboard: welcome header,
   activity, camera grid, projects carousel, agenda, notifications),
   `/agenda` (month/week/day calendar + event forms), `/projects`
