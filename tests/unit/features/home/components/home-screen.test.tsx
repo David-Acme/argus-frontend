@@ -33,6 +33,7 @@ const state = {
   ]),
   creates: true,
   guardView: true,
+  productivity: true,
   summary: {
     camerasTotal: 5,
     camerasOnline: 5,
@@ -61,6 +62,7 @@ mock.module('@/shared/hooks/use-capabilities', () => ({
     has: (capability: string) => state.granted.has(capability),
     can: () => state.creates,
     guard: { view: state.guardView },
+    moduleActive: (moduleId: string) => moduleId !== 'productivity' || state.productivity,
   }),
 }));
 
@@ -182,6 +184,7 @@ afterEach(() => {
     roleActive: true,
     creates: true,
     guardView: true,
+    productivity: true,
     granted: new Set([
       'reminders.read',
       'agenda.read',
@@ -331,6 +334,13 @@ describe('Inicio at night, away and with little data', () => {
     state.mode = 'away';
     render(<HomeScreen />);
     expect(order(ALL)).toEqual(['watch', 'now', 'cameras', 'news']);
+  });
+
+  test('with Productividad off the agenda columns go, live, whatever the role reads', () => {
+    setWindowWidth(1280);
+    state.productivity = false;
+    render(<HomeScreen />);
+    expect(order(ALL)).toEqual(['news', 'cameras', 'people']);
   });
 
   test('a sparse home at 1280 px closes the side column with Estado', () => {

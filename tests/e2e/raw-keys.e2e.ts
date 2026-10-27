@@ -30,7 +30,7 @@ test('a value the client does not know reads as text, never as a translation key
   await expect.poll(() => connected(baseUrl, 'A'), { timeout: 10000 }).toBe(1);
 
   const steps = [
-    ['button', 'Open security'],
+    ['tab', 'Security'],
     ['tab', 'Settings'],
     ['tab', 'You'],
   ] as const;

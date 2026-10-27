@@ -35,6 +35,7 @@ function DropdownMenu({ label, items, icon = 'more' }: ButtonMenuProps) {
   return (
     <DropdownPrimitive.Root>
       <DropdownPrimitive.Trigger
+        role="button"
         aria-label={label}
         className="size-target-min web:focus-ring web:hover:bg-fill items-center justify-center rounded-full">
         <Icon name={icon} />

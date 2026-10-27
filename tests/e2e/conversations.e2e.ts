@@ -66,6 +66,7 @@ test('the conversations list Argus first, then the household with its unread and
   const escapes = await openFirst(browser, app);
   await expect.poll(() => connected(baseUrl, 'A'), { timeout: 10000 }).toBe(1);
 
+  await screen.getByRole('tab', 'Argus').first().click();
   await screen.getByRole('button', 'Messages').first().click();
   await expect(screen.getByText('Argus', { exact: true }).first()).toBeVisible({ timeout: 10000 });
   await expect(screen.getByText('Dinner is ready', { exact: true })).toBeVisible();
@@ -95,8 +96,9 @@ test('opening a thread reads it, shows where Argus turns were said, and clearing
   const escapes = await openFirst(browser, app);
   await expect.poll(() => connected(baseUrl, 'A'), { timeout: 10000 }).toBe(1);
 
+  await screen.getByRole('tab', 'Argus').first().click();
   await screen.getByRole('button', 'Messages').first().click();
-  await screen.getByText('Argus', { exact: true }).last().click();
+  await screen.getByRole('button', /^Argus\. /).click();
   await expect(screen.getByText('From the laptop', { exact: true })).toBeVisible({ timeout: 10000 });
   await expect(screen.getByText('Through the camera', { exact: true })).toBeVisible();
   await expect(screen.getByRole('heading', 'Today')).toBeVisible();

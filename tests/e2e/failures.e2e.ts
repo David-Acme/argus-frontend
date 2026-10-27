@@ -33,7 +33,10 @@ test('members do not read "No open sessions" when the sessions overview failed t
   await expect.poll(() => connected(baseUrl, 'A'), { timeout: 10000 }).toBe(1);
 
   await screen.getByRole('tab', 'You').first().click();
-  await screen.getByRole('button', 'People').first().click();
+  await screen
+    .getByRole('button', /^People, /)
+    .first()
+    .click();
   await expect(screen.getByText(/Luis Paz/).first()).toBeVisible({ timeout: 10000 });
   await expect(
     screen.getByText('The connected devices could not be loaded.', { exact: true })
@@ -99,10 +102,10 @@ test('home does not say nothing is pending before anything was synced', async ({
   await control(baseUrl, 'refuse?device=A&ms=600000');
   const escapes = await openFirst(browser, app);
 
-  await expect(
-    screen.getByText('Your reminders have not arrived yet', { exact: true })
-  ).toBeVisible({ timeout: 15000 });
-  await expect(screen.getByText('Nothing is pending', { exact: true })).toBeHidden();
+  await expect(screen.getByRole('progressbar', 'Loading Home')).toBeVisible({ timeout: 15000 });
+  await expect(screen.getByText('Nothing due today', { exact: true })).toBeHidden();
+  await expect(screen.getByText('Free day', { exact: true })).toBeHidden();
+  await expect(screen.getByRole('heading', 'All quiet.')).toBeHidden();
 
   expect(escapes).toEqual([]);
 });

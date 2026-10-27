@@ -1,5 +1,10 @@
 import { describe, expect, test } from 'bun:test';
-import { firstStep, isNewHousehold, sosOnInicio } from '@/features/home/model/inicio-states';
+import {
+  agendaOnInicio,
+  firstStep,
+  isNewHousehold,
+  sosOnInicio,
+} from '@/features/home/model/inicio-states';
 import { dayDetections, heroStats, statPlace } from '@/features/home/model/inicio-stats';
 
 const ALL = { cameras: 5, alerts: 0, detections: 4, pending: 3 };
@@ -103,5 +108,14 @@ describe('the SOS on Inicio', () => {
     expect(sosOnInicio({ panics: true, hasSecurityTab: false })).toBe(true);
     expect(sosOnInicio({ panics: true, hasSecurityTab: true })).toBe(false);
     expect(sosOnInicio({ panics: false, hasSecurityTab: false })).toBe(false);
+  });
+});
+
+describe('the agenda on Inicio', () => {
+  test('it belongs to Productividad: off, the lines go even for a role that reads reminders', () => {
+    expect(agendaOnInicio({ productivity: true, reminders: true, agenda: true })).toBe(true);
+    expect(agendaOnInicio({ productivity: true, reminders: true, agenda: false })).toBe(true);
+    expect(agendaOnInicio({ productivity: false, reminders: true, agenda: false })).toBe(false);
+    expect(agendaOnInicio({ productivity: true, reminders: false, agenda: false })).toBe(false);
   });
 });

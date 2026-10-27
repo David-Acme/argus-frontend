@@ -118,8 +118,9 @@ export function ModuleSection({ module, switches }: ModuleProps) {
           danger
           title={t(
             danger === 'erase'
-              ? 'screens.modules.actions.erase'
-              : 'screens.modules.actions.uninstall'
+              ? 'screens.modules.actions.erase-named'
+              : 'screens.modules.actions.uninstall-named',
+            { name: module.name || t('screens.modules.core-name') }
           )}
           meta={t(
             danger === 'erase'

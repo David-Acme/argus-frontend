@@ -45,9 +45,10 @@ test('an alert raised for the user is on Home with its two answers, and a confir
   const escapes = await openFirst(browser, app);
   await expect.poll(() => connected(baseUrl, 'A'), { timeout: 10000 }).toBe(1);
 
-  await expect(screen.getByText(/Security alert · Patio trasero \(Casa\)/).first()).toBeVisible({ timeout: 10000 });
+  await expect(screen.getByRole('heading', 'Someone at Patio trasero.')).toBeVisible({ timeout: 10000 });
+  await expect(screen.getByRole('alert').last()).toBeVisible();
   await expect(screen.getByText('It is real', { exact: true })).toBeVisible();
-  await screen.getByText('False alarm', { exact: true }).first().click();
+  await screen.getByText('It is a false alarm', { exact: true }).click();
   await expect(screen.getByText('Is it a false alarm?')).toBeVisible();
   await screen.getByText('False alarm', { exact: true }).last().click();
 
@@ -55,6 +56,7 @@ test('an alert raised for the user is on Home with its two answers, and a confir
     ((await (await fetch(new URL('/__e2e/requests', baseUrl))).json()) as { requests: string[] }).requests;
   await expect.poll(requests).toContain('PATCH /notification/responses/5 @A');
   await expect(screen.getByText('It is real', { exact: true })).toBeHidden({ timeout: 5000 });
+  await expect(screen.getByRole('heading', 'Someone at Patio trasero.')).toBeHidden();
 
   expect(escapes).toEqual([]);
 });

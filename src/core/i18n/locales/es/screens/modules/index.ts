@@ -106,6 +106,8 @@ export const modules = {
     reinstall: 'Reinstalar',
     uninstall: 'Desinstalar',
     erase: 'Borrar mis datos',
+    'uninstall-named': 'Desinstalar {name}',
+    'erase-named': 'Borrar mis datos de {name}',
   },
   lifecycle: {
     not_installed: 'No instalado',

@@ -2,13 +2,14 @@ import { controls, unnamed } from './support/accessibility';
 import { connected, routes, store } from './support/harness';
 import { populated, seededProject } from './support/screens';
 import { expect, test } from './support/devices';
+import { SETTINGS_ROUTES } from './ui-map/household';
 
 test('the project dialog names every field by its visible label', async ({ app, second }) => {
   const baseUrl = app.baseUrl ?? '';
   await second.open();
   await expect.poll(() => connected(baseUrl, 'B'), { timeout: 10000 }).toBe(1);
   await second.page.getByRole('tab', { name: 'Agenda', exact: true }).first().click();
-  await second.page.getByRole('button', { name: 'Projects', exact: true }).first().click();
+  await second.page.getByRole('tab', { name: 'Projects', exact: true }).first().click();
   await second.page.getByRole('button', { name: 'New project' }).first().click();
   await expect
     .poll(async () => (await controls(second.page)).some((control) => control.role === 'textbox'), {
@@ -37,7 +38,7 @@ const tab = (name: string) => async (page: import('playwright-core').Page) => {
   await page.waitForTimeout(800);
 };
 
-const SAME_PURPOSE = new Set(['projects: button: New project']);
+const SAME_PURPOSE = new Set(['projects: button: New project', 'profile: button: Invite']);
 
 const VISITS: Visit[] = [
   { name: 'home', go: async (page) => page.waitForTimeout(800) },
@@ -45,14 +46,13 @@ const VISITS: Visit[] = [
     name: 'projects',
     go: async (page) => {
       await tab('Agenda')(page);
-      await click('Projects')(page);
+      await tab('Projects')(page);
     },
   },
   {
     name: 'security',
     go: async (page) => {
-      await tab('Home')(page);
-      await click('Open security')(page);
+      await tab('Security')(page);
     },
   },
   { name: 'places', go: click('Places and modes', false) },
@@ -96,7 +96,7 @@ test('every control on the section-2 screens has a name, and no two different co
   second,
 }) => {
   const baseUrl = app.baseUrl ?? '';
-  await routes(baseUrl, populated);
+  await routes(baseUrl, [...populated, ...SETTINGS_ROUTES]);
   await store(baseUrl, 'project', seededProject);
   await second.open();
   await expect.poll(() => connected(baseUrl, 'B'), { timeout: 10000 }).toBe(1);

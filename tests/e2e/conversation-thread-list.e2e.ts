@@ -183,13 +183,12 @@ const openThread = async (second: SecondDevice, baseUrl: string, size: number): 
   await page.setViewportSize(PHONE);
   const cdp = await second.context.newCDPSession(page);
   await cdp.send('Performance.enable');
-  await second.open();
+  await second.open('/conversations');
   await expect.poll(() => connected(baseUrl, 'B'), { timeout: 15000 }).toBe(1);
-  await page.getByRole('button', { name: 'Messages' }).first().click();
   await page.getByText(new RegExp(`${bodyOf(size)}$`)).first().waitFor({ timeout: 60000 });
   await cdp.send('Emulation.setCPUThrottlingRate', { rate: CPU_SLOWDOWN });
   const opening = Date.now();
-  await page.getByText('Argus', { exact: true }).first().click();
+  await page.getByRole('button', { name: /^Argus\. / }).click();
   await bubble(page, size).waitFor({ state: 'visible', timeout: 60000 });
   const openMs = Date.now() - opening;
   await page.waitForTimeout(1500);

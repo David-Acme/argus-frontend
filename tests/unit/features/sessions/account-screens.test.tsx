@@ -284,7 +284,7 @@ describe('Módulos', () => {
   test('a module switches through its lifecycle and offers to uninstall', () => {
     render(<ModulesScreen />);
     fireEvent.click(screen.getByRole('switch', { name: 'Vigilancia' }));
-    fireEvent.click(screen.getAllByRole('button', { name: /^Desinstalar/ })[0]!);
+    fireEvent.click(screen.getByRole('button', { name: /^Desinstalar Vigilancia,/ }));
     expect(state.toggled).toEqual(['surveillance', 'remove:surveillance']);
   });
 

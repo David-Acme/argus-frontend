@@ -1,5 +1,5 @@
 import type { Page } from 'playwright-core';
-import { connected, patchContext, store } from './support/harness';
+import { connected, emit, patchContext, store } from './support/harness';
 import { expect, openFirst, test } from './support/devices';
 
 const at = Math.floor(Date.now() / 1000);
@@ -51,7 +51,9 @@ test('a reminder Argus keeps reaches both devices read-only, with no check and n
     await second.page.getByRole('checkbox', { name: 'Mark «Water the plants» as done' }).count()
   ).toBe(0);
 
-  await store(baseUrl, 'reminder', reminder(702, 'Call the plumber', null));
+  await emit(baseUrl, [
+    { frame: { operation: 4, option: 'reminder', info: reminder(702, 'Call the plumber', null) } },
+  ]);
   await expect
     .poll(() => lineCount(second.page, 'Call the plumber'), { timeout: LIVE_MS * 5 })
     .toBe(1);
