@@ -144,3 +144,15 @@ export function keyboardOffsets(bottomInset: number): KeyboardOffsets {
   const sticky = { closed: 0, opened: inset };
   return { list: inset, sticky, pill: { ...sticky } };
 }
+
+export type StickyKeyboardEvent = 'show' | 'resume' | 'leave';
+
+export function stickyKeyboardStep(
+  enabled: boolean,
+  event: StickyKeyboardEvent,
+  keyboardShown: boolean
+): boolean {
+  if (event === 'show') return true;
+  if (event === 'leave') return false;
+  return enabled && keyboardShown;
+}

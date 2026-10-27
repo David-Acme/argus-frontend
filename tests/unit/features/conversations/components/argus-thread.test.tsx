@@ -90,7 +90,12 @@ mock.module('expo-router', () => ({
 }));
 mock.module('react-native-keyboard-controller', async () => {
   const web = await import('react-native-web');
-  return { KeyboardStickyView: web.View, KeyboardAwareScrollView: web.ScrollView };
+  return {
+    KeyboardStickyView: web.View,
+    KeyboardAwareScrollView: web.ScrollView,
+    KeyboardEvents: { addListener: () => ({ remove: () => undefined }) },
+    KeyboardController: { dismiss: async () => undefined, isVisible: () => false },
+  };
 });
 mock.module('@/features/conversations/components/thread-scroller', () => ({
   ThreadScroller: ({ data, renderItem }: ListProps) =>
