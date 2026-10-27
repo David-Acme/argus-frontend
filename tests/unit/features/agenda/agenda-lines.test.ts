@@ -87,6 +87,30 @@ describe('the words of an agenda line', () => {
     expect(kindWords(named('Cena con Luis'), context)).toBe('Evento compartido');
   });
 
+  test('an event or a task Argus made says «por Argus» in its meta', () => {
+    const made = items(
+      [],
+      [
+        entry('event:argus', at(18), { title: 'Cita', ownerId: '1', createdVia: 'assistant' }),
+        entry('task:argus', at(0), {
+          title: 'Comprar focos',
+          source: 'task',
+          isAllDay: true,
+          createdVia: 'assistant',
+        }),
+        entry('event:app', at(19), { title: 'Cena', ownerId: '1', createdVia: 'app' }),
+      ]
+    );
+    const meta = (title: string) => {
+      const found = made.find((item) => item.title === title);
+      if (!found) throw new Error(title);
+      return lineWords(found, context).meta;
+    };
+    expect(meta('Cita')).toBe('Evento · por Argus');
+    expect(meta('Comprar focos')).toBe('Tarea · por Argus');
+    expect(meta('Cena')).toBe('Evento');
+  });
+
   test('a free slot gives its start, its length and its end', () => {
     expect(freeWords({ from: at(15), to: at(17) }, context)).toEqual({
       time: '15:00',

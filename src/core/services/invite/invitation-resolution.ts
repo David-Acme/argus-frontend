@@ -9,12 +9,18 @@ const FINGERPRINT_PATTERN = /^[0-9A-Fa-f]{64}$/;
 const isInviteRole = (value: unknown): value is InviteRole =>
   typeof value === 'string' && INVITE_ROLES.includes(value as InviteRole);
 
+const nameOf = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const name = value.trim();
+  return name.length > 0 ? name : null;
+};
+
 const sameFingerprint = (left: string, right: string): boolean =>
   left.toUpperCase() === right.toUpperCase();
 
 export const validateInvitationResolution = (
   qr: InvitationQrPayload,
-  value: unknown,
+  value: unknown
 ): IInviteAcceptResult | null => {
   if (!value || typeof value !== 'object') return null;
   const result = value as Record<string, unknown>;
@@ -49,10 +55,13 @@ export const validateInvitationResolution = (
     caPem: result.caPem,
     scheme: result.scheme,
     port: result.port,
+    inviterName: nameOf(result.inviterName),
   };
 };
 
-export const invitationResolveRequest = (qr: InvitationQrPayload): { request: NetHttpRequest; pin: NetPin } => ({
+export const invitationResolveRequest = (
+  qr: InvitationQrPayload
+): { request: NetHttpRequest; pin: NetPin } => ({
   request: {
     url: `https://${qr.ip}:${qr.port}${RESOLVE_PATH}`,
     method: 'POST',

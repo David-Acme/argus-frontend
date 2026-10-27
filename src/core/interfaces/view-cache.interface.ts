@@ -4,6 +4,7 @@ import type {
   CameraDriverKind,
   CameraPrivacyState,
   CameraRecordMode,
+  CreatedVia,
   EventSeverity,
   IconName,
   NotificationData,
@@ -86,6 +87,7 @@ export interface IProjectTaskCacheRow {
   status: string;
   priority: string;
   dueAt: number | null;
+  createdVia?: CreatedVia;
 }
 
 export interface IPeopleDirectoryCacheRow {
@@ -121,6 +123,7 @@ export interface ICalendarEventCacheSource {
   projectId: string | null;
   recurrenceRule?: string | null;
   recurrenceExceptions?: readonly RecurrenceException[];
+  createdVia?: string;
 }
 
 export interface IEventListCacheRow {
@@ -205,4 +208,5 @@ export interface IProjectTaskCalendarCacheSource {
   dueAt: Date | null;
   status: string;
   projectId: string;
+  createdVia?: string;
 }

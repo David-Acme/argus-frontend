@@ -19,6 +19,7 @@ import {
   VIEW_CACHE_CALENDAR_MONTH_DAYS,
   VIEW_CACHE_KEYS,
 } from '@/shared/constants/cache.constant';
+import { sanitizeCreatedVia } from '@/core/database/tables/sanitizers';
 import { log } from '@/core/services/log';
 import {
   occurrenceLimitFor,
@@ -75,6 +76,7 @@ function eventEntry(event: ICalendarEventCacheSource, startsAt: number, endsAt: 
     location: event.location || undefined,
     description: event.description || undefined,
     projectId: event.projectId,
+    createdVia: sanitizeCreatedVia(event.createdVia),
   };
 }
 
@@ -188,6 +190,7 @@ export const toCalendarEntries = (input: CalendarProjectionInput, { from, to }: 
       isAllDay: true,
       status,
       projectId: task.projectId,
+      createdVia: sanitizeCreatedVia(task.createdVia),
     });
   }
 

@@ -2,6 +2,10 @@ import type { AgendaStatus } from './dashboard.type';
 
 export type CalendarSource = 'event' | 'reminder' | 'task';
 
+export const CREATED_VIA = ['app', 'assistant'] as const;
+
+export type CreatedVia = (typeof CREATED_VIA)[number];
+
 export type CalendarEntryState =
   | 'upcoming'
   | 'ongoing'
@@ -32,5 +36,6 @@ export type CalendarEntry = {
   projectId?: string | null;
   ownerId?: string;
   series?: CalendarSeries;
+  createdVia?: CreatedVia;
 };
 

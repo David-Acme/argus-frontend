@@ -2,8 +2,11 @@ import { describe, expect, test } from 'bun:test';
 import {
   approveNoteOf,
   approveTitleOf,
+  decidedPhase,
+  decidingPhase,
   deviceGlyphOf,
   fromHome,
+  isConfirming,
   refusedPhase,
 } from '@/features/auth/model/approve';
 import { consentSignalsOf } from '@/features/auth/model/consent-signals';
@@ -40,6 +43,18 @@ describe('the sign-in on another device', () => {
     expect(showsQr('loading')).toBe(true);
     expect(showsQr('error')).toBe(false);
   });
+
+  test('a refusal on the phone ends the wait with its own words and a fresh start', () => {
+    expect(loginHeadingOf('denied', false)).toEqual({
+      title: 'screens.login.denied.title',
+      lead: 'screens.login.denied.lead',
+    });
+    expect(loginActionOf('denied')).toEqual({
+      action: 'refresh',
+      label: 'screens.login.denied.again',
+    });
+    expect(showsQr('denied')).toBe(false);
+  });
 });
 
 describe('approving on the phone', () => {
@@ -69,12 +84,35 @@ describe('approving on the phone', () => {
     expect(approveNoteOf('denied')).toEqual({ tone: 'ok', key: 'screens.approve.denied' });
     expect(approveNoteOf('confirm')).toBeNull();
   });
+
+  test('«No fui yo» refuses on the server and says so, or keeps the question to try again', () => {
+    expect(decidingPhase('deny')).toBe('denying');
+    expect(decidingPhase('approve')).toBe('approving');
+    expect(decidedPhase('deny', { ok: true, status: 200 })).toBe('denied');
+    expect(decidedPhase('approve', { ok: true, status: 200 })).toBe('approved');
+    expect(decidedPhase('deny', { ok: false, status: 404 })).toBe('expired');
+    expect(decidedPhase('deny', { ok: false, status: 0 })).toBe('deny-failed');
+    expect(decidedPhase('approve', { ok: false, status: 500 })).toBe('error');
+    expect(isConfirming('denying')).toBe(true);
+    expect(isConfirming('deny-failed')).toBe(true);
+    expect(isConfirming('denied')).toBe(false);
+    expect(approveNoteOf('deny-failed')).toEqual({
+      tone: 'alert',
+      key: 'screens.approve.deny-error',
+    });
+  });
 });
 
 describe('the invitation', () => {
   test('a valid one shows the role it brings', () => {
-    const valid = invitationOutcomeOf({ ok: true, status: 200, role: 'resident', errors: null });
-    expect(valid).toEqual({ phase: 'valid', role: 'resident', revoked: null });
+    const valid = invitationOutcomeOf({
+      ok: true,
+      status: 200,
+      role: 'resident',
+      inviter: null,
+      errors: null,
+    });
+    expect(valid).toEqual({ phase: 'valid', role: 'resident', revoked: null, inviter: null });
     expect(invitationCopyOf(valid)).toEqual({
       title: 'screens.invitation.valid-title',
       lead: 'screens.invitation.role.resident',
@@ -82,11 +120,37 @@ describe('the invitation', () => {
     });
   });
 
+  test('names who invited when the server says, and keeps the plain title when it does not', () => {
+    const named = invitationOutcomeOf({
+      ok: true,
+      status: 200,
+      role: 'guest',
+      inviter: 'Ana Ruiz',
+      errors: null,
+    });
+    expect(invitationCopyOf(named)).toEqual({
+      title: 'screens.invitation.valid-title-by',
+      lead: 'screens.invitation.role.guest',
+      action: 'accept',
+      name: 'Ana Ruiz',
+    });
+    const gone = invitationOutcomeOf({
+      ok: false,
+      status: 410,
+      role: null,
+      inviter: 'Ana Ruiz',
+      errors: { code: 'GONE', message: 'x' },
+    });
+    expect(gone.inviter).toBeNull();
+    expect(invitationCopyOf(gone).name).toBeUndefined();
+  });
+
   test('a used, expired or revoked one says it no longer works', () => {
     const gone = invitationOutcomeOf({
       ok: false,
       status: 410,
       role: null,
+      inviter: null,
       errors: { code: 'GONE', message: 'x' },
     });
     expect(gone.phase).toBe('expired');
@@ -95,6 +159,7 @@ describe('the invitation', () => {
       ok: false,
       status: 410,
       role: null,
+      inviter: null,
       errors: {
         code: 'INVITATION_MODULE_DISABLED',
         message: 'x',
@@ -105,6 +170,7 @@ describe('the invitation', () => {
       phase: 'expired',
       role: null,
       revoked: { moduleId: 'surveillance' },
+      inviter: null,
     });
   });
 
@@ -114,6 +180,7 @@ describe('the invitation', () => {
         ok: false,
         status: 200,
         role: null,
+        inviter: null,
         errors: { code: 'FINGERPRINT_MISMATCH', message: 'x' },
       }).phase
     ).toBe('mismatch');
@@ -122,10 +189,13 @@ describe('the invitation', () => {
         ok: false,
         status: 0,
         role: null,
+        inviter: null,
         errors: { code: 'NETWORK_ERROR', message: 'x' },
       }).phase
     ).toBe('unreachable');
-    expect(invitationCopyOf({ phase: 'idle', role: null, revoked: null }).action).toBe('scan');
+    expect(
+      invitationCopyOf({ phase: 'idle', role: null, revoked: null, inviter: null }).action
+    ).toBe('scan');
   });
 });
 

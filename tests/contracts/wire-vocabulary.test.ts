@@ -3,6 +3,8 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { backendRoot } from '@tests/support/backend-dir';
 import * as voice from '@/features/voice/constants/voice';
+import { deviceLoginStatusSchema } from '@/core/contracts/http.contract';
+import { CREATED_VIA } from '@/core/types/calendar.type';
 import { SYNC_TABLE_KEYS } from '@/core/types/sync.type';
 import { ARGUS_DEFAULT_ROUTE_PORTS } from '@/shared/constants/net.constant';
 import { SYNC_OPERATION } from '@/shared/constants/sync.constant';
@@ -61,5 +63,19 @@ describe('wire vocabulary matches the backend', () => {
       if (port !== null) backendPorts[segment] = port;
     }
     expect(ARGUS_DEFAULT_ROUTE_PORTS).toEqual(backendPorts);
+  });
+
+  test('the cross-device login statuses the poll reads are the backend DeviceLoginStatus', () => {
+    const header = read('packages/contracts/auth/src/auth/device-login-status.hxx');
+    const wire = new Set([...header.matchAll(/"([a-z]+)"/g)].map(([, name = '']) => name));
+    const polled: string[] = [...deviceLoginStatusSchema.shape.status.options].sort();
+    expect(polled).toEqual([...wire].sort());
+  });
+
+  test('how a task or an event was made is the backend CreatedVia', () => {
+    const header = read('packages/contracts/productivity/src/productivity/created-via.hxx');
+    const wire = new Set([...header.matchAll(/"([a-z]+)"/g)].map(([, name = '']) => name));
+    const made: string[] = [...CREATED_VIA].sort();
+    expect(made).toEqual([...wire].sort());
   });
 });

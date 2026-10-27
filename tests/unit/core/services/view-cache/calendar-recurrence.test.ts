@@ -211,4 +211,19 @@ describe('one occurrence changed or skipped', () => {
   test('a series without changes builds exactly the entries it built before', () => {
     expect(entriesOf(event({ recurrenceExceptions: [] }))).toEqual(entriesOf(event()));
   });
+
+  test('an event, an occurrence or a task Argus made keeps it in its entry; anything else is the app', () => {
+    const task = { id: 't1', title: 'Llamar al gasfitero', dueAt: new Date(OCT_1 + DAY), status: 'todo', projectId: 'p1' };
+    const entries = toCalendarEntries(
+      {
+        events: [event({ id: 'e2', recurrenceRule: null, createdVia: 'assistant' }), event({ id: 'e3', recurrenceRule: null, createdVia: '' })],
+        reminders: [],
+        tasks: [{ ...task, createdVia: 'assistant' }, { ...task, id: 't2' }],
+        series: [event({ createdVia: 'assistant' })],
+      },
+      range(OCT_1, 7)
+    );
+    const via = Object.fromEntries(entries.map((entry) => [entry.id.split('@')[0], entry.createdVia]));
+    expect(via).toEqual({ 'event:e1': 'assistant', 'event:e2': 'assistant', 'event:e3': 'app', 'task:t1': 'assistant', 'task:t2': 'app' });
+  });
 });

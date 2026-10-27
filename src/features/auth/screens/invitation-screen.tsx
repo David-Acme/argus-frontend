@@ -22,7 +22,7 @@ import { holdInviteToken } from '@/features/auth/model/invite-slot';
 import { useOnboardingLayout } from '@/features/auth/hooks/use-onboarding-layout';
 import { useOnboardingNext } from '@/features/auth/hooks/use-onboarding-next';
 
-const FRESH: InvitationOutcome = { phase: 'idle', role: null, revoked: null };
+const FRESH: InvitationOutcome = { phase: 'idle', role: null, revoked: null, inviter: null };
 
 function revokedOutcome(revoked: string | undefined): InvitationOutcome {
   if (!revoked) return FRESH;
@@ -30,6 +30,7 @@ function revokedOutcome(revoked: string | undefined): InvitationOutcome {
     phase: 'expired',
     role: null,
     revoked: { moduleId: revoked === 'none' ? null : revoked },
+    inviter: null,
   };
 }
 
@@ -50,7 +51,13 @@ function InvitationScreen() {
     setOutcome({ ...FRESH, phase: 'resolving' });
     const answer = await inviteService.accept(qr);
     setToken(qr.token);
-    setOutcome(invitationOutcomeOf({ ...answer, role: answer.info?.role ?? null }));
+    setOutcome(
+      invitationOutcomeOf({
+        ...answer,
+        role: answer.info?.role ?? null,
+        inviter: answer.info?.inviterName ?? null,
+      })
+    );
   }, []);
   const scan = useQrScan('invite', (value) => void resolve(value));
   const start = () => {
@@ -83,7 +90,7 @@ function InvitationScreen() {
       <View className="mt-4 items-center gap-2">
         <Presence state={phase === 'expired' ? 'idle' : 'happy'} size={hero} />
         <Text variant="heroCompact" heading={1} align="center">
-          {t(copy.title)}
+          {copy.name ? t('screens.invitation.valid-title-by', { name: copy.name }) : t(copy.title)}
         </Text>
         <Text variant="body" tone="2" align="center">
           {t(copy.lead)}

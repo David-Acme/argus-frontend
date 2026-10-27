@@ -1,4 +1,4 @@
-import { deviceLoginDetailsSchema } from '@/core/contracts/session.contract';
+import { deviceLoginDeniedSchema, deviceLoginDetailsSchema } from '@/core/contracts/session.contract';
 import { createLoginProof } from '@/core/services/device-login';
 import { httpService } from '@/core/services/http';
 import { errorResponse } from '@/core/services/http/http-envelope';
@@ -28,6 +28,15 @@ const SESSIONS_PATH = '/auth/sessions';
 const DEVICE_LOGIN_PROOF_HEADER = 'X-Argus-Login-Proof';
 
 const FACE_FILE = { name: 'image', uri: '', filename: 'face.jpg', contentType: 'image/jpeg' };
+
+function readDenial(response: IServiceResponse<unknown>): IServiceResponse<{ denied: true }> {
+  if (!response.ok) return { ...response, info: null };
+  const result = deviceLoginDeniedSchema.safeParse(response.info);
+  if (!result.success) {
+    return errorResponse(response.status, 'INVALID_RESPONSE', 'The refusal is not in the expected shape');
+  }
+  return { ...response, info: result.data };
+}
 
 class AuthService {
   private readonly loginProofs = new Map<string, string>();
@@ -115,6 +124,10 @@ class AuthService {
       `${DEVICE_LOGIN_PATH}/${encodeURIComponent(id)}/approve`,
       {},
     );
+  }
+
+  async denyDeviceLogin(id: string): Promise<IServiceResponse<{ denied: true }>> {
+    return readDenial(await httpService.post(`${DEVICE_LOGIN_PATH}/${encodeURIComponent(id)}/deny`));
   }
 
   async pollDeviceLogin(id: string): Promise<IServiceResponse<IDeviceLoginStatusResponse>> {

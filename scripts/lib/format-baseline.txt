@@ -20,7 +20,6 @@ src/core/database/tables/conversation-message.table.ts
 src/core/database/tables/index.ts
 src/core/database/tables/project-task.table.ts
 src/core/database/tables/reminder.table.ts
-src/core/database/tables/sanitizers.ts
 src/core/i18n/locales/en/screens/approve/index.ts
 src/core/i18n/locales/en/screens/conversations/index.ts
 src/core/i18n/locales/en/screens/face/index.ts
@@ -72,7 +71,6 @@ src/core/services/http/http-envelope.ts
 src/core/services/http/http.service.ts
 src/core/services/http/refresh-response.ts
 src/core/services/instance-storage/instance-storage.web.ts
-src/core/services/invite/invitation-resolution.ts
 src/core/services/invite/invite.service.ts
 src/core/services/modules/index.ts
 src/core/services/modules/module-engine.ts

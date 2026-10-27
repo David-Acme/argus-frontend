@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { authService } from '@/core/services/auth.service';
 import { LOGIN_POLL_MS } from '@/features/auth/constants/login.constant';
-import { loginPollOutcome } from '@/features/auth/model/login-entry';
+import { pollAnswerOutcome, settledPhaseOf } from '@/features/auth/model/login-entry';
 import type { LoginPhase } from '@/features/auth/model/login-screen';
 
 export type LoginQr = {
@@ -58,10 +58,10 @@ export function useLoginQr(active: boolean): LoginQr {
   useEffect(() => {
     if (phase !== 'qr' || !challenge) return;
     const tick = async () => {
-      const polled = await authService.pollDeviceLogin(challenge.id);
-      const outcome = polled.ok && polled.info ? loginPollOutcome(polled.info) : 'waiting';
-      if (outcome === 'approved') setPhase('approved');
-      else if (outcome === 'expired') setPhase('expired');
+      const settled = settledPhaseOf(
+        pollAnswerOutcome(await authService.pollDeviceLogin(challenge.id))
+      );
+      if (settled) setPhase(settled);
       else timer.current = setTimeout(() => void tick(), LOGIN_POLL_MS);
     };
     timer.current = setTimeout(() => void tick(), LOGIN_POLL_MS);

@@ -154,8 +154,8 @@ animation and photo content out.
 - `features/auth/screens/login-screen.tsx`.
 - Purpose: desktop sign-in by a QR the phone approves.
 - Data: `GET /pairing/status`, `POST /auth/device-login`, poll `GET /auth/device-login/{id}`.
-- Captured: `qr` (main), `loading` (status held), `waiting-owner`, `expired`, `error`,
-  `error-unpaired-device`. Approved ("¡Listo!") [not captured: shows for 600 ms, then redirects].
+- Captured: `qr` (main), `loading` (status held), `waiting-owner`, `expired`, `denied` (the
+  phone answered «No fui yo»), `error`, `error-unpaired-device`. Approved ("¡Listo!") [not captured: shows for 600 ms, then redirects].
 
 ### Not found (`+not-found`)
 - Captured: `signed-in` (main), `unpaired`.
@@ -221,7 +221,8 @@ animation and photo content out.
   `agenda-list`, `month-empty`, `agenda-list-empty`, `day-next-not-today`, `day-crowded`,
   `month-crowded`, `entry-detail`, `options-menu`, `occurrence-options-menu`, `create-form`,
   `create-form-errors`, `create-form-all-day`, `day-picker`, `edit-form`, `share-dialog-empty`,
-  `save-error-toast`, `read-only-guest`, `module-off-redirect`.
+  `save-error-toast`, `read-only-guest`, `module-off-redirect`, `by-argus` (an event Argus made,
+  «por Argus» in its meta).
 - Not captured: pending optimistic row (needs `info: null` answers held 60 s), undo toasts
   (transient), the "Loading more" footer of the list view (fires once and resolves).
 
@@ -229,7 +230,8 @@ animation and photo content out.
 - `features/projects/*`. Productivity module; owner and resident; per-project access owner/edit/view/none.
 - Captured: `populated` (main), `empty`, `many-long`, `coming-up-empty`, `view-only-member`,
   `status-menu`, `new-project-form`, `new-project-errors`, `edit-project-form`,
-  `delete-project-confirm`, `new-task-form`, `edit-task-form`, `members-dialog`, `save-error-toast`.
+  `delete-project-confirm`, `new-task-form`, `edit-task-form`, `members-dialog`, `save-error-toast`,
+  `by-argus` (project screen: a task Argus made, «por Argus» in its meta).
 - Not captured: drag between lanes (pointer gesture), pending project (60 s optimistic window).
 
 ### Conversations (`/conversations`, `/conversations/[id]`)

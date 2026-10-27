@@ -30,6 +30,7 @@ export interface IInviteAcceptResult {
   port: number;
   role: InviteRole;
   expiresAt: number;
+  inviterName: string | null;
 }
 
 export interface IUserManagementRecord {

@@ -35,7 +35,7 @@ const approve = (patch: Partial<Approve> = {}): Approve => ({
   details: null,
   scanned: async () => undefined,
   approve: async () => undefined,
-  deny: () => undefined,
+  deny: async () => undefined,
   ...patch,
 });
 
@@ -136,6 +136,17 @@ describe('Entrar en la computadora', () => {
     render(<LoginScreen />);
     expect(screen.getByText('El código caducó')).toBeDefined();
     fireEvent.click(screen.getByRole('button', { name: 'Mostrar otro código' }));
+    expect(refreshed).toBe(1);
+  });
+
+  test('a refusal on the phone stops the wait and offers to start again', () => {
+    let refreshed = 0;
+    state.qr = qr({ phase: 'denied', refresh: async () => void (refreshed += 1) });
+    render(<LoginScreen />);
+    expect(screen.getByRole('heading', { name: 'No se aprobó la entrada' })).toBeDefined();
+    expect(screen.queryByText('código qr')).toBeNull();
+    expect(screen.queryByText(/caduca en/)).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Empezar de nuevo' }));
     expect(refreshed).toBe(1);
   });
 

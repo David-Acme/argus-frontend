@@ -18,6 +18,7 @@ export const CALENDAR_EVENT_SCHEMA = tableSchema({
     { name: 'is_all_day', type: 'boolean' },
     { name: 'recurrence_rule', type: 'string', isOptional: true },
     { name: 'recurrence_exceptions', type: 'string' },
+    { name: 'created_via', type: 'string' },
     { name: 'created_at', type: 'number' },
     { name: 'updated_at', type: 'number' },
   ],
@@ -38,6 +39,7 @@ export class CalendarEventModel extends Model {
   @field('is_all_day') isAllDay!: boolean;
   @text('recurrence_rule') recurrenceRule!: string | null;
   @json('recurrence_exceptions', sanitizeRecurrenceExceptions) recurrenceExceptions!: RecurrenceException[];
+  @field('created_via') createdVia!: string;
   @date('created_at') createdAt!: Date;
   @date('updated_at') updatedAt!: Date;
 }

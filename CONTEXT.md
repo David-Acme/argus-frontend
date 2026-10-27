@@ -7319,6 +7319,11 @@ replaces §9.4's Hoy/Calendario split: a Teams-like agenda.
   scrolls on a short or landscape window (`sheetDetentsOf`, `sheetScrolls`), the
   week strip drops its grab handle and the month uses small discs, so the list
   starts within the top 40 %.
+- **«por Argus».** An event or a task Argus made ends its line's meta with
+  «por Argus», also when it is late: `calendar_event.created_via` and
+  `project_task.created_via` (schema v17) reach the month caches as the
+  entry's `createdVia`, read by `madeByArgus`. Reminders are all Argus's and
+  say nothing more.
 - **Slices.** The reminders slice merged into agenda: agenda reads
   `useReminders` and reminders read agenda's day picker, which would close a
   slice cycle. Inicio's agenda models moved here; the types they share live in
@@ -7374,11 +7379,22 @@ v2). What was decided while building it:
   `/rtc/token` body and in the socket leg's `voice:start`. Without a voice
   path or the microphone permission the step redirects to Listo
   (`callStepOf`).
-- **Approving on the phone**: «No fui yo» has no server route; it leaves the
-  challenge unapproved (it expires on its own) and says so.
-- **Invitation**: the resolve answers the role, never the inviter's name or
-  the home's, so the valid view says «Te invitaron a una casa» and the role's
-  sentence.
+- **Approving on the phone**: «No fui yo» calls `POST /auth/device-login/{id}/deny`
+  (`authService.denyDeviceLogin`, zod-checked `{denied: true}`), single-flight in
+  the button and in `useApprove`, and says the request was refused. A gone
+  challenge (404/409/410) reads as expired; any other failure keeps the question
+  on screen with «No pude rechazar la entrada» so the button is the retry
+  (`decidedPhase`, `deny-failed`).
+- **The waiting device** learns the refusal on the poll it already runs: `GET
+  /auth/device-login/{id}` answers `status: "denied"`, a terminal state like
+  `expired` (`pollAnswerOutcome`, `settledPhaseOf`). The login screen stops
+  polling, hides the code and reads «No se aprobó la entrada» with «Empezar de
+  nuevo», which asks for a new challenge.
+- **Invitation**: the resolve answers the role and, when the inviter still
+  exists and has a name, `inviterName` (trimmed by
+  `validateInvitationResolution`; empty or malformed is unknown). The valid view
+  says «Ana te invitó a una casa», or «Te invitaron a una casa» without the
+  name, and the role's sentence. The home's name is never answered.
 - **Data sources.** Pairing: discovery and the pinned pair call (no local
   data). Name: the session user, `PATCH /auth/me`, the `user` row through
   `/sync`. Consent: a local draft sent after the face. Module privacy:
@@ -7424,8 +7440,13 @@ density and components.
   keeps a «Pendiente» or «Cancelada» task's status when its lane did not change.
 - **Argus.** The empty list and the empty project offer suggestion chips that
   open the thread with a draft (the Agenda's `Ideas`, now exported and fed
-  translated text). «por Argus» is not shown: `project_task.created_by` is the
-  user Argus acted for, and no column says a row came from Argus.
+  translated text). A task Argus made ends its meta with «por Argus» (en «by
+  Argus»): the synced `project_task.created_via` (`'app' | 'assistant'`,
+  schema v17, `sanitizeCreatedVia` reads anything but `assistant` as the app, so a
+  migrated row and an old cached snapshot read as the app) travels into the
+  `project.tasks.<id>` cache rows as `createdVia`. `created_by` stays the user
+  Argus acted for. The column is set once at creation, so no audit diff
+  changes it.
 - **Data.** Everything is the view cache projected from WatermelonDB
   (`project.list`, `project.tasks.<id>`, `project.members.<id>`,
   `people.users`) with the optimistic lenses, so the screen paints from local

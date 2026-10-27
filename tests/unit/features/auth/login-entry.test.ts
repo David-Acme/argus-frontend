@@ -1,5 +1,11 @@
 import { describe, expect, test } from 'bun:test';
-import { LOGIN_QR_ROUTE, loginEntry, loginPollOutcome } from '@/features/auth/model/login-entry';
+import {
+  LOGIN_QR_ROUTE,
+  loginEntry,
+  loginPollOutcome,
+  pollAnswerOutcome,
+  settledPhaseOf,
+} from '@/features/auth/model/login-entry';
 
 describe('loginEntry', () => {
   test('native shows the QR display only when the entry asks for it', () => {
@@ -28,5 +34,21 @@ describe('loginEntry', () => {
     expect(loginPollOutcome({ status: 'approved', refreshToken: 'r' })).toBe('waiting');
     expect(loginPollOutcome({ status: 'expired' })).toBe('expired');
     expect(loginPollOutcome({ status: 'pending' })).toBe('waiting');
+  });
+
+  test('a refused login is a terminal state, like an expired one', () => {
+    expect(loginPollOutcome({ status: 'denied' })).toBe('denied');
+    expect(settledPhaseOf('denied')).toBe('denied');
+    expect(settledPhaseOf('expired')).toBe('expired');
+    expect(settledPhaseOf('approved')).toBe('approved');
+  });
+
+  test('only a pending answer or a failed poll keeps polling', () => {
+    expect(settledPhaseOf('waiting')).toBeNull();
+    expect(pollAnswerOutcome({ ok: true, info: { status: 'pending' } })).toBe('waiting');
+    expect(pollAnswerOutcome({ ok: false, info: null })).toBe('waiting');
+    expect(pollAnswerOutcome({ ok: true, info: null })).toBe('waiting');
+    expect(pollAnswerOutcome({ ok: true, info: { status: 'denied' } })).toBe('denied');
+    expect(pollAnswerOutcome({ ok: true, info: { status: 'unknown' } })).toBe('waiting');
   });
 });

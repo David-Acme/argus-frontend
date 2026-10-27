@@ -12,7 +12,12 @@ import { OnboardingTop } from '@/features/auth/components/onboarding-top';
 import { APPROVE_CLOSE_MS } from '@/features/auth/constants/login.constant';
 import { useApprove } from '@/features/auth/hooks/use-approve';
 import { useQrScan } from '@/features/auth/hooks/use-qr-scan';
-import { approveNoteOf, approveTitleOf, deviceGlyphOf } from '@/features/auth/model/approve';
+import {
+  approveNoteOf,
+  approveTitleOf,
+  deviceGlyphOf,
+  isConfirming,
+} from '@/features/auth/model/approve';
 
 export default function ApproveScreen() {
   const router = useRouter();
@@ -20,7 +25,7 @@ export default function ApproveScreen() {
   const flow = useApprove();
   const scan = useQrScan('login', (value) => void flow.scanned(value));
   const { details, phase } = flow;
-  const confirming = details !== null && (phase === 'confirm' || phase === 'approving');
+  const confirming = details !== null && isConfirming(phase);
   const note = approveNoteOf(phase);
   const back = useCallback(
     () => (router.canGoBack() ? router.back() : router.replace('/')),
@@ -45,8 +50,16 @@ export default function ApproveScreen() {
               label={t('screens.approve.confirm')}
               onPress={flow.approve}
               busy={phase === 'approving'}
+              disabled={phase === 'denying'}
             />
-            <Button variant="danger" block label={t('screens.approve.deny')} onPress={flow.deny} />
+            <Button
+              variant="danger"
+              block
+              label={t('screens.approve.deny')}
+              onPress={flow.deny}
+              busy={phase === 'denying'}
+              disabled={phase === 'approving'}
+            />
           </>
         ) : (
           <Button

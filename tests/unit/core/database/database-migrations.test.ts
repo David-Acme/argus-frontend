@@ -4,6 +4,7 @@ import { tableSchema, type AppSchema } from '@nozbe/watermelondb';
 import { encodeMigrationSteps, encodeSchema } from '@nozbe/watermelondb/adapters/sqlite/encodeSchema';
 import { stepsForMigration } from '@nozbe/watermelondb/Schema/migrations/stepsForMigration';
 import { migrations } from '@/core/database/migrations';
+import { sanitizeCreatedVia } from '@/core/database/tables/sanitizers';
 import { schema } from '@/core/database/schema';
 import { SCHEMA_VERSION } from '@/shared/constants/database.constant';
 import { parseCameraPrivacyState } from '@/shared/libs/camera-privacy';
@@ -565,9 +566,12 @@ describe('the recurrence exceptions column', () => {
   const atVersionFifteen = (): AppSchema => {
     const tables = Object.fromEntries(
       Object.entries(schema.tables).map(([name, table]) => {
-        if (name !== 'reminder' && name !== 'calendar_event') return [name, table];
+        if (name !== 'reminder' && name !== 'calendar_event' && name !== 'project_task')
+          return [name, table];
         const columns = Object.fromEntries(
-          Object.entries(table.columns).filter(([column]) => column !== 'recurrence_exceptions')
+          Object.entries(table.columns).filter(
+            ([column]) => column !== 'recurrence_exceptions' && column !== 'created_via'
+          )
         );
         return [name, { ...table, columns, columnArray: Object.values(columns) }];
       })
@@ -600,5 +604,54 @@ describe('the recurrence exceptions column', () => {
       title: 'Regar',
       exceptions: '',
     });
+  });
+});
+
+describe('the created via column', () => {
+  const columnsOf = (db: Database, table: string): string[] =>
+    (db.query(`select name from pragma_table_info('${table}')`).all() as { name: string }[]).map(
+      (row) => row.name
+    );
+
+  const atVersionSixteen = (): AppSchema => {
+    const tables = Object.fromEntries(
+      Object.entries(schema.tables).map(([name, table]) => {
+        if (name !== 'project_task' && name !== 'calendar_event') return [name, table];
+        const columns = Object.fromEntries(
+          Object.entries(table.columns).filter(([column]) => column !== 'created_via')
+        );
+        return [name, { ...table, columns, columnArray: Object.values(columns) }];
+      })
+    );
+    return { ...schema, version: 16, tables } as AppSchema;
+  };
+
+  test('a fresh database has it on tasks and calendar events', () => {
+    const db = new Database(':memory:');
+    db.exec(encodeSchema(schema));
+    expect(columnsOf(db, 'project_task')).toContain('created_via');
+    expect(columnsOf(db, 'calendar_event')).toContain('created_via');
+  });
+
+  test('a version 16 database gains it through the migration, and its tasks stay and read as the app', () => {
+    const db = new Database(':memory:');
+    db.exec(encodeSchema(atVersionSixteen()));
+    expect(columnsOf(db, 'project_task')).not.toContain('created_via');
+    db.query(
+      'insert into project_task (id, _changed, _status, project_id, created_by, assignee_id, title, status, priority, due_at, sort_order, created_at, updated_at) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    ).run('1', '', 'synced', '3', '1', null, 'Pintar la reja', 'todo', 'low', null, 1, 1, 1);
+
+    const steps = stepsForMigration({ migrations, fromVersion: 16, toVersion: SCHEMA_VERSION });
+    expect(steps).not.toBeNull();
+    db.exec(encodeMigrationSteps(steps ?? []));
+
+    expect(columnsOf(db, 'project_task')).toContain('created_via');
+    expect(columnsOf(db, 'calendar_event')).toContain('created_via');
+    const row = db.query('select title, created_via as via from project_task').get() as {
+      title: string;
+      via: string;
+    };
+    expect(row).toEqual({ title: 'Pintar la reja', via: '' });
+    expect(sanitizeCreatedVia(row.via)).toBe('app');
   });
 });

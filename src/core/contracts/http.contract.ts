@@ -83,7 +83,7 @@ export const deviceLoginCreatedSchema = z.object({
 }) satisfies z.ZodType<ICreateDeviceLoginResponse>;
 
 export const deviceLoginStatusSchema = z.object({
-  status: z.enum(['pending', 'approved', 'expired']),
+  status: z.enum(['pending', 'approved', 'expired', 'denied']),
   accessToken: z.string().optional(),
   refreshToken: z.string().optional(),
   userId: z.number().optional(),

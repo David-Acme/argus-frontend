@@ -34,7 +34,7 @@ export interface ICreateDeviceLoginResponse {
   expiresAt: number;
 }
 
-export type DeviceLoginStatus = 'pending' | 'approved' | 'expired';
+export type DeviceLoginStatus = 'pending' | 'approved' | 'expired' | 'denied';
 
 export interface IDeviceLoginStatusResponse {
   status: DeviceLoginStatus;

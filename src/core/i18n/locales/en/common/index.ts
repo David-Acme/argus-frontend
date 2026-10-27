@@ -12,6 +12,7 @@ export const common = {
     'key-escape': 'Esc',
     'key-enter': '↵',
   },
+  'by-argus': 'by Argus',
   retry: 'Retry',
   undo: 'Undo',
   'permission-prompt': {
