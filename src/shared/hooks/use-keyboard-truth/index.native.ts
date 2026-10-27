@@ -2,7 +2,10 @@ import { useEffect, useState } from 'react';
 import { AppState } from 'react-native';
 import { KeyboardController, KeyboardEvents } from 'react-native-keyboard-controller';
 import { watchKeyboardTruth } from '@/shared/hooks/use-keyboard-truth/keyboard-truth';
-import type { KeyboardSources, Subscription } from '@/shared/hooks/use-keyboard-truth/keyboard-truth';
+import type {
+  KeyboardSources,
+  Subscription,
+} from '@/shared/hooks/use-keyboard-truth/keyboard-truth';
 
 const both = (first: Subscription, second: Subscription): Subscription => ({
   remove: () => {
