@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, mock, test } from 'bun:test';
+import { afterEach, beforeEach, describe, expect, mock, setSystemTime, test } from 'bun:test';
 import { fireEvent, render, screen } from '@testing-library/react';
 import * as constants from '@/shared/constants';
 import type { FaceCapture } from '@/features/auth/hooks/use-face-capture';
@@ -115,6 +115,10 @@ const capture = (patch: Partial<FaceCapture> = {}): FaceCapture =>
     ...patch,
   }) as unknown as FaceCapture;
 
+afterEach(() => {
+  setSystemTime();
+});
+
 beforeEach(() => {
   setWindowSize(1440, 900);
   Object.assign(state, { pushed: [], replaced: [], qr: qr(), approve: approve(), opened: 0 });
@@ -122,10 +126,12 @@ beforeEach(() => {
 
 describe('Entrar en la computadora', () => {
   test('one card with the code, its expiry and three steps, with no phone wording to do here', () => {
+    setSystemTime(new Date(2026, 9, 26, 12));
+    state.qr = qr();
     render(<LoginScreen />);
     expect(screen.getByRole('heading', { name: 'Entra con tu teléfono' })).toBeDefined();
     expect(screen.getByText('código qr')).toBeDefined();
-    expect(screen.getByText(/caduca en 2:(40|39)/)).toBeDefined();
+    expect(screen.getByText(/caduca en 2:40/)).toBeDefined();
     expect(screen.getByText('Toca Tú → Conectar otro dispositivo')).toBeDefined();
     expect(screen.queryByRole('button', { name: 'Entrar con la cara' })).toBeNull();
   });
