@@ -2630,17 +2630,31 @@ Guard posture is per environment now (backend 2f669111, `services/guard/CONTEXT.
 
 - **Creating a camera is four steps** (`components/camera-form.tsx`, `model/camera-form-steps.ts`):
   model, connection, test, details; an edit starts at the connection. The model step is
-  a searchable grid of `GET /camera/catalog` (`hooks/use-camera-catalog.ts`, a cached remote
-  resource) with brand, form and feature chips (`model/camera-catalog.ts`, unit-tested).
+  a searchable list of `GET /camera/catalog` (`hooks/use-camera-catalog.ts`, a cached remote
+  resource) with brand and type chips (`model/camera-catalog.ts`, unit-tested).
   Picking a model fills the driver, port, user, paths and `catalogId` (kept in the camera's
   `config`, projected as `catalogId`). The test step calls `POST /camera/probe` and words each
   step for the user (`model/camera-probe.ts`): unreachable, port refused, wrong user, wrong path,
   no cloud password for the speaker. A failed test does not block saving ("Continuar de todos
   modos"): a camera may be installed before it is plugged in. Save stays optimistic.
 - **Product pictures are our own drawings.** `components/camera-illustration.tsx` draws each
-  form factor (pan-tilt, outdoor pan-tilt, cube, bullet, turret, dome, doorbell) as line art in
-  `react-native-svg` from the theme tokens, so it follows light and dark. No vendor image is
-  copied or hot-linked.
+  catalog entry's `look` (`model/camera-looks.ts`: a shape, its mount and its traits such as
+  antennas, a spotlight or a dark front face) from the parts in `camera-illustration-parts.tsx`,
+  `-shapes.tsx` and `-ceiling.tsx`, as line art in `react-native-svg` from the theme tokens, so it
+  follows light and dark. The looks were drawn from the products' silhouettes as described in the
+  manufacturers' spec pages (a Tapo C100 is a tall pill on a neck, a C200 a sphere on a base, a C310
+  a bullet with two antennas, a C420 a battery body on a ball joint); an unknown look falls back to
+  the form factor. No vendor image, logo or artwork is copied or hot-linked. Rectangles are rounded
+  paths (`roundRect`), because `Rect`'s `x`/`y` are typed as the deprecated transform props.
+- **The model step (2026-10-27)** is a search field, two rows of wrapping filter chips (brand, and
+  indoor / outdoor / pan and tilt / doorbell) and the list. Each row shows the model's drawing and
+  its support level from the catalog (`support`: Completa, Video y control, Solo video, No
+  compatible). Tapping a row opens its detail under it (`camera-setup/model-detail.tsx`): what Argus
+  does with it (live video, AI detection, listen, talk, move, siren, motion alerts, each marked
+  whether Argus drives it), the manufacturer's specifications (`model/camera-catalog-specs.ts`) and
+  the spec sheet's host. «Continuar» applies the previewed model and stays disabled for a model that
+  cannot connect. Supported models sort first, brand profiles after them and incompatible models
+  last. An older backend without `support` reads it from the driver (`supportOf`).
 - **The cameras screen** (`screens/cameras-screen.tsx`) reads `GET /camera/overview` every 15 s
   while focused (`hooks/use-camera-overview.ts`): per camera last seen, picture health, sub-stream
   size/fps/bitrate, viewers and last detection, plus the recent detections (the synced `event`
@@ -3399,8 +3413,11 @@ window, the end detection and the loading/error state; components render.
   last release shrinks a warm scope back to its first page (so MMKV holds one
   page, not everything ever scrolled) or closes a cold one. The coordinator
   exposes `watchPages` / `extendPages` / `releasePages`. Watch requests made
-  before a session starts are replayed when it does. Two views use it today:
-  `notification.feed` (keyset) and `calendar.agenda` (a span of weeks).
+  before a session starts are replayed when it does. Four views use it
+  today: `notification.feed` (keyset), `calendar.agenda` (a span of weeks),
+  `command.search` (segmented keyset, see "The search reads the database
+  page by page") and `project.tasks` (see "Tasks read the database by
+  project").
 - **Remote feeds.** `RemoteFeed` (`core/services/paging/remote-feed.ts`) is
   the same idea for server-only lists. It stores `{rows, next}` in the view
   cache per scope. `refresh` re-reads the head and keeps the pages already
@@ -6593,7 +6610,9 @@ grid itself is at least `layout.mediaGridWide` (640) wide, which is where the pr
 switches at a 2400 px window. The section measures its own width with `onLayout`
 because a feature never reads the window. The grid shows no clip, as in the prototype.
 
-**Old Android.** The section never mounts a player. It paints the snapshot path the
+**Old Android.** Superseded on 2026-10-27 by "Live camera previews" below: the
+tiles now play live, capped per tier (two on `low`). What follows is the earlier rule.
+The section never mounted a player. It paints the snapshot path the
 cameras screen already uses (`CameraThumbnailPoller`: one `GET /camera/{id}/snapshot`
 per live camera, in sequence, cross-faded by `MediaFrame`): at `perfTier` low it reads
 each picture once per focus and stops (`repeat` false), otherwise every 30 s. The old
@@ -6640,21 +6659,11 @@ sidebar's ⌘K field, Inicio's search button and «Nuevo» call.
   (`useOpenedOnce`), so the layout pays no subscription until then. Results are
   computed against the moment the palette opened (`openedAt` in the store), not
   a ticking clock, so a mounted palette does not recompute every minute.
-- **Local first.** Results come from the view cache only, with no query per
-  keystroke: events (`event.list`, new: the 1000
-  latest by start through `calendarEventService.observeLatest`, gated by the
-  productivity module like every other productivity source), tasks
-  (`task.list`, new: the flat list the project projection already builds per
-  project, written once more so one hook can read every task), projects, the
-  people directory and cameras. Each title is folded once (NFD, marks removed,
-  lower case) when the entries are built; a keystroke only compares strings.
-  A recurring event is found at its next occurrence. Reminders are never a
-  result: the app keeps none (2026-10-27).
-- **Ranking** (`model/command-search.ts`): a title that starts with the query,
-  then one with a word that starts with it, then one that contains it; ties go
-  to the nearest upcoming, then the most recent past, then the undated; five
-  per group, groups in the order Agenda, Proyectos, Personas, Cámaras, then
-  Acciones and Ir a. «Pedir a Argus» leads whenever there is text.
+- **Local first, paged.** Results are read from WatermelonDB page by page; see
+  "The search reads the database page by page" (2026-10-27), which replaced the
+  in-memory ranking over the `event.list` snapshot. A recurring event is shown
+  at its next occurrence. Reminders are never a result: the app keeps none
+  (2026-10-27).
 - **Access** (`model/command-access.ts`): every result kind, action and section
   answers the same tables the screens answer (`routeFallback`, `tableAllowed`,
   `peopleAccessOf`). A module that is off removes its results, actions and
@@ -6676,6 +6685,86 @@ sidebar's ⌘K field, Inicio's search button and «Nuevo» call.
   palette (`hints`); the phone's sheet lists the same rows without them.
 - **Component tests of a feature** live in `tests/unit/features/<slice>/components/`
   and run with the DOM runner (`test:ui`); the plain runner skips them.
+
+## The search reads the database page by page (2026-10-27, feat/search-paged)
+
+David: the search felt empty; it should look better, centre its empty state
+in the whole area, stay flat (no shadow, nothing that carries no meaning), and
+read from the database with infinite scroll instead of loading every table into
+the client. The agenda keeps loading by its visible range.
+
+- **Query.** `command.search` is a coordinator paged view
+  (`core/services/view-cache-pages.ts`, `searchPages`). Its scope is the JSON of
+  `{kinds, words, since}` (`shared/libs/text-search.ts`); `since` is the start
+  of the day the palette opened. The list is a chain of keyset segments
+  (`core/services/paging/segments.ts`), each a `DatabaseService.keysetSegment`
+  of 20 rows (`SEARCH_PAGE_SIZE`) ordered by its column plus `id`: recurring
+  events by start, upcoming single events by start, open tasks with a due date
+  by due date, open tasks without one by creation (newest first), past single
+  events by start (newest first), projects (newest first), active people and
+  cameras (oldest first). Reaching the end extends the current segment; an
+  exhausted segment hands over to the next one that has rows (`exists`), and
+  `hasMore` also watches a one-row probe of every segment not yet opened, so
+  the footer never waits on an empty tail.
+- **Accents.** SQLite's `LIKE` folds ASCII case only, and the schema has no
+  folded column (no migration was added). Each word becomes
+  `%…%` with every letter that can carry an accent or a tilde (a, c, e, i, n,
+  o, u, y) and every non-alphanumeric character turned into `_`
+  (`likeWord`), so «jose» reaches «José» on SQLite and on LokiJS. The
+  projection then keeps only the rows whose NFD-folded title holds every word
+  (`matchesWords`), which removes what the wildcards let in («Josa»). A
+  person's words may sit in `name` or `last_name`.
+- **Order.** Results are no longer ranked by match quality: a database page
+  cannot be, and re-sorting loaded pages would move rows under the reader. The
+  segment order above is the order.
+- **Typing.** The query settles after 150 ms (`COMMAND_SEARCH_DEBOUNCE_MS`);
+  until the new scope's first projection lands the previous results stay and
+  the empty message waits (`pending`).
+- **Scopes.** With text, chips (Todo and each group the role may search)
+  narrow the kinds the scope asks for.
+- **Palette.** Actions and «Ir a» come before the results, so the results can
+  grow at the end of one `InfiniteList`. Every row has a leading icon well in
+  its kind's colour (agenda `ev3`, tasks `ok`, projects `ev2`, people `ev1`,
+  cameras and sections neutral, new items `accent`) and a second line naming
+  the kind and its time. The pointer palette lost its shadow and its glass and
+  is a solid surface with a hairline; its list is capped by the palette height
+  minus its measured chrome. On touch the sheet opens full height
+  (`Sheet long="fill"`, whose body fills the sheet) and the list fills it.
+- **Empty.** No match (or nothing to offer with no text) centres an icon well,
+  a title and a hint in the whole list area, with «Pedir a Argus» and the
+  matching actions under it.
+- **Gone.** `event.list` (the 1000 latest events kept only for the search) and
+  its projection; the key is retired so MMKV drops it. The «create task» action
+  now asks `dashboard.summary.projectsTotal` instead of reading the project
+  list.
+
+## Tasks read the database by project (2026-10-27, feat/lists-paged)
+
+David asked every long list to page from the database. The coordinator no
+longer observes the whole `project_task` table.
+
+- **`project.tasks`** is a paged view per project id
+  (`core/services/view-cache-tasks.ts`, `projectTaskPages`), opened only while
+  a screen watches it. Its value (`IProjectTasksPage`) holds the project's open
+  tasks (one bounded query, at most `VIEW_CACHE_LIST_LIMIT`), a keyset page of
+  its finished and canceled tasks (20 at a time, `PROJECT_DONE_PAGE_SIZE`,
+  newest `updated_at` first), and the counts: progress (done over all but
+  canceled) and how many are in Terminadas.
+- **The board** merges the open rows with the finished page
+  (`projectTaskRows`, an id seen open wins) before the optimistic lenses, so a
+  task marked done moves lanes at once. Terminadas keeps the database order
+  (most recently finished first) and renders through `InfiniteList`, capped at
+  `layout.laneListCap` (440) on the board and in the phone's groups, loading
+  the next page at its end; its head shows the counted total.
+- **Counts instead of rows.** Each project card's progress comes from three
+  count queries per project (`observeProgress`, fed by the project list), the
+  dashboard's open tasks from one count (`observeOpenCount`), and the
+  profile's week from counts of tasks due in the week (`observeDueCounts`,
+  `week.tasks`, rebuilt at midnight with the other date-derived projections).
+  The project list rows read their progress from `dashboard.projects`. Inicio's
+  project rows watch `project.tasks` for their next open task.
+- **Gone.** `task.list` (retired key) and `observeAll`; `weekOf` moved to
+  `shared/libs/week-range.ts` because core and the profile both read it.
 
 ## Inicio's agenda sections (2026-10-26, Phase 2 T5, p2/inicio-agenda)
 
@@ -8293,3 +8382,37 @@ the first mount, and Reduce Motion skips it entirely.
   (`useClipPlayback().replay`). The Owner can delete a clip.
 - **Elsewhere.** `/cameras/[id]/recordings` redirects to `/clips?camera=<id>`. Tamper evidence
   reads the same feed path.
+
+## Live camera previews (2026-10-27, owner: «en tiempo real, eficiente y ordenado»)
+
+Every camera tile outside the full view plays live: Inicio's cameras section (strip and
+grid), Seguridad's cameras section and the camera list. The plan, the options and their
+sources are in `uiux-map/redesign/later-phases/briefs/R-live-previews.md`; the server
+side is the backend's `services/camera/CONTEXT.md` › "Live previews".
+
+- **One socket.** `cameraPreviewMux` (`features/cameras/services/camera-preview-mux.ts`)
+  keeps one `/media` socket for all tiles of all screens, subscribes each tile with
+  `{quality: 'sub', preview: true}` (sub stream, video only, no viewer seat, its own
+  credit window on the server), routes binary frames by `subId` to the tile's sink
+  (`PreviewChannel`), acknowledges per subscription, renews the token in band, and
+  closes 3 s after the last tile leaves so moving between Inicio and Seguridad does not
+  churn. The same URL serves the LAN and the tunnel; WebRTC is never used for tiles
+  (no TURN, and it would take the full view's seats).
+- **Ordered.** Subscriptions go out one at a time, the lowest tile order first, the
+  next once the previous one is answered; frames that arrive before the answer belong to
+  the subscription being asked. A refused or closed tile waits with the existing
+  back-off and the next tile is asked at once.
+- **Only what is seen.** `useCameraPreview` measures its tile once a second
+  (`measureInWindow` against the window) while the screen is focused and the app is in
+  the foreground; `previewBoard` grants live play to the first visible tiles in order,
+  one per camera, up to `PREVIEW_LIVE_CAP` (`low` 2, `mid` 4, `high` 6, under every
+  declared AVC decoder-instance limit with room for the full view and a call). A tile
+  past the cap, scrolled away, or on a blurred or backgrounded screen keeps its still.
+- **No flicker.** The still (snapshot cache) stays painted under the video. Native
+  (`camera-preview.native.tsx`, `ArgusCameraView`, muted) reveals the player 250 ms after
+  its first fragment and hides it again on a stall or close; it subscribes without
+  `fastStart`, because ExoPlayer would keep the replayed GOP's age as latency. Web
+  (`camera-preview.web.tsx`, `WebCameraPlayer`) subscribes with `fastStart` and paints
+  on a transparent canvas; without WebCodecs the tile keeps its still.
+- **Stills only where needed.** `CameraThumbnailPoller` skips a camera that is playing
+  live; it still paints every tile once before its video starts.

@@ -41,6 +41,11 @@ const c225: ICameraCatalogModel = {
   defaults: { port: 554, onvifPort: 2020, username: '', streamPath: '/stream1', subStreamPath: '/stream2' },
   features: { ...features, ptz: true, presets: true, speaker: true, microphone: true, siren: true },
   note: 'tapo-camera-account',
+  support: 'full',
+  tested: true,
+  look: 'egg',
+  specs: null,
+  source: '',
 };
 
 const c310: ICameraCatalogModel = {
@@ -66,6 +71,8 @@ const hikvision: ICameraCatalogModel = {
   defaults: { port: 554, onvifPort: 80, username: 'admin', streamPath: '/Streaming/Channels/101', subStreamPath: '/Streaming/Channels/102' },
   features,
   note: '',
+  support: 'control',
+  tested: false,
 };
 
 const catalog = [hikvision, c310, c225];
@@ -112,12 +119,12 @@ function flacFrame(samples: readonly number[]): Uint8Array {
 
 describe('camera catalog', () => {
   test('search matches brand and model tokens, filters combine, generic profiles come last', () => {
-    expect(filterCatalog(catalog, { query: 'tapo c2', brand: null, formFactor: null, feature: null }).map((m) => m.id)).toEqual(['tapo-c225']);
-    expect(filterCatalog(catalog, { query: 'axis', brand: null, formFactor: null, feature: null })).toEqual([]);
-    expect(filterCatalog(catalog, { query: 'c225', brand: null, formFactor: null, feature: null }).map((m) => m.id)).toEqual(['tapo-c225']);
-    expect(filterCatalog(catalog, { query: '', brand: null, formFactor: null, feature: null }).at(-1)?.id).toBe('hikvision');
-    expect(filterCatalog(catalog, { query: '', brand: 'TP-Link Tapo', formFactor: 'bullet', feature: null }).map((m) => m.id)).toEqual(['tapo-c310']);
-    expect(filterCatalog(catalog, { query: '', brand: null, formFactor: null, feature: 'ptz' }).map((m) => m.id)).toEqual(['tapo-c225']);
+    expect(filterCatalog(catalog, { query: 'tapo c2', brand: null, kind: null }).map((m) => m.id)).toEqual(['tapo-c225']);
+    expect(filterCatalog(catalog, { query: 'axis', brand: null, kind: null })).toEqual([]);
+    expect(filterCatalog(catalog, { query: 'c225', brand: null, kind: null }).map((m) => m.id)).toEqual(['tapo-c225']);
+    expect(filterCatalog(catalog, { query: '', brand: null, kind: null }).at(-1)?.id).toBe('hikvision');
+    expect(filterCatalog(catalog, { query: '', brand: 'TP-Link Tapo', kind: 'outdoor' }).map((m) => m.id)).toEqual(['tapo-c310']);
+    expect(filterCatalog(catalog, { query: '', brand: null, kind: 'moving' }).map((m) => m.id)).toEqual(['tapo-c225']);
   });
 
   test('picking a model pre-fills the driver, port, user and paths', () => {

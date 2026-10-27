@@ -61,6 +61,12 @@ mock.module('@/features/home/hooks/use-camera-section', () => ({
   },
 }));
 
+mock.module('@/features/cameras', () => ({
+  CameraPreview: ({ cameraId, order }: { cameraId: string; order: number }) => (
+    <span data-testid={`preview-${cameraId}`}>{order}</span>
+  ),
+}));
+
 const { CamerasSection } = await import('@/features/home/components/cameras/cameras-section');
 const { CameraMedia } = await import('@/features/home/components/cameras/camera-media');
 const { ScreenColumn, ScreenColumns } = await import('@/shared/ui/screen/screen-columns');
@@ -105,6 +111,14 @@ describe('CamerasSection', () => {
     expect(pushed).toEqual(['/cameras/1', '/security']);
   });
 
+  test('every online tile carries its live preview in tile order, and a private one none', () => {
+    data = sectionData({});
+    render(<CamerasSection />);
+    expect(screen.getByTestId('preview-1').textContent).toBe('0');
+    expect(screen.getByTestId('preview-2').textContent).toBe('1');
+    expect(screen.queryByTestId('preview-3')).toBeNull();
+  });
+
   test('in a desktop column the cameras fill a grid with no clip and no strip', () => {
     setWindowWidth(1920);
     data = sectionData({});
@@ -132,11 +146,13 @@ describe('CamerasSection', () => {
         tile={{ id: '1', name: 'Cocina', state: 'live', at: null }}
         detail="14:47"
         frame="data:image/jpeg;base64,AAAA"
+        order={0}
         onOpen={() => undefined}
       />
     );
     expect(screen.getByRole('button', { name: 'Cocina, Sin conexión' })).toBeDefined();
     expect(screen.queryByText('En vivo')).toBeNull();
+    expect(screen.queryByTestId('preview-1')).toBeNull();
     reach.offline = false;
   });
 
@@ -147,6 +163,7 @@ describe('CamerasSection', () => {
         <CameraMedia
           tile={{ id: '5', name: 'Garaje', state: 'offline', at: null }}
           detail="Sin conexión"
+          order={0}
           onOpen={(id) => opened.push(id)}
         />
       </>

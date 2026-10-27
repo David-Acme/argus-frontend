@@ -593,10 +593,6 @@
   backdrop-filter: blur(26px) saturate(1.6);
 }
 
-@utility glass-palette {
-  -webkit-backdrop-filter: blur(30px) saturate(1.6);
-  backdrop-filter: blur(30px) saturate(1.6);
-}
 
 @utility glass-cap {
   -webkit-backdrop-filter: blur(20px);

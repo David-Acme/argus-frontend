@@ -20,6 +20,16 @@ export type CameraFeatureKey =
   | 'motion'
   | 'sdCard';
 
+export type CameraSupportLevel = 'full' | 'control' | 'video' | 'none';
+
+export type CameraPowerKind =
+  | 'adapter'
+  | 'poe'
+  | 'adapter-poe'
+  | 'battery'
+  | 'doorbell-wiring'
+  | 'battery-wiring';
+
 export type CameraProbeStepId = 'network' | 'main' | 'sub' | 'device' | 'talk';
 
 export type CameraProbeStepStatus = 'ok' | 'failed' | 'skipped' | 'warning';

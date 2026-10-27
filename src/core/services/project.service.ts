@@ -3,11 +3,22 @@ import type { Observable } from 'rxjs';
 import type { ProjectModel } from '@/core/database';
 import type { IProjectCreate, IProjectUpdate, IServiceResponse } from '@/core/interfaces';
 import { DatabaseService } from './database.service';
+import { wordClauses, type PageSegment } from './paging';
+import { SEARCH_PAGE_SIZE } from '@/shared/constants';
 import { httpService, idempotentConfig } from '@/core/services/http';
 
 class ProjectService extends DatabaseService<'project'> {
   constructor() {
     super('project');
+  }
+
+  search(words: readonly string[]): PageSegment<ProjectModel> {
+    return this.keysetSegment({
+      clauses: wordClauses(['name'], words),
+      sort: { column: 'created_at', order: 'desc' },
+      columns: ['name'],
+      pageSize: SEARCH_PAGE_SIZE,
+    });
   }
 
   observeList(): Observable<ProjectModel[]> {

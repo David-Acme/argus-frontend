@@ -9,6 +9,7 @@ import { Notice } from '@/shared/ui/notice';
 import { Row } from '@/shared/ui/row';
 import { Switch } from '@/shared/ui/switch';
 import { Text } from '@/shared/ui/text';
+import { CameraIllustration } from '@/features/cameras/components/camera-illustration';
 import { SetupField } from '@/features/cameras/components/camera-setup/setup-field';
 import { CAMERA_DRIVER_SPECS } from '@/features/cameras/constants';
 import {
@@ -42,6 +43,7 @@ const NOTE_LABEL: Readonly<Record<string, TranslationKey>> = {
   'safety-code-password': 'screens.cameras.catalog.note-safety-code',
   'verification-code-password': 'screens.cameras.catalog.note-verification-code',
   'reolink-h265': 'screens.cameras.catalog.note-reolink',
+  'vigi-onvif': 'screens.cameras.catalog.note-vigi-onvif',
   'custom-paths': 'screens.cameras.catalog.note-custom-paths',
 };
 
@@ -51,7 +53,13 @@ function ModelRow({ model, driver, onChange }: ModelRowProps) {
   return (
     <Stack gap={2}>
       <Row
-        leading={<Avatar icon="cam" />}
+        leading={
+          model ? (
+            <CameraIllustration formFactor={model.formFactor} look={model.look} size={48} />
+          ) : (
+            <Avatar icon="cam" />
+          )
+        }
         title={model ? catalogLabel(model) : t(DRIVER_LABEL[driver])}
         meta={
           model

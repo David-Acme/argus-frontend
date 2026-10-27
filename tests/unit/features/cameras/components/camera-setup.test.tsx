@@ -43,6 +43,48 @@ const MODEL: ICameraCatalogModel = {
     sdCard: true,
   },
   note: '',
+  support: 'full',
+  tested: false,
+  look: 'sphere-visor',
+  specs: {
+    fovDeg: 98,
+    nightVisionM: 9,
+    colorNight: false,
+    spotlight: false,
+    siren: true,
+    microphone: true,
+    twoWayAudio: true,
+    panDeg: 360,
+    tiltDeg: 114,
+    opticalZoom: 0,
+    ipRating: '',
+    power: 'adapter',
+    storageGb: 512,
+    rtsp: true,
+    onvif: true,
+    onvifProfile: 'S',
+  },
+  source: 'https://www.tp-link.com/uk/home-networking/cloud-camera/tapo-c210/',
+};
+
+const BATTERY: ICameraCatalogModel = {
+  ...MODEL,
+  id: 'tapo-c420',
+  model: 'C420',
+  formFactor: 'bullet',
+  outdoor: true,
+  features: { ...MODEL.features, ptz: false, presets: false, privacy: false },
+  support: 'none',
+  look: 'battery-bullet',
+  specs: MODEL.specs && {
+    ...MODEL.specs,
+    panDeg: 0,
+    tiltDeg: 0,
+    power: 'battery',
+    rtsp: false,
+    onvif: false,
+    onvifProfile: '',
+  },
 };
 
 const RESULT: ICameraProbeResult = {
@@ -60,7 +102,7 @@ mock.module('expo-router', () => ({
 
 mock.module('@/features/cameras/hooks/use-camera-catalog', () => ({
   useCameraCatalog: () => ({
-    models: [MODEL],
+    models: [MODEL, BATTERY],
     loading: false,
     failed: false,
     reload: async () => undefined,
@@ -139,11 +181,31 @@ describe('the camera setup sheet', () => {
     expect(closed).toBe(1);
   });
 
-  test('a new camera starts by picking its model, then goes to its connection', async () => {
+  test('a new camera previews its model with specs and support, then goes to its connection', async () => {
     render(<CameraForm open onOpenChange={() => undefined} />);
     expect(screen.getByText('Paso 1 de 4: Modelo')).toBeDefined();
     fireEvent.click(screen.getByRole('button', { name: /^TP-Link Tapo C210/ }));
+    expect(screen.getByText('Paso 1 de 4: Modelo')).toBeDefined();
+    expect(screen.getByText('Especificaciones')).toBeDefined();
+    expect(screen.getByText('Gira 360° · inclina 114°')).toBeDefined();
+    expect(screen.getByText('Datos de la ficha oficial en tp-link.com')).toBeDefined();
+    fireEvent.click(screen.getByRole('button', { name: 'Continuar' }));
     expect(screen.getByText('Paso 2 de 4: Conexión')).toBeDefined();
+  });
+
+  test('a camera Argus cannot use is shown as not compatible and cannot be chosen', () => {
+    render(<CameraForm open onOpenChange={() => undefined} />);
+    fireEvent.click(screen.getByRole('button', { name: /^TP-Link Tapo C420/ }));
+    expect(screen.getAllByText('No compatible').length).toBeGreaterThan(0);
+    fireEvent.click(screen.getByRole('button', { name: 'Continuar' }));
+    expect(screen.getByText('Paso 1 de 4: Modelo')).toBeDefined();
+  });
+
+  test('the brand and type chips narrow the list', () => {
+    render(<CameraForm open onOpenChange={() => undefined} />);
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Motorizada' }));
+    expect(screen.queryByRole('button', { name: /^TP-Link Tapo C420/ })).toBeNull();
+    expect(screen.getByRole('button', { name: /^TP-Link Tapo C210/ })).toBeDefined();
   });
 
   test('a missing field is said under it in words and the step stays', async () => {

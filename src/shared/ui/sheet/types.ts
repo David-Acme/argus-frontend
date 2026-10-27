@@ -24,7 +24,7 @@ export type SheetProps = {
   onClose: () => void;
   title: string;
   variant?: SheetVariant;
-  long?: boolean;
+  long?: boolean | 'fill';
   dirty?: string | boolean;
   actions?: SheetActions;
   initialFocus?: RefObject<Focusable | null>;

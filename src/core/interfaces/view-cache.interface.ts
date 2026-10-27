@@ -9,6 +9,7 @@ import type {
   IconName,
   NotificationData,
   RecurrenceException,
+  SearchKind,
   UserRole,
   ZonePoint,
   ZoneType,
@@ -90,6 +91,19 @@ export interface IProjectTaskCacheRow {
   createdVia?: CreatedVia;
 }
 
+export interface IProjectTasksPage {
+  rows: readonly IProjectTaskCacheRow[];
+  hasMore: boolean;
+  open: readonly IProjectTaskCacheRow[];
+  doneTotal: number;
+  progress: { done: number; total: number };
+}
+
+export interface IWeekTaskCounts {
+  done: number;
+  pending: number;
+}
+
 export interface IPeopleDirectoryCacheRow {
   id: string;
   name: string;
@@ -126,11 +140,13 @@ export interface ICalendarEventCacheSource {
   createdVia?: string;
 }
 
-export interface IEventListCacheRow {
+export interface ISearchHitCacheRow {
+  kind: SearchKind;
   id: string;
   title: string;
-  startsAt: number;
-  isAllDay: boolean;
+  at: number | null;
+  allDay: boolean;
+  parentId: string | null;
   recurrenceRule: string | null;
 }
 

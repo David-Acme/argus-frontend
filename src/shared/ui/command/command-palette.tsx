@@ -1,4 +1,3 @@
-import { clsx } from 'clsx';
 import { useEffect, type ReactNode } from 'react';
 import { useWindowDimensions } from 'react-native';
 import Animated, {
@@ -7,14 +6,7 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
-import {
-  heightLayoutOf,
-  layout,
-  motion,
-  paletteTopOf,
-  useEffects,
-  useThemeTokens,
-} from '@/shared/theme';
+import { heightLayoutOf, layout, motion, paletteTopOf, useEffects } from '@/shared/theme';
 
 type CommandPaletteProps = { children: ReactNode };
 
@@ -27,9 +19,15 @@ const ENTER = { duration: motion.duration.enter, easing: Easing.bezier(x1, y1, x
 export const paletteWidth = (windowWidth: number): number =>
   Math.min(layout.palette, windowWidth - layout.gutterCompact * 2);
 
+export const paletteHeight = (size: { width: number; height: number }): number =>
+  size.height - paletteTopOf(heightLayoutOf(size)) * 2;
+
+export function usePaletteHeight(): number {
+  return paletteHeight(useWindowDimensions());
+}
+
 export function CommandPalette({ children }: CommandPaletteProps) {
-  const { reduceMotion, reduceTransparency } = useEffects();
-  const { elevation } = useThemeTokens();
+  const { reduceMotion } = useEffects();
   const { width, height } = useWindowDimensions();
   const shown = useSharedValue(reduceMotion ? 1 : 0);
   const enter = useAnimatedStyle(() => ({
@@ -38,8 +36,7 @@ export function CommandPalette({ children }: CommandPaletteProps) {
   }));
   const frame = {
     width: paletteWidth(width),
-    maxHeight: height - paletteTopOf(heightLayoutOf({ width, height })) * 2,
-    boxShadow: `${elevation.float}, ${elevation.glassInset}`,
+    maxHeight: paletteHeight({ width, height }),
   };
 
   useEffect(() => {
@@ -49,10 +46,7 @@ export function CommandPalette({ children }: CommandPaletteProps) {
   return (
     <Animated.View
       style={[frame, enter]}
-      className={clsx(
-        'rounded-dialog overflow-hidden',
-        reduceTransparency ? 'bg-surface' : 'bg-surface/84 web:glass-palette'
-      )}>
+      className="rounded-dialog border-line bg-surface overflow-hidden border">
       {children}
     </Animated.View>
   );

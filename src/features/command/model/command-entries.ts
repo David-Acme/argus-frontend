@@ -1,36 +1,12 @@
-import type {
-  ICameraCacheRow,
-  IEventListCacheRow,
-  IPeopleDirectoryCacheRow,
-  IProjectCacheRow,
-  IProjectTaskCacheRow,
-} from '@/core/interfaces';
+import type { ISearchHitCacheRow } from '@/core/interfaces';
 import type { TranslateFn } from '@/core/types';
 import type { DateFormatter } from '@/shared/hooks/use-date-formatter/date';
 import { firstOccurrenceAfter, parseRecurrenceRule, zoneClock } from '@/shared/libs/recurrence';
-import { foldText, type SearchEntry, type SearchKind } from './command-search';
+import type { SearchEntry } from './command-search';
 
-export type SearchRows = {
-  events: readonly IEventListCacheRow[];
-  tasks: readonly Pick<IProjectTaskCacheRow, 'id' | 'projectId' | 'title' | 'status' | 'dueAt'>[];
-  projects: readonly Pick<IProjectCacheRow, 'id' | 'name'>[];
-  people: readonly Pick<IPeopleDirectoryCacheRow, 'id' | 'name' | 'lastName' | 'isActive'>[];
-  cameras: readonly Pick<ICameraCacheRow, 'id' | 'name'>[];
-};
+export type EventTiming = { startsAt: number; recurrenceRule: string | null };
 
-type EntryFields = Omit<SearchEntry, 'folded'>;
-
-const CLOSED_TASKS: ReadonlySet<string> = new Set(['done', 'canceled']);
-
-const entryOf = (fields: EntryFields): SearchEntry => ({
-  ...fields,
-  folded: foldText(fields.title),
-});
-
-const plain = (kind: SearchKind, id: string, title: string): SearchEntry =>
-  entryOf({ kind, id, title, at: null });
-
-export function nextEventAt(event: IEventListCacheRow, now: number): number {
+export function nextEventAt(event: EventTiming, now: number): number {
   const rule = parseRecurrenceRule(event.recurrenceRule);
   if (!rule || event.startsAt >= now) return event.startsAt;
   return (
@@ -39,36 +15,20 @@ export function nextEventAt(event: IEventListCacheRow, now: number): number {
   );
 }
 
-export function searchEntries(rows: SearchRows, now: number): SearchEntry[] {
-  return [
-    ...rows.events.map((event) =>
-      entryOf({
-        kind: 'event',
-        id: event.id,
-        title: event.title,
-        at: nextEventAt(event, now),
-        allDay: event.isAllDay,
-      })
-    ),
-    ...rows.tasks
-      .filter((task) => !CLOSED_TASKS.has(task.status))
-      .map((task) =>
-        entryOf({
-          kind: 'task',
-          id: task.id,
-          title: task.title,
-          at: task.dueAt,
-          parentId: task.projectId,
-        })
-      ),
-    ...rows.projects.map((project) => plain('project', project.id, project.name)),
-    ...rows.people
-      .filter((person) => person.isActive)
-      .map((person) =>
-        plain('person', person.id, [person.name, person.lastName].filter(Boolean).join(' '))
-      ),
-    ...rows.cameras.map((camera) => plain('camera', camera.id, camera.name)),
-  ];
+function entryAt(hit: ISearchHitCacheRow, now: number): number | null {
+  if (hit.kind !== 'event' || hit.at === null) return hit.at;
+  return nextEventAt({ startsAt: hit.at, recurrenceRule: hit.recurrenceRule }, now);
+}
+
+export function searchEntries(hits: readonly ISearchHitCacheRow[], now: number): SearchEntry[] {
+  return hits.map((hit) => ({
+    kind: hit.kind,
+    id: hit.id,
+    title: hit.title,
+    at: entryAt(hit, now),
+    allDay: hit.allDay,
+    parentId: hit.parentId ?? undefined,
+  }));
 }
 
 type WhenFormat = Pick<DateFormatter, 'sameDay' | 'addDays' | 'formatTime' | 'formatDayMonth'>;

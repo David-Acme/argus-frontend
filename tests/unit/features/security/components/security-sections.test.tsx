@@ -169,8 +169,10 @@ describe('Cámaras', () => {
     const { rerender } = render(grid());
     expect(screen.getByRole('button', { name: 'Patio trasero, En vivo, 14:45' })).toBeDefined();
     expect(screen.getByRole('button', { name: 'Sala, sin novedad' })).toBeDefined();
+    expect(screen.getByTestId('preview-3').textContent).toBe('0');
     reach.offline = true;
     rerender(grid());
+    expect(screen.queryByTestId('preview-3')).toBeNull();
     expect(screen.getByRole('button', { name: 'Patio trasero, Sin conexión' })).toBeDefined();
     expect(screen.getByRole('button', { name: 'Sala, Sin conexión' })).toBeDefined();
     expect(screen.queryByText('En vivo')).toBeNull();

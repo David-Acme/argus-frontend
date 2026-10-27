@@ -118,7 +118,6 @@ src/core/services/view-cache/camera.projection.ts
 src/core/services/view-cache/conversation.projection.ts
 src/core/services/view-cache/module-source-gate.ts
 src/core/services/view-cache/notification.projection.ts
-src/core/services/view-cache/project.projection.ts
 src/core/services/view-cache/projection.ts
 src/core/services/view-cache/summary.projection.ts
 src/core/services/zone.service.ts
@@ -150,7 +149,6 @@ src/features/activity/screens/activity-screen.tsx
 src/features/activity/services/activity.service.ts
 src/features/agenda/components/calendar-event-share-dialog.tsx
 src/features/cameras/components/camera-form-schema.ts
-src/features/cameras/components/camera-illustration.tsx
 src/features/cameras/components/camera-live-status.tsx
 src/features/cameras/components/camera-privacy-placeholder.tsx
 src/features/cameras/components/camera-snapshot-view.tsx
@@ -168,7 +166,6 @@ src/features/cameras/hooks/use-camera-rows.ts
 src/features/cameras/hooks/use-clip-playback.ts
 src/features/cameras/hooks/use-tamper-evidence.ts
 src/features/cameras/model/camera-aim.ts
-src/features/cameras/model/camera-catalog.ts
 src/features/cameras/model/camera-device.ts
 src/features/cameras/model/camera-form-steps.ts
 src/features/cameras/model/camera-live-audio.ts

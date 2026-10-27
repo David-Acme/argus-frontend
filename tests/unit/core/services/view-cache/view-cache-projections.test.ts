@@ -14,10 +14,13 @@ import {
   projectCameras,
   type CameraSource,
 } from '@/core/services/view-cache/camera.projection';
-import { projectEventList } from '@/core/services/view-cache/event.projection';
 import { projectNotificationFeed } from '@/core/services/view-cache/notification.projection';
 import { projectPeople } from '@/core/services/view-cache/people.projection';
-import { projectProjects } from '@/core/services/view-cache/project.projection';
+import {
+  projectProjects,
+  projectTasksPage,
+  projectWeekTasks,
+} from '@/core/services/view-cache/project.projection';
 import { projectSummary } from '@/core/services/view-cache/summary.projection';
 import { VIEW_CACHE_PAGE_SIZE } from '@/shared/constants/cache.constant';
 
@@ -216,32 +219,13 @@ const TASK_ROWS = [
 ];
 
 describe('project projection', () => {
-  test('tasks and members are scoped per project and cards carry progress', () => {
+  test('members are scoped per project and cards carry the counted progress', () => {
     const writes = projectProjects({
       projects: [
         { id: 'p1', ownerId: '1', name: 'Home', description: '', status: 'active' },
         { id: 'p2', ownerId: '2', name: 'Empty', description: '', status: 'active' },
       ],
-      tasks: [
-        {
-          id: 't1',
-          projectId: 'p1',
-          title: 'a',
-          status: 'done',
-          priority: 'none',
-          dueAt: null,
-          createdVia: 'assistant',
-        },
-        {
-          id: 't2',
-          projectId: 'p1',
-          title: 'b',
-          status: 'todo',
-          priority: 'high',
-          dueAt: new Date(1000),
-          createdVia: '',
-        },
-      ],
+      progress: new Map([['p1', { done: 1, total: 2 }]]),
       members: [
         { id: 'm1', projectId: 'p1', userId: '2', access: 'edit' },
         { id: 'm2', projectId: 'p1', userId: '9', access: 'view' },
@@ -255,9 +239,7 @@ describe('project projection', () => {
       { id: 'p1', ownerId: '1', name: 'Home', description: '', status: 'active' },
       { id: 'p2', ownerId: '2', name: 'Empty', description: '', status: 'active' },
     ]);
-    expect(rowsOf(writes, 'project.tasks', 'p1')).toEqual([...TASK_ROWS]);
-    expect(rowsOf(writes, 'project.tasks', 'p2')).toEqual([]);
-    expect(rowsOf(writes, 'task.list')).toEqual([...TASK_ROWS]);
+    expect(writes.some((write) => write.key === 'project.tasks')).toBe(false);
     expect(rowsOf(writes, 'project.members', 'p1')).toEqual([
       { id: 'm1', projectId: 'p1', userId: '2', name: 'Luis', access: 'edit' },
       { id: 'm2', projectId: 'p1', userId: '9', name: '', access: 'view' },
@@ -286,27 +268,50 @@ describe('project projection', () => {
       },
     ]);
   });
-});
 
-describe('event list projection', () => {
-  test('every event is one searchable row in milliseconds, an empty rule read as none', () => {
-    const writes = projectEventList({
-      events: [
-        {
-          id: 'e1',
-          title: 'Cena',
-          startsAt: new Date(5000),
-          isAllDay: false,
-          recurrenceRule: 'FREQ=WEEKLY',
-        },
-        { id: 'e2', title: 'Viaje', startsAt: new Date(9000), isAllDay: true, recurrenceRule: '' },
-      ],
+  test('a project page carries its open tasks, a page of finished ones and the counts', () => {
+    const [open, done] = [
+      {
+        id: 't2',
+        projectId: 'p1',
+        title: 'b',
+        status: 'todo',
+        priority: 'high',
+        dueAt: new Date(1000),
+        createdVia: '',
+      },
+      {
+        id: 't1',
+        projectId: 'p1',
+        title: 'a',
+        status: 'done',
+        priority: 'none',
+        dueAt: null,
+        createdVia: 'assistant',
+      },
+    ];
+    const writes = projectTasksPage(
+      {
+        open: [open],
+        done: { rows: [done], hasMore: true },
+        counts: { done: 41, total: 42, closed: 45 },
+      },
+      'p1'
+    );
+    expect(valueOf(writes, 'project.tasks', 'p1')).toEqual({
+      rows: [TASK_ROWS[0]],
+      hasMore: true,
+      open: [TASK_ROWS[1]],
+      doneTotal: 45,
+      progress: { done: 41, total: 42 },
     });
-    expect(writes).toHaveLength(1);
-    expect(rowsOf(writes, 'event.list')).toEqual([
-      { id: 'e1', title: 'Cena', startsAt: 5000, isAllDay: false, recurrenceRule: 'FREQ=WEEKLY' },
-      { id: 'e2', title: 'Viaje', startsAt: 9000, isAllDay: true, recurrenceRule: null },
-    ]);
+  });
+
+  test('the week reads counted tasks due in it', () => {
+    expect(valueOf(projectWeekTasks({ counts: { open: 3, done: 2 } }), 'week.tasks')).toEqual({
+      done: 2,
+      pending: 3,
+    });
   });
 });
 
@@ -442,12 +447,13 @@ describe('summary projection', () => {
         { status: 'done' },
         { status: 'canceled' },
       ],
-      tasks: [{ status: 'todo' }, { status: 'done' }, { status: 'canceled' }],
+      openTasks: 1,
     });
     expect(valueOf(writes, 'dashboard.summary')).toEqual({
       camerasTotal: 2,
       camerasOnline: 1,
       projectsActive: 1,
+      projectsTotal: 5,
       tasksOpen: 1,
     });
   });

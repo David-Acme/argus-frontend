@@ -8,6 +8,8 @@ import type {
 import { at, date, NOW } from '../../home/agenda-fixtures';
 import '../../../shared/ui/translation-stub';
 import { setWindowSize, setWindowWidth } from '../../../shared/ui/window-width';
+import { InfiniteListStub } from '@tests/support/infinite-list-stub';
+import { pagedViewStub, projectTasksPageOf } from '@tests/support/project-tasks-page';
 
 type Calls = { pushed: unknown[]; asked: string[]; commands: string[] };
 
@@ -78,6 +80,10 @@ mock.module('@/shared/hooks/use-cached-rows', () => ({
   useViewCacheRows: (key: string, scope?: string) =>
     state.rows.get(scope ? `${key}.${scope}` : key) ?? [],
 }));
+mock.module('@/shared/components/ui/infinite-list', () => ({ InfiniteList: InfiniteListStub }));
+mock.module('@/shared/hooks/use-infinite-list', () =>
+  pagedViewStub((key, scope) => state.rows.get(scope ? `${key}.${scope}` : key) ?? [])
+);
 mock.module('@/shared/hooks/use-date-formatter', () => ({ useDateFormatter: () => date }));
 mock.module('@/shared/hooks/use-capabilities', () => ({
   useCapabilities: () => ({
@@ -161,6 +167,8 @@ const parts = [
   TaskSheet,
 ];
 
+const progressOf = (rows: readonly IProjectTaskCacheRow[]) => projectTasksPageOf(rows).progress;
+
 const flush = () => act(() => new Promise((resolve) => globalThis.setTimeout(resolve, 0)));
 
 const seed = () => {
@@ -168,6 +176,13 @@ const seed = () => {
     ['project.list', [mudanza, viaje]],
     ['project.tasks.7', tasks],
     ['project.members.7', members],
+    [
+      'dashboard.projects',
+      [
+        { ...mudanza, ...progressOf(tasks) },
+        { ...viaje, done: 0, total: 0 },
+      ],
+    ],
   ]);
 };
 

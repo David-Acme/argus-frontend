@@ -36,6 +36,7 @@ const state = {
     camerasTotal: 5,
     camerasOnline: 5,
     projectsActive: 1,
+    projectsTotal: 1,
     tasksOpen: 2,
   },
   mode: null as GuardMode | null,
@@ -206,6 +207,7 @@ afterEach(() => {
       camerasTotal: 5,
       camerasOnline: 5,
       projectsActive: 1,
+      projectsTotal: 1,
       tasksOpen: 2,
     },
     mode: null,
@@ -270,6 +272,7 @@ describe('Inicio on a phone', () => {
       camerasTotal: 0,
       camerasOnline: 0,
       projectsActive: 0,
+      projectsTotal: 0,
       tasksOpen: 0,
     };
     render(<HomeScreen />);
@@ -286,6 +289,7 @@ describe('Inicio on a phone', () => {
       camerasTotal: 0,
       camerasOnline: 0,
       projectsActive: 0,
+      projectsTotal: 0,
       tasksOpen: 0,
     };
     state.granted = new Set([...state.granted, 'reminders.write', 'messages.relay']);
@@ -374,6 +378,7 @@ describe('a new household on a tablet', () => {
       camerasTotal: 0,
       camerasOnline: 0,
       projectsActive: 0,
+      projectsTotal: 0,
       tasksOpen: 0,
     };
     render(<HomeScreen />);

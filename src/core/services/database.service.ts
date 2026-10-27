@@ -5,6 +5,7 @@ import { combineLatest, type Observable } from 'rxjs';
 import { collection, database } from '@/core/database';
 import type { KeysetPage, KeysetSort, KeysetWindow, ModelOf, TableName } from '@/core/types';
 import { cursorOf, keysetAfter, keysetOrder, keysetThrough } from './paging/keyset';
+import type { PageSegment } from './paging';
 
 export type KeysetQuery = {
   clauses: Clause[];
@@ -93,6 +94,20 @@ export abstract class DatabaseService<K extends TableName> {
     const last = reach[reach.length - 1];
     if (!last) return window;
     return { through: cursorOf(last, query.sort) ?? through };
+  }
+
+  protected keysetSegment(query: KeysetQuery): PageSegment<ModelOf<K>> {
+    const probe = [...query.clauses, Q.take(1)];
+    return {
+      observe: (window) => this.observeKeysetPage(query, window),
+      next: (window) => this.nextKeysetWindow(query, window),
+      any: () =>
+        this.collection
+          .query(...probe)
+          .observe()
+          .pipe(map((rows) => rows.length > 0)),
+      exists: async () => (await this.fetchMany(probe)).length > 0,
+    };
   }
 
   protected write<T>(work: () => Promise<T>): Promise<T> {

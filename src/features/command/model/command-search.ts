@@ -1,12 +1,16 @@
-export type SearchKind = 'event' | 'task' | 'project' | 'person' | 'camera';
+import type { SearchKind } from '@/core/types';
+import { foldText } from '@/shared/libs/text-search';
+
+export type { SearchKind };
 
 export type SearchGroup = 'agenda' | 'projects' | 'people' | 'cameras';
+
+export type SearchScopeKey = 'all' | SearchGroup;
 
 export type SearchEntry = {
   kind: SearchKind;
   id: string;
   title: string;
-  folded: string;
   at: number | null;
   allDay?: boolean;
   parentId?: string;
@@ -14,9 +18,7 @@ export type SearchEntry = {
 
 export type SearchMatches = { group: SearchGroup; entries: readonly SearchEntry[] };
 
-export const SEARCH_GROUP_LIMIT = 5;
-
-const GROUP_OF: Readonly<Record<SearchKind, SearchGroup>> = {
+export const GROUP_OF: Readonly<Record<SearchKind, SearchGroup>> = {
   event: 'agenda',
   task: 'agenda',
   project: 'projects',
@@ -24,69 +26,38 @@ const GROUP_OF: Readonly<Record<SearchKind, SearchGroup>> = {
   camera: 'cameras',
 };
 
-const GROUP_ORDER: readonly SearchGroup[] = ['agenda', 'projects', 'people', 'cameras'];
+export const GROUP_ORDER: readonly SearchGroup[] = ['agenda', 'projects', 'people', 'cameras'];
 
-const MARKS = /\p{M}/gu;
+const KIND_ORDER: readonly SearchKind[] = ['event', 'task', 'project', 'person', 'camera'];
 
-export const foldText = (text: string): string =>
-  text.normalize('NFD').replace(MARKS, '').toLocaleLowerCase().trim();
+export function searchGroups(allowed: ReadonlySet<SearchKind>): SearchGroup[] {
+  return GROUP_ORDER.filter((group) =>
+    KIND_ORDER.some((kind) => GROUP_OF[kind] === group && allowed.has(kind))
+  );
+}
+
+export function scopeKinds(scope: SearchScopeKey, allowed: ReadonlySet<SearchKind>): SearchKind[] {
+  return KIND_ORDER.filter(
+    (kind) => allowed.has(kind) && (scope === 'all' || GROUP_OF[kind] === scope)
+  );
+}
+
+export function groupEntries(entries: readonly SearchEntry[]): SearchMatches[] {
+  const groups: SearchMatches[] = [];
+  for (const entry of entries) {
+    const group = GROUP_OF[entry.kind];
+    const last = groups[groups.length - 1];
+    if (last?.group === group) last.entries = [...last.entries, entry];
+    else groups.push({ group, entries: [entry] });
+  }
+  return groups;
+}
 
 export function foldedScore(haystack: string, needle: string): number {
   if (needle.length === 0) return 0;
   if (haystack.startsWith(needle)) return 3;
   if (haystack.includes(` ${needle}`)) return 2;
   return haystack.includes(needle) ? 1 : 0;
-}
-
-function byTime(left: number | null, right: number | null, now: number): number {
-  const leftAhead = left !== null && left >= now;
-  const rightAhead = right !== null && right >= now;
-  if (leftAhead !== rightAhead) return leftAhead ? -1 : 1;
-  if (left === null || right === null) return Number(left === null) - Number(right === null);
-  return leftAhead ? left - right : right - left;
-}
-
-type RankInput = {
-  entries: readonly SearchEntry[];
-  needle: string;
-  now: number;
-  limit?: number;
-};
-
-export function rankEntries({
-  entries,
-  needle,
-  now,
-  limit = SEARCH_GROUP_LIMIT,
-}: RankInput): SearchEntry[] {
-  return entries
-    .map((entry) => ({ entry, score: foldedScore(entry.folded, needle) }))
-    .filter(({ score }) => score > 0)
-    .sort(
-      (left, right) =>
-        right.score - left.score ||
-        byTime(left.entry.at, right.entry.at, now) ||
-        left.entry.title.localeCompare(right.entry.title)
-    )
-    .slice(0, limit)
-    .map(({ entry }) => entry);
-}
-
-export function searchMatches(
-  entries: readonly SearchEntry[],
-  query: string,
-  now: number
-): SearchMatches[] {
-  const needle = foldText(query);
-  if (needle.length === 0) return [];
-  return GROUP_ORDER.map((group) => ({
-    group,
-    entries: rankEntries({
-      entries: entries.filter((entry) => GROUP_OF[entry.kind] === group),
-      needle,
-      now,
-    }),
-  })).filter((matches) => matches.entries.length > 0);
 }
 
 export function filterLabeled<T extends { label: string }>(

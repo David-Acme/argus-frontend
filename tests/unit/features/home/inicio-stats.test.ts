@@ -8,6 +8,7 @@ const EMPTY = {
   camerasTotal: 0,
   camerasOnline: 0,
   projectsActive: 0,
+  projectsTotal: 0,
   tasksOpen: 0,
 };
 

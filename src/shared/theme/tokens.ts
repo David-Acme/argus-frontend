@@ -250,8 +250,6 @@ export const material = {
   saturationControl: 1.6,
   blurSheet: 26,
   sheetSurfaceMix: 0.94,
-  blurPalette: 30,
-  paletteSurfaceMix: 0.84,
   blurMedia: 10,
   blurCap: 20,
   fadeSolid: 0.7,
@@ -283,6 +281,7 @@ export const layout = {
   mediaGridThree: 560,
   mediaGridFour: 1400,
   bandMax: 2256,
+  laneListCap: 440,
 } as const;
 
 export const tokens = {

@@ -6,6 +6,7 @@ import { CAPABILITY, VIEW_CACHE_KEYS } from '@/shared/constants';
 import type { Agenda } from '@/features/home/hooks/use-agenda';
 import type { AgendaActions } from '@/features/home/hooks/use-agenda-actions';
 import { agendaMenu, agendaRights } from '@/features/agenda/model/agenda-actions';
+import { pagedViewStub } from '@tests/support/project-tasks-page';
 import { screenFocus } from '../../shared/ui/screen-focus';
 import '../../shared/ui/translation-stub';
 import { at, items, prototypeDay, task, TODAY, TOMORROW, wording } from './agenda-fixtures';
@@ -72,6 +73,9 @@ mock.module('@/shared/hooks/use-cached-rows', () => ({
   useViewCacheRows: (key: string, scope?: string) =>
     state.rows.get(scope ? `${key}.${scope}` : key) ?? [],
 }));
+mock.module('@/shared/hooks/use-infinite-list', () =>
+  pagedViewStub((key, scope) => state.rows.get(scope ? `${key}.${scope}` : key) ?? [])
+);
 mock.module('expo-router', () => ({
   Redirect: () => null,
   useLocalSearchParams: () => ({}),

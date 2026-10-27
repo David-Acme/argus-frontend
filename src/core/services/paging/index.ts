@@ -8,3 +8,14 @@ export {
   type RemoteFeedOrder,
   type RemoteFeedSnapshot,
 } from './remote-feed';
+export { likeWord, wordClauses } from './search';
+export {
+  FIRST_SEGMENT,
+  mapSegment,
+  nextSegments,
+  observeSegments,
+  sameKeyset,
+  sameSegments,
+  type PageSegment,
+  type SegmentWindow,
+} from './segments';

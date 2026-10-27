@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import { heroLookOf } from '@/features/profile/model/hero-look';
 import { homeSteps } from '@/features/profile/model/home-steps';
 import { deviceKindOf, factsOf, initialsOf } from '@/features/profile/model/profile-hero';
-import { weekOf, weekStats } from '@/features/profile/model/week-stats';
+import { weekOf } from '@/shared/libs/week-range';
 
 describe('homeSteps', () => {
   test('only real steps count, and done ones leave the cards', () => {
@@ -51,24 +51,6 @@ describe('the week', () => {
     expect(week.from.getDay()).toBe(1);
     expect(week.from.getDate()).toBe(19);
     expect(week.to.getDate()).toBe(25);
-  });
-
-  test('counts the tasks due this week that are done and those still open', () => {
-    const at = (day: number) => new Date(2026, 9, day).getTime();
-    const stats = weekStats(
-      [
-        { status: 'done', dueAt: at(20) },
-        { status: 'done', dueAt: at(25) },
-        { status: 'todo', dueAt: at(24) },
-        { status: 'doing', dueAt: at(19) },
-        { status: 'canceled', dueAt: at(22) },
-        { status: 'done', dueAt: at(12) },
-        { status: 'todo', dueAt: at(30) },
-        { status: 'todo', dueAt: null },
-      ],
-      week
-    );
-    expect(stats).toEqual({ done: 2, pending: 2 });
   });
 });
 

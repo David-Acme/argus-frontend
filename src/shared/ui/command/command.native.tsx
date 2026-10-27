@@ -10,8 +10,8 @@ type BodyProps = Omit<CommandProps, 'open'> & {
   inputRef: RefObject<TextInput | null>;
 };
 
-function Body({ onClose, source, onAsk, initialQuery, inputRef }: BodyProps) {
-  const state = useCommand({ source, onAsk, onClose, initialQuery });
+function Body({ onClose, source, onAsk, onQueryChange, initialQuery, inputRef }: BodyProps) {
+  const state = useCommand({ source, onAsk, onQueryChange, onClose, initialQuery });
   return <CommandPanel state={state} inputRef={inputRef} />;
 }
 
@@ -24,7 +24,7 @@ export function Command({ open, onClose, ...body }: CommandProps) {
       onClose={onClose}
       title={t('common.overlay.command-label')}
       variant="list"
-      long
+      long="fill"
       initialFocus={input}>
       {open ? <Body onClose={onClose} inputRef={input} {...body} /> : null}
     </Sheet>

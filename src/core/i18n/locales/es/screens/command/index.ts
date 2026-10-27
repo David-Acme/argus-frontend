@@ -17,4 +17,11 @@ export const command = {
   tomorrow: 'mañana',
   when: '{day} {time}',
   'key-new': 'N',
+  'scope-all': 'Todo',
+  'kind-event': 'Evento',
+  'kind-task': 'Tarea',
+  'kind-project': 'Proyecto',
+  'kind-person': 'Persona',
+  'kind-camera': 'Cámara',
+  'kind-when': '{kind} · {when}',
 } as const;
