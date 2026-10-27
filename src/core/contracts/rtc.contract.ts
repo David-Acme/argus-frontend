@@ -66,6 +66,8 @@ export const incomingCallSchema = z.object({
   summary: z.string().default(''),
   urgency: z.enum(['active', 'time_sensitive', 'critical']),
   kind: callKind,
+  category: z.enum(['alert', 'reminder', 'notice']).nullish().catch(null),
+  reminderId: optionalId.catch(null),
   episodeId: optionalId,
   cameraId: optionalId,
   cameraName: optionalText,

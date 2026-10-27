@@ -10,7 +10,7 @@ import { elevation, space } from '@/shared/theme';
 import { Text } from '@/shared/ui/text';
 import { CallAvatar } from '@/features/voice/components/call-avatar';
 import { CallStage } from '@/features/voice/components/call-stage';
-import { RingControls } from '@/features/voice/components/ring-controls';
+import { RING_CHOICE_LOOKS, RingControls } from '@/features/voice/components/ring-controls';
 import { RoundControl } from '@/features/voice/components/round-control';
 import {
   CALL_BANNER_AVATAR,
@@ -18,22 +18,26 @@ import {
   CALL_RING_VIBRATION,
   CALL_STAGE_MAX_WIDTH,
 } from '@/features/voice/constants/call.constant';
+import { useReminderCall } from '@/features/voice/hooks/use-reminder-call';
 import { useVoiceSession } from '@/features/voice/hooks/use-voice-session';
 import {
   callKindOf,
+  callReminderIdOf,
   callSubjectOf,
   ringChoices,
   ringSurfaceOf,
-  type RingChoice,
 } from '@/features/voice/model/incoming-surface';
+import type { RingChoice } from '@/features/voice/model/incoming-surface';
 import { voiceService } from '@/features/voice/services/voice';
 
 type RingProps = {
   call: IncomingCall;
+  choices: readonly RingChoice[];
+  busy: boolean;
   onChoose: (choice: RingChoice) => void;
 };
 
-function RingBanner({ call, onChoose }: RingProps) {
+function RingBanner({ call, choices, busy, onChoose }: RingProps) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const place = {
@@ -58,26 +62,23 @@ function RingBanner({ call, onChoose }: RingProps) {
             {t('screens.voice.ring.banner-line', { subject: callSubjectOf(call) })}
           </Text>
         </View>
-        <RoundControl
-          icon="hang"
-          tone="decline"
-          label={t('screens.voice.ring-decline')}
-          size={CALL_BANNER_CONTROL}
-          onPress={() => onChoose('decline')}
-        />
-        <RoundControl
-          icon="phone"
-          tone="answer"
-          label={t('screens.voice.ring-answer')}
-          size={CALL_BANNER_CONTROL}
-          onPress={() => onChoose('answer')}
-        />
+        {choices.map((choice) => (
+          <RoundControl
+            key={choice}
+            icon={RING_CHOICE_LOOKS[choice].icon}
+            tone={RING_CHOICE_LOOKS[choice].tone}
+            label={t(RING_CHOICE_LOOKS[choice].label)}
+            size={CALL_BANNER_CONTROL}
+            disabled={busy && choice === 'snooze'}
+            onPress={() => onChoose(choice)}
+          />
+        ))}
       </Animated.View>
     </ScopedTheme>
   );
 }
 
-function RingStage({ call, onChoose }: RingProps) {
+function RingStage({ call, choices, onChoose }: RingProps) {
   const { t } = useTranslation();
   return (
     <Animated.View
@@ -99,10 +100,7 @@ function RingStage({ call, onChoose }: RingProps) {
           </View>
         ) : null}
         <View className="flex-1" />
-        <RingControls
-          choices={ringChoices({ kind: callKindOf(call.urgency), snoozable: false })}
-          onChoose={onChoose}
-        />
+        <RingControls choices={choices} onChoose={onChoose} />
       </CallStage>
     </Animated.View>
   );
@@ -112,6 +110,7 @@ export function IncomingCallSurface() {
   const pathname = usePathname();
   const router = useRouter();
   const { waitingCall } = useVoiceSession();
+  const reminderCall = useReminderCall();
   const surface = ringSurfaceOf({ waiting: waitingCall, pathname });
 
   useEffect(() => {
@@ -122,16 +121,20 @@ export function IncomingCallSurface() {
 
   if (surface === 'none' || !waitingCall) return null;
 
+  const reminderId = callReminderIdOf(waitingCall);
+  const choices = ringChoices({
+    kind: callKindOf(waitingCall.urgency),
+    snoozable: reminderId !== null,
+  });
   const choose = (choice: RingChoice) => {
     if (choice === 'decline') void voiceService.declineCall(waitingCall.callId);
+    if (choice === 'snooze' && reminderId !== null)
+      void reminderCall.snooze({ callId: waitingCall.callId, reminderId });
     if (choice !== 'answer') return;
     voiceService.answerWaiting();
     router.navigate('/call');
   };
+  const ring = { call: waitingCall, choices, busy: reminderCall.pending, onChoose: choose };
 
-  return surface === 'banner' ? (
-    <RingBanner call={waitingCall} onChoose={choose} />
-  ) : (
-    <RingStage call={waitingCall} onChoose={choose} />
-  );
+  return surface === 'banner' ? <RingBanner {...ring} /> : <RingStage {...ring} />;
 }

@@ -8,3 +8,7 @@ export const CALL_AVATAR_FILL = 0.8;
 export const CALL_BANNER_CONTROL = 44;
 export const CALL_STAGE_MAX_WIDTH = 480;
 export const CALL_MISSED_TICK_MS = 60_000;
+export const CALL_SNOOZE_MINUTES = 10;
+export const CALL_ACTION_ROUTE = '/notification/call-action';
+export const CALL_ACTION_TASK_NAME = 'ArgusCallAction';
+export const CALL_ACTION_TASK_TIMEOUT_MS = 10_000;

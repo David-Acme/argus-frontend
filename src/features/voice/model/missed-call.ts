@@ -1,6 +1,7 @@
 import type { INotificationPreviewCacheRow } from '@/core/interfaces';
 import { notificationThreadKey } from '@/core/services/notification';
-import { callKindOf, type CallKind } from '@/features/voice/model/incoming-surface';
+import { callKindOf, callReminderIdOf } from '@/features/voice/model/incoming-surface';
+import type { CallKind } from '@/features/voice/model/incoming-surface';
 
 export type MissedCall = {
   notificationId: string;
@@ -8,6 +9,7 @@ export type MissedCall = {
   title: string;
   body: string;
   kind: CallKind;
+  reminderId: number | null;
   at: number;
 };
 
@@ -53,6 +55,7 @@ export function latestMissedCall({
     title: row.title.trim(),
     body: row.body.trim(),
     kind: callKindOf(urgencyOf(row.data)),
+    reminderId: callReminderIdOf(row.data),
     at: row.createdAt,
   };
 }

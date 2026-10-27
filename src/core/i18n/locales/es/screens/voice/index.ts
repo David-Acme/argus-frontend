@@ -72,6 +72,12 @@ export const voice = {
     'mark-done': 'Marcar hecho',
     'call-back': 'Devolver',
   },
+  reminder: {
+    snoozed: 'Te llamo de nuevo en 10 min',
+    done: 'Marcado como hecho',
+    'snooze-failed': 'No se pudo posponer',
+    'done-failed': 'No se pudo marcar como hecho',
+  },
   context: {
     cameras: 'Cámaras de la casa: {names}.',
     'no-cameras': 'La casa no tiene cámaras conectadas.',

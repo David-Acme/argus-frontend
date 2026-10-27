@@ -13,7 +13,7 @@ type RingControlsProps = {
 
 type ChoiceLook = { icon: IconGlyph; tone: RoundTone; label: TranslationKey };
 
-const LOOKS: Readonly<Record<RingChoice, ChoiceLook>> = {
+export const RING_CHOICE_LOOKS: Readonly<Record<RingChoice, ChoiceLook>> = {
   decline: { icon: 'hang', tone: 'decline', label: 'screens.voice.ring-decline' },
   snooze: { icon: 'clock', tone: 'neutral', label: 'screens.voice.ring-snooze' },
   answer: { icon: 'phone', tone: 'answer', label: 'screens.voice.ring-answer' },
@@ -27,9 +27,9 @@ export function RingControls({ choices, onChoose }: RingControlsProps) {
       {choices.map((choice) => (
         <RoundControl
           key={choice}
-          icon={LOOKS[choice].icon}
-          tone={LOOKS[choice].tone}
-          label={t(LOOKS[choice].label)}
+          icon={RING_CHOICE_LOOKS[choice].icon}
+          tone={RING_CHOICE_LOOKS[choice].tone}
+          label={t(RING_CHOICE_LOOKS[choice].label)}
           size={ringControl}
           caption
           onPress={() => onChoose(choice)}
