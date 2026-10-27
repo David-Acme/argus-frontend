@@ -59,9 +59,13 @@ describe('the live waveform', () => {
   });
 
   test('playback progress runs on between position reports at the playback speed', () => {
-    expect(playedShare(1000, 500, 1, 10_000)).toBeCloseTo(0.15);
-    expect(playedShare(1000, 500, 2, 10_000)).toBeCloseTo(0.2);
-    expect(playedShare(9900, 500, 1, 10_000)).toBe(1);
-    expect(playedShare(0, 0, 1, 0)).toBe(0);
+    expect(
+      playedShare({ positionMs: 1000, sinceMs: 500, speed: 1, durationMs: 10_000 })
+    ).toBeCloseTo(0.15);
+    expect(
+      playedShare({ positionMs: 1000, sinceMs: 500, speed: 2, durationMs: 10_000 })
+    ).toBeCloseTo(0.2);
+    expect(playedShare({ positionMs: 9900, sinceMs: 500, speed: 1, durationMs: 10_000 })).toBe(1);
+    expect(playedShare({ positionMs: 0, sinceMs: 0, speed: 1, durationMs: 0 })).toBe(0);
   });
 });

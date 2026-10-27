@@ -17,13 +17,15 @@ export type LiveWaveProps = { live: SharedValue<LiveLevels> };
 
 const CAP = size.liveBar / 2;
 
-function drawBars(
-  builder: SkPathBuilder,
-  box: WaveBox,
-  values: readonly number[],
-  share: number,
-  newest: number
-) {
+type BarsDraw = {
+  builder: SkPathBuilder;
+  box: WaveBox;
+  values: readonly number[];
+  share: number;
+  newest: number;
+};
+
+function drawBars({ builder, box, values, share, newest }: BarsDraw) {
   'worklet';
   const count = Math.min(values.length, liveBarCount(box));
   for (let fromEnd = 0; fromEnd < count; fromEnd++) {
@@ -70,7 +72,7 @@ export function LiveWave({ live }: LiveWaveProps) {
       builder.lineTo(box.width, box.height / 2);
       return;
     }
-    drawBars(builder, box, live.get().values, share.get(), newest.get());
+    drawBars({ builder, box, values: live.get().values, share: share.get(), newest: newest.get() });
   });
 
   const canvas = { width, height: size.noteWave };

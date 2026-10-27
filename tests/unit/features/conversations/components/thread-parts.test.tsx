@@ -5,6 +5,7 @@ import type { SharedValue } from 'react-native-reanimated';
 import type { IConversationMessageCacheRow } from '@/core/interfaces';
 import { createDateFormatter } from '@/shared/hooks/use-date-formatter/date';
 import { Text } from '@/shared/ui/text';
+import type { LiveLevels } from '@/features/conversations/model/live-wave';
 import '../../../shared/ui/translation-stub';
 
 const calls: string[] = [];
@@ -95,9 +96,6 @@ mock.module('@/features/conversations/components/context-panel', () => ({
 }));
 
 const { ThreadComposer } = await import('@/features/conversations/components/thread-composer');
-const shared = <T,>(value: T): SharedValue<T> =>
-  ({ get: () => value, set: () => undefined }) as unknown as SharedValue<T>;
-
 const { MicHold } = await import('@/features/conversations/components/mic-hold');
 const { MicHold: WebMicHold } = await import('@/features/conversations/components/mic-hold.web');
 const { RecordingBar } = await import('@/features/conversations/components/recording-bar');
@@ -113,6 +111,9 @@ const { BubbleMore: WebBubbleMore } =
   await import('@/features/conversations/components/bubble-more.web');
 const { ThreadSearch } = await import('@/features/conversations/components/thread-search');
 const { ArgusInfo } = await import('@/features/conversations/components/argus-info');
+
+const shared = <T,>(value: T): SharedValue<T> =>
+  ({ get: () => value, set: () => undefined }) as unknown as SharedValue<T>;
 
 const show = async (node: ReactNode) => {
   calls.length = 0;
@@ -196,7 +197,7 @@ describe('the composer parts', () => {
       <RecordingBar
         mode="holding"
         elapsedMs={3200}
-        live={shared({ seq: 0, values: [] })}
+        live={shared<LiveLevels>({ seq: 0, values: [] })}
         drag={shared(-20)}
         onCancel={() => undefined}
       />
@@ -207,7 +208,7 @@ describe('the composer parts', () => {
       <RecordingBar
         mode="locked"
         elapsedMs={1000}
-        live={shared({ seq: 2, values: [0.2, 0.8] })}
+        live={shared<LiveLevels>({ seq: 2, values: [0.2, 0.8] })}
         drag={shared(0)}
         onCancel={() => calls.push('discard')}
       />
@@ -243,7 +244,15 @@ describe('the thread parts', () => {
       (screen.getByRole('button', { name: /^Reproducir la nota de voz/ }) as HTMLButtonElement)
         .disabled
     ).toBe(true);
-    await show(<NoteWave peaks={[0, 100, 40]} progress={0.5} />);
+    await show(
+      <NoteWave
+        peaks={[0, 100, 40]}
+        positionMs={2000}
+        durationMs={4000}
+        playing={false}
+        speed={1}
+      />
+    );
   });
 
   test('the first-frame snapshot and the list rows render the same bubbles', async () => {

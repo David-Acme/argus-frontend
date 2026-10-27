@@ -4,7 +4,7 @@ import '../ui/translation-stub';
 
 const stored = new Map<string, unknown>();
 const toasts: string[] = [];
-const devices: { kind: string; deviceId: string; label: string }[] = [];
+const devices: { kind: MediaDeviceKind; deviceId: string; label: string }[] = [];
 const listeners: (() => void)[] = [];
 
 Object.defineProperty(globalThis.navigator, 'mediaDevices', {
@@ -47,7 +47,7 @@ const plugIn = (...entries: { deviceId: string; label: string }[]) => {
   devices.push(
     { kind: 'audioinput', deviceId: 'default', label: 'Predeterminado' },
     { kind: 'audiooutput', deviceId: 'speakers', label: 'Altavoces' },
-    ...entries.map((entry) => ({ kind: 'audioinput', ...entry }))
+    ...entries.map((entry) => ({ kind: 'audioinput' as const, ...entry }))
   );
 };
 

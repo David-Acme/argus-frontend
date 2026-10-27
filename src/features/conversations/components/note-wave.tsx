@@ -18,7 +18,7 @@ export type NoteWaveProps = {
   speed: number;
 };
 
-type BarsProps = { peaks: readonly number[]; tone: string };
+type BarsProps = { peaks: readonly number[]; played: boolean };
 
 type Report = { position: number; stamp: number };
 
@@ -33,11 +33,15 @@ const barStyle = (peak: number) => ({
   height: Math.max(MIN_BAR, peak / 100) * size.noteWave,
 });
 
-function Bars({ peaks, tone }: BarsProps) {
+function Bars({ peaks, played }: BarsProps) {
   return (
     <View style={WAVE} className="flex-row items-center justify-between">
       {peaks.map((peak, index) => (
-        <View key={index} style={barStyle(peak)} className={clsx('rounded-full', tone)} />
+        <View
+          key={index}
+          style={barStyle(peak)}
+          className={clsx('rounded-full', played ? 'bg-accent' : 'bg-text-3')}
+        />
       ))}
     </View>
   );
@@ -54,7 +58,7 @@ export function NoteWave({ peaks, positionMs, durationMs, playing, speed }: Note
     const last = report.get();
     if (last.stamp < 0) report.set({ position: last.position, stamp: info.timestamp });
     const since = last.stamp < 0 ? 0 : info.timestamp - last.stamp;
-    share.set(playedShare(last.position, since, speed, durationMs));
+    share.set(playedShare({ positionMs: last.position, sinceMs: since, speed, durationMs }));
   }, false);
 
   useEffect(() => {
@@ -75,10 +79,10 @@ export function NoteWave({ peaks, positionMs, durationMs, playing, speed }: Note
 
   return (
     <View aria-hidden style={WAVE} className="overflow-hidden">
-      <Bars peaks={peaks} tone="bg-text-3" />
+      <Bars peaks={peaks} played={false} />
       <Animated.View style={clip} className="absolute inset-0 overflow-hidden">
         <Animated.View style={keep}>
-          <Bars peaks={peaks} tone="bg-accent" />
+          <Bars peaks={peaks} played />
         </Animated.View>
       </Animated.View>
     </View>

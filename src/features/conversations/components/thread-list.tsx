@@ -58,6 +58,8 @@ export type ThreadListProps = {
 
 type OlderLoaderProps = { active: boolean };
 
+type DayBandProps = { label: string; still: boolean };
+
 type Viewable = { viewableItems: ViewToken<ThreadItem>[] };
 
 const LIST_FILL = { flexGrow: 1, flexShrink: 1, flexBasis: 0, minHeight: 0 } as const;
@@ -94,6 +96,18 @@ function OlderLoader({ active }: OlderLoaderProps) {
         </Text>
       </View>
     </View>
+  );
+}
+
+function DayBand({ label, still }: DayBandProps) {
+  return (
+    <Animated.View
+      entering={still ? undefined : PILL_IN}
+      exiting={still ? undefined : PILL_OUT}
+      pointerEvents="none"
+      className="bg-bg absolute inset-x-0 top-0 py-1">
+      <DaySeparator floating label={label} />
+    </Animated.View>
   );
 }
 
@@ -170,15 +184,7 @@ export function ThreadList({ rows, bodies, paging, days, chat, argus }: ThreadLi
       {ready ? null : (
         <ThreadSnapshot items={thread.items.slice(-THREAD_TAIL)} bottom={LIST_BOTTOM} {...view} />
       )}
-      {pill === null ? null : (
-        <Animated.View
-          entering={reduceMotion ? undefined : PILL_IN}
-          exiting={reduceMotion ? undefined : PILL_OUT}
-          pointerEvents="none"
-          className="bg-bg absolute inset-x-0 top-0 py-1">
-          <DaySeparator floating label={days.dayLabel(pill)} />
-        </Animated.View>
-      )}
+      {pill === null ? null : <DayBand label={days.dayLabel(pill)} still={reduceMotion} />}
       <OlderLoader active={thread.loadingOlder} />
       {!thread.atEnd || !paging.live ? (
         <ScrollDown unseen={thread.unseen} onPress={thread.goToLatest} offset={offsets.pill} />

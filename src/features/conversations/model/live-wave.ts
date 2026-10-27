@@ -16,15 +16,10 @@ export function wholeSecondsOf(shownMs: number, elapsedMs: number): number {
   return Math.floor(shownMs / 1000) === Math.floor(elapsedMs / 1000) ? shownMs : elapsedMs;
 }
 
-export function easeToward(
-  current: number,
-  target: number,
-  dtMs: number,
-  tauMs: number = LIVE_EASE_MS
-): number {
+export function easeToward(current: number, target: number, dtMs: number): number {
   'worklet';
   if (dtMs <= 0) return current;
-  return target + (current - target) * Math.exp(-dtMs / tauMs);
+  return target + (current - target) * Math.exp(-dtMs / LIVE_EASE_MS);
 }
 
 export function scrollShare(sinceMs: number, tickMs: number): number {
@@ -48,12 +43,14 @@ export function liveBarCount(box: WaveBox): number {
   return box.pitch > 0 ? Math.ceil(box.width / box.pitch) + 1 : 0;
 }
 
-export function playedShare(
-  positionMs: number,
-  sinceMs: number,
-  speed: number,
-  durationMs: number
-): number {
+export type PlayedInput = {
+  positionMs: number;
+  sinceMs: number;
+  speed: number;
+  durationMs: number;
+};
+
+export function playedShare({ positionMs, sinceMs, speed, durationMs }: PlayedInput): number {
   'worklet';
   if (durationMs <= 0) return 0;
   return Math.min(1, Math.max(0, (positionMs + Math.max(0, sinceMs) * speed) / durationMs));
