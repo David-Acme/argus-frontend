@@ -1,4 +1,5 @@
 import { lazyScreen } from '@/shared/libs/lazy-screen';
+import { useClipsWarm } from './hooks/use-clips-warm';
 export const CameraLiveScreen = lazyScreen(
   () => import('./screens/camera-screens'),
   'CameraLiveScreen'
@@ -23,6 +24,14 @@ export { useCameraOverview } from './hooks/use-camera-overview';
 export { useCameraPrivacy } from './hooks/use-camera-privacy';
 export const ClipsScreen = lazyScreen(() => import('./screens/camera-screens'), 'ClipsScreen');
 export const ClipScreen = lazyScreen(() => import('./screens/camera-screens'), 'ClipScreen');
+
+const preloadClipScreens = async (): Promise<void> => {
+  await Promise.all([ClipsScreen.preload(), ClipScreen.preload()]);
+};
+
+export function useClipsRuntime(): void {
+  useClipsWarm({ preload: preloadClipScreens });
+}
 export const CameraLabScreen = lazyScreen(
   () => import('./screens/camera-screens'),
   'CameraLabScreen'
@@ -33,8 +42,6 @@ export { useTamperEvidenceKeeper } from './hooks/use-tamper-evidence';
 export { useCameraThumbnails } from './hooks/use-camera-thumbnails';
 export { useCameraStill } from './hooks/use-camera-still';
 export { RecentClipsCard } from './components/clips/recent-clips-card';
-export { CameraAttention } from './components/attention/camera-attention';
-export { SecurityCard } from './components/attention/security-card';
 export {
   cameraMasked,
   cameraViews,

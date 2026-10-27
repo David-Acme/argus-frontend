@@ -45,11 +45,33 @@ mock.module(
   () => import('@/features/navigation/hooks/use-section-keys.web')
 );
 mock.module('@/shared/hooks/use-cached-rows', () => ({
+  useViewCacheRows: () => [],
   useViewCacheValue: (key: string) => (key === 'dashboard.unread' ? 3 : null),
+}));
+mock.module('@/features/command', () => ({
+  useCommandSearch: ({ query }: { query: string }) => ({
+    results: query
+      ? [
+          {
+            title: 'Cámaras',
+            items: [{ id: 'camera:3', label: 'Cocina', icon: 'cam', onRun: () => undefined }],
+          },
+        ]
+      : [],
+    paging: {
+      footer: 'none',
+      loading: false,
+      onEndReached: () => undefined,
+      retry: () => undefined,
+    },
+    pending: false,
+  }),
 }));
 mock.module('@/features/cameras', () => ({
   useCameraCounts: () => ({ online: 5, total: 6 }),
   RecentClipsCard: () => null,
+  CameraAttention: () => null,
+  SecurityCard: () => null,
 }));
 mock.module('@/features/home', () => {
   const Section = () => null;
@@ -65,6 +87,8 @@ mock.module('@/features/home', () => {
     HelpSection: Section,
     SystemSection: Section,
     WatchSection: Section,
+    AttentionSection: Section,
+    ModuleCards: Section,
   };
 });
 mock.module('@/features/security', () => ({ useGuardHeadline: () => 'home' }));

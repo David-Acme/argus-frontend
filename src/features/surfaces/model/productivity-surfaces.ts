@@ -1,8 +1,8 @@
 import { CAPABILITY, MODULE_IDS } from '@/shared/constants';
 import { tableAllowed } from '@/shared/libs/capabilities';
 import type { ModuleSurfaces } from '@/shared/libs/surfaces';
-import { AgendaCard } from '@/features/agenda';
 import { NowSection, ProjectsSection, TodaySection, TomorrowSection } from '@/features/home';
+import { AgendaCard } from '@/features/surfaces/components/agenda-card';
 
 const AGENDA = { capabilities: [CAPABILITY.agendaRead] } as const;
 

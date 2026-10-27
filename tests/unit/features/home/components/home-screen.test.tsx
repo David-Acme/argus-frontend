@@ -90,6 +90,23 @@ mock.module('@/features/home/hooks/use-inicio-stats', () => ({
 }));
 
 mock.module('@/features/command', () => ({
+  useCommandSearch: ({ query }: { query: string }) => ({
+    results: query
+      ? [
+          {
+            title: 'Cámaras',
+            items: [{ id: 'camera:3', label: 'Cocina', icon: 'cam', onRun: () => undefined }],
+          },
+        ]
+      : [],
+    paging: {
+      footer: 'none',
+      loading: false,
+      onEndReached: () => undefined,
+      retry: () => undefined,
+    },
+    pending: false,
+  }),
   useCommandLauncher: () => ({
     open: () => launched.push('search'),
     openNew: () => launched.push('new'),
@@ -146,9 +163,18 @@ mock.module('@/features/home', () => ({
   WatchSection: marker('watch'),
   SystemSection: marker('system'),
   HelpSection: marker('help'),
+  AttentionSection: marker('attention'),
+  ModuleCards: marker('modules'),
 }));
 
-mock.module('@/features/cameras', () => ({ RecentClipsCard: marker('clips') }));
+mock.module('@/features/home/hooks/use-inicio-prefs', () => ({
+  useInicioPrefs: () => ({ prefs: { hidden: [], order: [] }, save: () => undefined }),
+}));
+mock.module('@/features/cameras', () => ({
+  RecentClipsCard: marker('clips'),
+  CameraAttention: () => null,
+  SecurityCard: () => null,
+}));
 
 mock.module('@/features/home/components/hero/module-shortcuts', () => ({
   ModuleShortcuts: () => null,

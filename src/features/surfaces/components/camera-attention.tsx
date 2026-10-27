@@ -4,7 +4,7 @@ import { VIEW_CACHE_KEYS } from '@/shared/constants';
 import { useViewCacheRows } from '@/shared/hooks/use-cached-rows';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import type { AttentionProbeProps } from '@/shared/libs/surfaces';
-import { cameraAttention } from '@/features/cameras/model/camera-attention';
+import { cameraAttention } from '@/features/surfaces/model/camera-attention';
 
 export function CameraAttention({ report }: AttentionProbeProps) {
   const { t } = useTranslation();

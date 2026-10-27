@@ -31,7 +31,10 @@ mock.module('expo-router', () => ({
   useFocusEffect: () => undefined,
 }));
 
-mock.module('@/shared/hooks/use-cached-rows', () => ({ useViewCacheValue: () => null }));
+mock.module('@/shared/hooks/use-cached-rows', () => ({
+  useViewCacheRows: () => [],
+  useViewCacheValue: () => null,
+}));
 
 mock.module('@/features/security', () => ({ useGuardHeadline: () => 'home' }));
 
@@ -72,11 +75,34 @@ mock.module('@/features/home', () => {
     HelpSection: Section,
     SystemSection: Section,
     WatchSection: Section,
+    AttentionSection: Section,
+    ModuleCards: Section,
   };
 });
 
+mock.module('@/features/command', () => ({
+  useCommandSearch: ({ query }: { query: string }) => ({
+    results: query
+      ? [
+          {
+            title: 'Cámaras',
+            items: [{ id: 'camera:3', label: 'Cocina', icon: 'cam', onRun: () => undefined }],
+          },
+        ]
+      : [],
+    paging: {
+      footer: 'none',
+      loading: false,
+      onEndReached: () => undefined,
+      retry: () => undefined,
+    },
+    pending: false,
+  }),
+}));
 mock.module('@/features/cameras', () => ({
   RecentClipsCard: () => null,
+  CameraAttention: () => null,
+  SecurityCard: () => null,
   useCameraCounts: () => ({ online: 0, total: 0 }),
 }));
 
@@ -120,7 +146,7 @@ function Shell({ children }: { children: ReactNode }) {
 function mountSheet() {
   return render(
     <Shell>
-      <AllSheet onSearch={() => sheet.log.push('search')} onArgus={() => sheet.log.push('argus')} />
+      <AllSheet onArgus={() => sheet.log.push('argus')} />
     </Shell>
   );
 }
@@ -139,14 +165,24 @@ afterEach(() => {
 });
 
 describe('the «Todo» sheet', () => {
-  test('half height: the search, the module grid and General; a tile opens its module', () => {
+  test('half height: the search field, the module grid and General; a tile opens its module', () => {
     mountSheet();
-    fireEvent.click(screen.getByRole('button', { name: 'Buscar en Argus' }));
+    expect(screen.getByPlaceholderText('Buscar en Argus')).toBeDefined();
     fireEvent.click(screen.getByRole('button', { name: 'Abrir Seguridad' }));
     expect(heading('Módulos')).not.toBeNull();
     expect(heading('General')).not.toBeNull();
-    expect(sheet.log).toEqual(['close', 'search', 'close']);
+    expect(sheet.log).toEqual(['close']);
     expect(routes).toEqual(['/security']);
+  });
+
+  test('typing searches inside the sheet: matching sections first, then the paged results', () => {
+    mountSheet();
+    fireEvent.change(screen.getByPlaceholderText('Buscar en Argus'), { target: { value: 'cli' } });
+    expect(heading('Apartados')).not.toBeNull();
+    expect(heading('Cámaras')).not.toBeNull();
+    expect(heading('Módulos')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: /^Clips/ }));
+    expect(routes).toEqual(['/clips']);
   });
 
   test('full height: every module as a row that unfolds into its sections', () => {

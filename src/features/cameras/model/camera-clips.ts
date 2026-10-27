@@ -78,8 +78,7 @@ export function clipFeedCamera(scope: string): string | null {
 
 export function clipFeedPath(scope: string, cursor: ClipCursor | null, limit: number): string {
   const camera = clipFeedCamera(scope);
-  const query = new URLSearchParams({ limit: String(limit) });
-  if (cursor) query.set('cursor', cursor);
+  const query = new URLSearchParams({ limit: String(limit), cursor: cursor ?? '' });
   if (camera) query.set('cameraId', camera);
   return `/camera/clips?${query.toString()}`;
 }

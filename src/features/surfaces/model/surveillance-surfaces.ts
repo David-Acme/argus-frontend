@@ -1,8 +1,10 @@
 import { CAPABILITY, MODULE_IDS } from '@/shared/constants';
 import { clipAccessOf, guardAccessOf, tableAllowed } from '@/shared/libs/capabilities';
 import type { ModuleSurfaces } from '@/shared/libs/surfaces';
-import { CameraAttention, RecentClipsCard, SecurityCard } from '@/features/cameras';
+import { RecentClipsCard } from '@/features/cameras';
 import { CamerasSection, HappenedSection, HomePeopleSection, WatchSection } from '@/features/home';
+import { CameraAttention } from '@/features/surfaces/components/camera-attention';
+import { SecurityCard } from '@/features/surfaces/components/security-card';
 
 export const SURVEILLANCE_SURFACES: ModuleSurfaces = {
   module: MODULE_IDS.surveillance,

@@ -228,7 +228,7 @@ describe('record modes', () => {
     expect(clipFeedScope('4')).toBe('camera:4');
     expect(clipFeedCamera('camera:4')).toBe('4');
     expect(clipFeedCamera(CLIP_FEED_ALL)).toBeNull();
-    expect(clipFeedPath(CLIP_FEED_ALL, null, 24)).toBe('/camera/clips?limit=24');
+    expect(clipFeedPath(CLIP_FEED_ALL, null, 24)).toBe('/camera/clips?limit=24&cursor=');
     expect(clipFeedPath('camera:4', 'abc=', 24)).toBe(
       '/camera/clips?limit=24&cursor=abc%3D&cameraId=4'
     );

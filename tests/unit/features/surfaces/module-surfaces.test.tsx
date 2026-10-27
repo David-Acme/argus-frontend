@@ -19,9 +19,15 @@ mock.module('@/features/home', () => ({
   HelpSection: Section,
   SystemSection: Section,
   WatchSection: Section,
+  AttentionSection: Section,
+  ModuleCards: Section,
 }));
 
-mock.module('@/features/cameras', () => ({ RecentClipsCard: Section }));
+mock.module('@/features/cameras', () => ({
+  RecentClipsCard: Section,
+  CameraAttention: () => null,
+  SecurityCard: () => null,
+}));
 
 mock.module('@/shared/hooks/use-capabilities', () => ({
   useAccessView: () => viewFor('owner'),
@@ -57,6 +63,7 @@ const fakeModule = (index: number): ModuleSurfaces => ({
   inicio: [
     {
       id: `fake-${index}-card`,
+      label: 'screens.home.inicio.sections.modules',
       render: Nothing,
       places: {
         stack: { order: 200 + index },
@@ -187,7 +194,13 @@ describe('what each role is offered', () => {
   test('a guest keeps a calm Inicio: the lead and what it may read, nothing of the modules it lacks', () => {
     const resolved = resolveSurfaces(APP_SURFACES, viewFor('guest'));
     expect(resolved.modules.map((module) => module.module)).toEqual([]);
-    expect(inicioStack(resolved.inicio, SIGNALS, false)).toEqual(['lead', 'cameras', 'news']);
+    expect(inicioStack(resolved.inicio, SIGNALS, false)).toEqual([
+      'lead',
+      'attention',
+      'cameras',
+      'news',
+      'modules',
+    ]);
   });
 
   test('an inactive guard keeps the baseline: no module, no module section, no module search', () => {

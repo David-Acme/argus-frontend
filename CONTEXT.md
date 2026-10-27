@@ -8442,3 +8442,31 @@ side is the backend's `services/camera/CONTEXT.md` › "Live previews".
   on a transparent canvas; without WebCodecs the tile keeps its still.
 - **Stills only where needed.** `CameraThumbnailPoller` skips a camera that is playing
   live; it still paints every tile once before its video starts.
+
+### The approved follow-ups (2026-10-27)
+
+- **Search in «Todo».** Typing in the sheet's field searches without opening the palette. Matching
+  module sections come first; the rest comes from `useCommandSearch`, the same paged provider the
+  palette uses, with «Cargar más resultados». The registry feeds the palette only the jumps,
+  search kinds and create actions, each jump with its own icon and label.
+- **Atención.** A module contributes attention probes: components that read their own data and
+  report items into `attentionStore` (`shared/libs/surfaces`). `AttentionProbes`, mounted once in
+  the navigation, runs the probes the live view allows. Inicio's «Atención» lists the items and is
+  absent when there are none. Today's source is surveillance's camera that is on but not
+  answering.
+- **One card per module.** A module contributes `card`. «Tus módulos» shows the top four, ranked
+  by attention and then by priority, with «Ver todos los módulos» opening the full sheet. The
+  cards, the probe and its model live in `features/surfaces`, so a test that mocks a domain
+  feature does not lose them.
+- **Badges.** A pinned module's tab counts its own attention, and «Todo» counts the attention of
+  the modules outside the bar (`entryCount`, `hiddenAttention`).
+- **Swipe up.** A swipe up on the bar opens the sheet: an RNGH pan that waits for 12 px up, fails
+  sideways and is off while Argus listens.
+- **Personalizar Inicio.** Hide and reorder the Inicio sections; every section carries a label. The
+  choice is kept in the view cache (`inicio.prefs`), read on the first frame, and survives a
+  context resync. A chosen order leads every form, and the rest follow Argus's order.
+- **Clips.** The list reads `useFeedList`, with no paging wired in the feature. The first page
+  sends an empty `cursor=` and each next page sends back the string it received. The Clips screens
+  preload when the shell idles (`useClipsRuntime`, `lazyScreen.preload`). `LazyScreen` reads the
+  resolved screen in its first render, so opening Clips shows no blank frame. The «Todo» sheet is
+  mounted with the bar, so opening it never waits.

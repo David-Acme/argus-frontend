@@ -6,7 +6,7 @@ import { ModuleNotices } from '@/features/modules';
 import { GlobalCommand, useCommandLauncher } from '@/features/command';
 import { ArgusListening, useArgusVoice, useCallPush } from '@/features/voice';
 import { useBeaconController } from '@/features/proximity';
-import { useTamperEvidenceKeeper } from '@/features/cameras';
+import { useClipsRuntime, useTamperEvidenceKeeper } from '@/features/cameras';
 import { useNotificationPermission, usePushRegistration } from '@/features/notification';
 import { AppNavigation } from '@/features/navigation';
 import { APP_SURFACES } from '@/features/surfaces';
@@ -29,6 +29,7 @@ export default function AppLayout() {
   useCallPush();
   useBeaconController();
   useTamperEvidenceKeeper();
+  useClipsRuntime();
   useConversationRuntime();
   const { voice, listening } = useArgusVoice();
 
