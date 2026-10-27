@@ -7842,3 +7842,79 @@ What the audit found and changed:
   Only `project_task` and `calendar_event` record their actor
   (`created_via`, creation only); `project`, `notification`, guard modes and
   audit Log diffs carry none, so «por Argus» on an edit cannot be drawn.
+
+## One action menu, solid chrome, card spacing and the date and time picker (2026-10-27, feat/ui-polish-design)
+
+The owner used the redesign on his phone and asked for a designer's pass across
+phone, tablet, desktop and web.
+
+- **One action menu.** Every «⋯», long-press and right-click menu is
+  `shared/ui/menu` (`Menu`). The form is a pure decision, `menuForm`
+  (`menu-model.ts`): a phone (`navigation === 'bar'`) without a fine pointer
+  gets the bottom sheet, anything else the anchored menu. A screen header's
+  «⋯» (the default `Menu` button) opens an anchored, text-only dropdown under
+  the button on every platform, phone included, like the reference the owner
+  sent (`uiux-map/redesign/later-phases/owner-2026-10-27/whatsapp-overflow-menu.jpg`);
+  an item's own «⋯» (`<Menu item …>`) and a row's long press use the sheet on
+  phones. On tablet, desktop and web with a pointer, row actions open a context
+  menu at the pointer (right click, the context-menu key or Shift+F10). Rows
+  carry a flat icon well whose tone is the action's family (`edit`, `share`,
+  `state`, `view`, `argus`, `caution`; destructive is always the alert well),
+  and `menuGroups` keeps the caller's order (most-used first) and moves every
+  destructive item last behind a hairline. A destructive item never runs from
+  the menu: its `confirm` (title, body naming what goes, verb) opens the shared
+  `Confirm` dialog. `confirm: 'by-action'` exists only for actions that already
+  ask through a confirm of their own (the conversation clear, owned by the
+  conversations track; the environment and visitor deletes; the invitation
+  revoke), so nothing asks twice. A single action is a plain icon button, never
+  a one-row menu. Keyboard: Radix gives the anchored forms arrows, Enter, Escape
+  and focus return; the web sheet moves with the arrows, Home and End
+  (`stepFocus`). The native tablet popover places itself with `placeMenu`.
+  Replaced and deleted: `adaptive-menu`, `context-menu`, `popover` and
+  `menu.native.tsx`, and the context-menu animations they used.
+- **Solid chrome.** The phone bar and the desktop sidebar are opaque `surface`
+  in both themes with no blur: the bar keeps R-height's sizes and modes, with a
+  hairline top edge (`fill-press`) and a soft shadow without the glass inset;
+  the sidebar is `surface` with its hairline right edge. The `glass-bar` and
+  `glass-side` utilities, the `glass-side` colour and the `blur`, `saturation`
+  and `blurSide` materials went with them.
+- **Card separation.** Section spacing now follows spec §3.3 exactly: sections
+  24 apart (`inset.section.top`, was 26), rows and feed items 16 at the sides
+  and 12 between their parts (was 18 and 14). A dark card is drawn with a
+  `line` hairline instead of the inner top highlight, so two dark cards never
+  blend into each other or into the page.
+- **Date and time picker.** `shared/ui/picker`: one `DateField` (optionally
+  with a `time`) and one `TimeField`, the same pure model (`picker/model/`,
+  unit tested) and the same tokens under three presentations. The owner's
+  «tipo iOS» means the polish, not wheels everywhere. `pickerForm` decides by
+  input modality and window class, never by OS name: a fine pointer always
+  gets the desktop form (a desktop window resized narrow keeps typing), touch
+  on a phone gets the inline form, touch from tablet width the popover form.
+  - **Phone (inline):** the compact row («mar, 27 oct · 10:00») expands in
+    place with a reanimated layout transition into the graphical month and,
+    for a time, the snapping wheels (momentum, selection band, a selection
+    haptic per step on native; three rows and smaller days at tiny heights and
+    in landscape, `usePickerLayout`). Quick chips Hoy, Mañana, Este fin de
+    semana where a form asks.
+  - **Tablet (popover):** the same content in a popover anchored at the field,
+    the calendar and the wheels side by side; native places it with
+    `placeMenu`.
+  - **Desktop and web with a pointer (desktop):** the field itself is typeable
+    segments in the locale's order (`dateOrderOf` over the formatter's short
+    date), digits and arrows per segment, Tab and the side arrows between
+    them; a segment commits when no other digit fits or on blur, and an
+    impossible or too-early date keeps the draft and shows the field error.
+    The calendar button opens an anchored dropdown with hover states, keyboard
+    grid navigation (`gridKey`: arrows, PageUp/PageDown, Home/End; Enter picks;
+    Esc closes and focus returns) and a Hoy link, and, for a time, a list in
+    15-minute steps that scrolls to the chosen time; exact minutes are typed.
+  The calendar shares one column grid between the weekday initials and the
+  dates, starts the week where the locale does (`DateFormatter.weekStart`),
+  marks today in the accent, fills the selected day with the accent and mutes
+  and refuses the past when the field has a `min`; month and year wheels open
+  from its title. It replaced the agenda's `DayField` and `DayPickerField`, the
+  agenda form's typed start and end (the start is now the day field with its
+  time), the project task's due switch and the activity filter's dates. The
+  security hours (`hours-fields.tsx`, `environment-settings-panel.tsx`) keep
+  their half-hour lists: their windows end at `24:00`, which the picker's
+  0–23 hours cannot say.
