@@ -258,9 +258,10 @@ describe('the Argus thread', () => {
 describe('the composer', () => {
   const talk = (stage: HoldTalkStage) => ({
     stage,
+    mode: 'tap' as const,
     error: null,
     canListen: true,
-    start: () => calls.push('talk start'),
+    start: (mode?: string) => calls.push(`talk start ${mode}`),
     finish: (send: boolean) => calls.push(`talk finish ${send}`),
     dismiss: () => undefined,
   });
@@ -278,7 +279,7 @@ describe('the composer', () => {
       />
     );
     fireEvent.click(screen.getByRole('button', { name: 'Hablar con Argus' }));
-    expect(calls).toEqual(['talk start']);
+    expect(calls).toEqual(['talk start tap']);
     fireEvent.change(screen.getByRole('textbox', { name: 'Escríbele a Argus' }), {
       target: { value: '¿Quién está en casa?' },
     });
@@ -316,6 +317,37 @@ describe('the composer', () => {
     expect(screen.getByText('«pon el modo»')).toBeDefined();
     fireEvent.click(screen.getByRole('button', { name: 'Enviar lo que dije' }));
     expect(calls).toEqual(['talk finish true']);
+  });
+
+  test('while listening a visible cancel stops without sending, and the words say tap', async () => {
+    await show(
+      <ArgusComposer
+        talk={talk('listening')}
+        heard=""
+        busy={false}
+        readDraft={() => ''}
+        onDraft={() => undefined}
+        onSend={() => true}
+      />
+    );
+    expect(screen.getByText('Te escucho… toca para enviar')).toBeDefined();
+    fireEvent.click(screen.getByRole('button', { name: 'Dejar de escuchar sin enviar' }));
+    expect(calls).toEqual(['talk finish false']);
+  });
+
+  test('leaving the thread while listening cancels the listening', async () => {
+    const view = render(
+      <ArgusComposer
+        talk={talk('listening')}
+        heard=""
+        busy={false}
+        readDraft={() => ''}
+        onDraft={() => undefined}
+        onSend={() => true}
+      />
+    );
+    act(() => view.unmount());
+    expect(calls).toEqual(['talk finish false']);
   });
 
   test('a member thread is typed under the sender name with the voice shortcut beside it', async () => {

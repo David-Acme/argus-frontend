@@ -27,6 +27,7 @@ const NAV: NavProps = {
     navigation: 'Principal',
     argusHint: copy.argusTab,
     listening: copy.listening,
+    listeningTap: copy.listeningTap,
     command: copy.commandHint,
     commandKey: '⌘K',
   },
@@ -58,7 +59,7 @@ export function NavDemo() {
       </LabCase>
       <LabCase id="listening" block>
         <View className="bg-bg relative flex-row overflow-hidden" style={FRAME}>
-          <Nav {...NAV} status={status} listening />
+          <Nav {...NAV} status={status} listening="hold" />
         </View>
       </LabCase>
       <LabCase id="status">

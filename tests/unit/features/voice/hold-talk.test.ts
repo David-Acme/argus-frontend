@@ -10,6 +10,7 @@ import {
   holdTalkCanListen,
   holdTalkFailureOf,
   holdTalkInline,
+  holdTalkListenMode,
   holdTalkLive,
   holdTalkMutes,
   holdTalkSessionEnds,
@@ -230,6 +231,15 @@ describe('session effects', () => {
     ).toBe(true);
     expect(holdTalkSessionEnds(sending, listening)).toBe(false);
     expect(holdTalkSessionEnds(HOLD_IDLE, listening)).toBe(false);
+  });
+
+  test('a start remembers how it began, and the pill words follow it', () => {
+    const tapped = holdTalkStep(HOLD_IDLE, { type: 'start', mode: 'tap' });
+    expect(tapped.mode).toBe('tap');
+    expect(listening.mode).toBe('hold');
+    expect(holdTalkListenMode(tapped)).toBe('toggle');
+    expect(holdTalkListenMode(listening)).toBe('hold');
+    expect(holdTalkListenMode(sending)).toBe('off');
   });
 
   test('live covers listening and sending only', () => {

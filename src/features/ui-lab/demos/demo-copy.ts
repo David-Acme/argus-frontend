@@ -228,6 +228,7 @@ export const copy = {
   storageValue: '62%',
   askArgusPrompt: 'Pregúntale a Argus…',
   listening: 'Te escucho… suelta para enviar',
+  listeningTap: 'Te escucho… toca para enviar',
   argusTab: 'Argus: toca para escribir, mantén para hablar',
   updating: 'Actualizando',
   security: 'Seguridad',

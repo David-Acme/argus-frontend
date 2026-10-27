@@ -68,7 +68,8 @@ export const conversations = {
   composer: {
     talk: 'Hablar con Argus',
     stop: 'Enviar lo que dije',
-    listening: 'Te escucho…',
+    cancel: 'Dejar de escuchar sin enviar',
+    listening: 'Te escucho… toca para enviar',
     placeholder: 'Escríbele a {name}',
     send: 'Enviar el mensaje a {name}',
     'typed-note': 'Le llega a {name} con tu nombre: si está hablando con Argus puede decírselo en voz alta; si no, le queda un aviso. No sabrás si lo leyó ni dónde está.',

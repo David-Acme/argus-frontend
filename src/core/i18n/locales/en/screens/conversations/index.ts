@@ -68,7 +68,8 @@ export const conversations = {
   composer: {
     talk: 'Talk to Argus',
     stop: 'Send what I said',
-    listening: 'I am listening…',
+    cancel: 'Stop listening without sending',
+    listening: 'I am listening… tap to send',
     placeholder: 'Write to {name}',
     send: 'Send the message to {name}',
     'typed-note': '{name} gets it under your name: if they are talking to Argus it may say it aloud; if not, it leaves them a notice. You will not learn whether they read it or where they are.',

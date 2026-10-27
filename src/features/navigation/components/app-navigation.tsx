@@ -18,11 +18,11 @@ import { useViewCacheValue } from '@/shared/hooks/use-cached-rows';
 import { useAccessView } from '@/shared/hooks/use-capabilities';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { layout, useWindowLayout } from '@/shared/theme';
-import { Nav, navCollapse, type NavItem, type NavVoice } from '@/shared/ui/nav';
+import { Nav, navCollapse, type ListenMode, type NavItem, type NavVoice } from '@/shared/ui/nav';
 
 export type AppNavigationProps = {
   voice: NavVoice;
-  listening?: boolean;
+  listening?: ListenMode;
   onCommand: () => void;
   children: ReactNode;
 };
@@ -75,6 +75,7 @@ export function AppNavigation({ voice, listening, onCommand, children }: AppNavi
         navigation: t('screens.navigation.label'),
         argusHint: t('screens.navigation.argus-hint'),
         listening: t('screens.navigation.listening'),
+        listeningTap: t('screens.navigation.listening-tap'),
         command: t('screens.navigation.command'),
         commandKey: COMMAND_KEY,
       }}

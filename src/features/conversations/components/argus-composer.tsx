@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useIsFocused } from 'expo-router';
+import { useEffect, useEffectEvent, useState } from 'react';
 import { View } from 'react-native';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { size } from '@/shared/theme';
@@ -24,11 +25,19 @@ export type ArgusComposerProps = {
   onSend: (text: string) => boolean;
 };
 
-type ListeningProps = { heard: string; onStop: () => void };
+type ListeningProps = { heard: string; onStop: () => void; onCancel: () => void };
 
-function Listening({ heard, onStop }: ListeningProps) {
+function Listening({ heard, onStop, onCancel }: ListeningProps) {
   const { t } = useTranslation();
+  const focused = useIsFocused();
   const said = heard.trim();
+  const leave = useEffectEvent(onCancel);
+
+  useEffect(() => {
+    if (!focused) leave();
+  }, [focused]);
+  useEffect(() => () => leave(), []);
+
   return (
     <View className="flex-row items-center gap-2">
       <View
@@ -42,6 +51,12 @@ function Listening({ heard, onStop }: ListeningProps) {
           </Text>
         </View>
       </View>
+      <Button
+        iconOnly
+        icon="x"
+        label={t('screens.conversations.composer.cancel')}
+        onPress={onCancel}
+      />
       <Button
         iconOnly
         ink
@@ -81,7 +96,14 @@ export function ArgusComposer({
     if (onSend(body)) change('');
   };
 
-  if (button === 'stop') return <Listening heard={heard} onStop={() => talk.finish(true)} />;
+  if (button === 'stop')
+    return (
+      <Listening
+        heard={heard}
+        onStop={() => talk.finish(true)}
+        onCancel={() => talk.finish(false)}
+      />
+    );
   return (
     <View className="gap-1">
       <View className="flex-row items-end gap-2">
@@ -100,7 +122,7 @@ export function ArgusComposer({
             ink
             icon="mic"
             label={t('screens.conversations.composer.talk')}
-            onPress={talk.start}
+            onPress={() => talk.start('tap')}
           />
         ) : (
           <Button
