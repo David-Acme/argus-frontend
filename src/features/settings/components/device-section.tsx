@@ -1,9 +1,12 @@
 import { useRouter } from 'expo-router';
 import { IS_TAURI } from '@/shared/constants';
 import { useDevicePreferences } from '@/shared/hooks/use-device-preferences';
+import { useMicrophoneNotice } from '@/shared/hooks/use-microphone-notice';
+import { useMicrophones } from '@/shared/hooks/use-microphones';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { serviceErrorKey } from '@/shared/libs/service-error';
 import { Avatar } from '@/shared/ui/avatar';
+import { Choice } from '@/shared/ui/choice';
 import { Row } from '@/shared/ui/row';
 import { Section } from '@/shared/ui/section';
 import { Switch } from '@/shared/ui/switch';
@@ -37,6 +40,25 @@ function AutostartRow() {
   );
 }
 
+function MicrophoneRow() {
+  const { t } = useTranslation();
+  const mics = useMicrophones();
+  useMicrophoneNotice();
+  if (!mics.supported) return null;
+  return (
+    <Choice
+      label={t('common.microphone.title')}
+      options={mics.options.map((option) => ({
+        value: option.id,
+        label: option.label,
+        icon: 'mic',
+      }))}
+      value={mics.selected}
+      onChange={mics.choose}
+    />
+  );
+}
+
 export function DeviceSection() {
   const { t } = useTranslation();
   const router = useRouter();
@@ -63,6 +85,7 @@ export function DeviceSection() {
           />
         }
       />
+      <MicrophoneRow />
       {showsDesktopAutostart({ isTauri: IS_TAURI }) ? <AutostartRow /> : null}
     </Section>
   );

@@ -1,4 +1,5 @@
 import type { IVoiceMic } from '@/core/interfaces';
+import { audioConstraintsOf, chosenMicrophone } from '@/shared/libs/microphone';
 import { VOICE_WORKLET_URL } from '@/features/voice/constants/voice';
 
 const CAPTURE_CONSTRAINTS: MediaTrackConstraints = {
@@ -15,7 +16,9 @@ type PlayerMessage = {
 
 function errorCode(error: unknown): string {
   const name = error instanceof DOMException ? error.name : '';
-  return name === 'NotAllowedError' || name === 'SecurityError' ? 'MIC_PERMISSION_DENIED' : 'MIC_UNAVAILABLE';
+  return name === 'NotAllowedError' || name === 'SecurityError'
+    ? 'MIC_PERMISSION_DENIED'
+    : 'MIC_UNAVAILABLE';
 }
 
 class WebVoiceMic implements IVoiceMic {
@@ -85,7 +88,9 @@ class WebVoiceMic implements IVoiceMic {
     const generation = (this.captureGeneration += 1);
     try {
       const context = await this.ensureContext(sampleRate);
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: CAPTURE_CONSTRAINTS });
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: audioConstraintsOf(CAPTURE_CONSTRAINTS, chosenMicrophone()),
+      });
       if (generation !== this.captureGeneration) {
         stream.getTracks().forEach((track) => track.stop());
         return;
@@ -169,6 +174,7 @@ export function voiceCallSupported(): boolean {
 }
 
 export function createVoiceMic(): IVoiceMic {
-  if (!voiceCallSupported()) throw new Error('NOT_SUPPORTED|Voice is not supported on this platform');
+  if (!voiceCallSupported())
+    throw new Error('NOT_SUPPORTED|Voice is not supported on this platform');
   return new WebVoiceMic();
 }

@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { useSharedValue } from 'react-native-reanimated';
 import { VOICE_NOTE_MAX_MS, VOICE_NOTE_MIN_MS } from '@/core/services/conversation';
+import { audioConstraintsOf, chosenMicrophone } from '@/shared/libs/microphone';
 import {
   bucketPeaks,
   keepsNote,
@@ -15,7 +16,10 @@ import type {
   NoteRecorderPhase,
   RecordedNote,
 } from '@/features/conversations/model/voice-note';
-import { WEB_NOTE_TYPES } from '@/features/conversations/constants/voice-note.constant';
+import {
+  NOTE_CAPTURE,
+  WEB_NOTE_TYPES,
+} from '@/features/conversations/constants/voice-note.constant';
 
 type Take = {
   stream: MediaStream;
@@ -56,7 +60,7 @@ const stopped = (recorder: MediaRecorder): Promise<void> =>
 
 async function open(): Promise<Take> {
   const stream = await navigator.mediaDevices.getUserMedia({
-    audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true },
+    audio: audioConstraintsOf(NOTE_CAPTURE, chosenMicrophone()),
   });
   const type = pickType();
   const recorder = new MediaRecorder(

@@ -77,6 +77,7 @@ mock.module(
   () => import('@/shared/ui/presence/use-tier-probe.web')
 );
 mock.module('@/shared/ui/sheet/sheet', () => import('@/shared/ui/sheet/sheet.web'));
+mock.module('@/core/services/storage', () => import('@/core/services/storage/storage.web'));
 mock.module(
   '@/features/conversations/components/live-wave',
   () => import('@/features/conversations/components/live-wave.web')

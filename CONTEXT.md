@@ -7929,6 +7929,27 @@ suggestion chips over the field and the microphone as tap-to-talk.
   sends both on `/rtc/token` and `voice:start`. Any other missed call keeps
   the plain call.
 
+## Choosing the microphone on the web and the desktop (phone run 2 #15, 2026-10-27)
+
+On a browser and in the Tauri desktop (WebKitGTK) the user chooses the
+input: Ajustes › Este dispositivo › «Micrófono» lists «Predeterminado del
+sistema» and every `audioinput` of `enumerateDevices` (with its label once
+the microphone permission is granted, «Micrófono N» before), without the
+`default`/`communications` aliases. The choice is per device
+(`app.microphone` in the device storage, `shared/libs/microphone.ts`) and
+every web capture asks for it with `deviceId: { ideal }`, so a missing
+device never fails a capture: voice notes (`use-note-recorder.web.ts`),
+hold-to-talk and camera talk (both through `voice-mic.web.ts`) and calls
+(LiveKit `audioCaptureDefaults.deviceId`, and `switchActiveDevice` when the
+choice changes mid-call). The list refreshes on `devicechange`; a chosen
+input that is gone is forgotten for the system one and a quiet notice says
+so once (`useMicrophoneNotice`, mounted where the choice is shown). A list
+the browser has not answered yet keeps the choice. The recording bar shows
+the current input, small, with a dropdown to switch on the spot, and the
+call stage's top bar has a «⋯» with the same list. On the phones nothing
+shows: the system route decides (`microphonesSupported`). UI tests map
+`@/core/services/storage` to its web build in the shared setup.
+
 ## The chat's motion runs on the UI thread (phone run 2 #14, 2026-10-27)
 
 Owner: «más fluido… a 120 FPS, depende del dispositivo… súper optimizado».

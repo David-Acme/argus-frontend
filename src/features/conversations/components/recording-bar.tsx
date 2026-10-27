@@ -1,8 +1,11 @@
 import { View } from 'react-native';
 import Animated, { useAnimatedStyle, type SharedValue } from 'react-native-reanimated';
+import { useMicrophoneNotice } from '@/shared/hooks/use-microphone-notice';
+import { useMicrophones } from '@/shared/hooks/use-microphones';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { Button } from '@/shared/ui/button';
 import { Icon } from '@/shared/ui/icon';
+import { Menu } from '@/shared/ui/menu';
 import { Text } from '@/shared/ui/text';
 import { LiveWave } from '@/features/conversations/components/live-wave';
 import { SLIDE_CANCEL_PX } from '@/features/conversations/constants/voice-note.constant';
@@ -18,6 +21,21 @@ export type RecordingBarProps = {
   drag: SharedValue<number>;
   onCancel: () => void;
 };
+
+function MicrophonePick() {
+  const { t } = useTranslation();
+  const mics = useMicrophones();
+  useMicrophoneNotice();
+  if (!mics.supported) return null;
+  return (
+    <View className="max-w-mic-pick shrink flex-row items-center">
+      <Text variant="caption" tone="2" numberOfLines={1}>
+        {mics.current}
+      </Text>
+      <Menu item label={t('common.microphone.choose')} items={mics.menu} icon="chevd" />
+    </View>
+  );
+}
 
 export function RecordingBar({ mode, elapsedMs, live, drag, onCancel }: RecordingBarProps) {
   const { t } = useTranslation();
@@ -45,7 +63,10 @@ export function RecordingBar({ mode, elapsedMs, live, drag, onCancel }: Recordin
         {clock}
       </Text>
       {mode === 'locked' ? (
-        <LiveWave live={live} />
+        <>
+          <LiveWave live={live} />
+          <MicrophonePick />
+        </>
       ) : (
         <Animated.View
           style={fade}

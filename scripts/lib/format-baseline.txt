@@ -317,7 +317,6 @@ src/features/voice/services/call-audio/call-audio.native.ts
 src/features/voice/services/call-audio/call-audio.web.ts
 src/features/voice/services/rtc/rtc-token.ts
 src/features/voice/services/voice/voice-frames.ts
-src/features/voice/services/voice/voice-mic.web.ts
 src/features/voice/services/voice/voice-playout.ts
 src/features/voice/services/voice/voice-transcript.ts
 src/features/voice/services/voice/watch-continuation.ts

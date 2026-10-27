@@ -176,6 +176,7 @@ export const chromeSize = {
   noteBar: 3,
   liveBar: 2,
   livePitch: 4,
+  micPick: 160,
   noteWidth: 232,
   scrollDown: 40,
   unreadBadge: 20,

@@ -1,9 +1,11 @@
 import type { ReactNode } from 'react';
 import { View } from 'react-native';
 import type { VoiceActionRecord } from '@/core/types';
+import { useMicrophones } from '@/shared/hooks/use-microphones';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { Button } from '@/shared/ui/button';
 import { Icon } from '@/shared/ui/icon';
+import { Menu } from '@/shared/ui/menu';
 import { Text } from '@/shared/ui/text';
 import { endedSummaryOf } from '@/features/voice/model/call-stage';
 import { voiceActionLabel } from '@/features/voice/model/voice-action-label';
@@ -22,6 +24,7 @@ type WaitingCardProps = {
 
 export function StageTop({ header, onMinimise, onSwitchToChat }: StageTopProps) {
   const { t } = useTranslation();
+  const mics = useMicrophones();
   if (header) return header;
   return (
     <View className="flex-row items-center justify-between">
@@ -36,15 +39,18 @@ export function StageTop({ header, onMinimise, onSwitchToChat }: StageTopProps) 
       ) : (
         <View />
       )}
-      {onSwitchToChat ? (
-        <Button
-          iconOnly
-          icon="chat"
-          label={t('screens.voice.to-chat')}
-          onPress={onSwitchToChat}
-          filled
-        />
-      ) : null}
+      <View className="flex-row items-center gap-2">
+        {mics.supported ? <Menu label={t('common.microphone.choose')} items={mics.menu} /> : null}
+        {onSwitchToChat ? (
+          <Button
+            iconOnly
+            icon="chat"
+            label={t('screens.voice.to-chat')}
+            onPress={onSwitchToChat}
+            filled
+          />
+        ) : null}
+      </View>
     </View>
   );
 }

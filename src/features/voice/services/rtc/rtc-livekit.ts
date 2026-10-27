@@ -1,6 +1,7 @@
 import type { Participant, RemoteParticipant, RemoteTrack, Room } from 'livekit-client';
 import type { IRealtimeCall } from '@/core/interfaces';
 import type { RtcEvent, RtcIceServer, RtcJoin } from '@/core/types';
+import { chosenMicrophone, useMicrophoneStore } from '@/shared/libs/microphone';
 import { decodeUtf8, encodeUtf8, endReasonOf } from '@/features/voice/model/rtc-protocol';
 
 type Listener = (event: RtcEvent) => void;
@@ -12,6 +13,13 @@ export type LivekitCallOptions = {
 };
 
 const AGENT_STATE_ATTRIBUTE = 'lk.agent.state';
+
+const SYSTEM_DEVICE = 'default';
+
+function microphoneDeviceOf(): { deviceId?: string } {
+  const choice = chosenMicrophone();
+  return choice ? { deviceId: choice.deviceId } : {};
+}
 
 export function connectOptionsOf(join: RtcJoin): {
   autoSubscribe: boolean;
@@ -31,6 +39,7 @@ export class LivekitRealtimeCall implements IRealtimeCall {
   private audioElements: HTMLMediaElement[] = [];
   private levelTimer: ReturnType<typeof setInterval> | null = null;
   private followedSid: string | null = null;
+  private stopMicrophoneWatch: () => void = () => undefined;
 
   constructor(private readonly options: LivekitCallOptions) {}
 
@@ -48,6 +57,7 @@ export class LivekitRealtimeCall implements IRealtimeCall {
         echoCancellation: true,
         noiseSuppression: true,
         autoGainControl: true,
+        ...microphoneDeviceOf(),
       },
       publishDefaults: { dtx: true, red: true },
     });
@@ -88,6 +98,7 @@ export class LivekitRealtimeCall implements IRealtimeCall {
     try {
       await room.connect(target.url, target.token, connectOptionsOf(target));
       await room.localParticipant.setMicrophoneEnabled(true);
+      this.followMicrophoneChoice(room);
     } catch (error) {
       await this.leave();
       throw error;
@@ -123,9 +134,20 @@ export class LivekitRealtimeCall implements IRealtimeCall {
   async leave(): Promise<void> {
     const room = this.room;
     this.room = null;
+    this.stopMicrophoneWatch();
+    this.stopMicrophoneWatch = () => undefined;
     this.dropAgentAudio();
     if (room) await room.disconnect();
     if (room && this.options.release) await this.options.release();
+  }
+
+  private followMicrophoneChoice(room: Room): void {
+    this.stopMicrophoneWatch = useMicrophoneStore.subscribe((state, previous) => {
+      if (state.choice?.deviceId === previous.choice?.deviceId) return;
+      void room
+        .switchActiveDevice('audioinput', state.choice?.deviceId ?? SYSTEM_DEVICE)
+        .catch(() => undefined);
+    });
   }
 
   private emit(event: RtcEvent): void {
