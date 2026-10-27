@@ -5,6 +5,7 @@ import { cdpEndpoint } from '../chromium';
 import { installFixedClock, FIXED_NOW } from '../clock';
 import { control, NOT_LOOPBACK } from '../harness';
 import { installTauriShim, type ShimSeed } from '../tauri-shim';
+import { measureHeight, type HeightAudit } from './height-audit';
 
 export type Engine = 'chromium' | 'webkit';
 
@@ -54,6 +55,7 @@ type ManifestEntry = {
   fullPage: boolean;
   notes: string;
   auto: Audit;
+  height: HeightAudit;
   masks: Mask[];
   errors: string[];
 };
@@ -89,7 +91,18 @@ export const PROTO_VIEWPORTS: readonly Viewport[] = [
   { name: 'proto-2560', w: 2560, h: 1440 },
 ];
 
+export const HEIGHT_VIEWPORTS: readonly Viewport[] = [
+  { name: 'phone-small', w: 320, h: 568 },
+  { name: 'phone-short', w: 360, h: 640 },
+  { name: 'phone-se', w: 375, h: 667 },
+  { name: 'phone-mid', w: 360, h: 740 },
+  { name: 'phone-tall', w: 390, h: 844 },
+  { name: 'phone-landscape', w: 740, h: 360 },
+];
+
 export const PROTO = process.env.ARGUS_UI_MAP_VIEWPORTS === 'proto';
+
+export const HEIGHT = process.env.ARGUS_UI_MAP_VIEWPORTS === 'height';
 
 const CORE_NAMES = new Set(['phone', 'phone-short', 'tablet-portrait', 'desktop']);
 
@@ -383,6 +396,7 @@ const capture = async (
   );
   mkdirSync(dirname(target), { recursive: true });
   const found = await audit(scene.page);
+  const heights = await measureHeight(scene.page);
   const regions = await masks(scene.page);
   await scene.page.screenshot({ path: target, animations: 'disabled', caret: 'hide' });
   record({
@@ -398,6 +412,7 @@ const capture = async (
     fullPage,
     notes: shot.notes ?? '',
     auto: found,
+    height: heights,
     masks: regions,
     errors: [...new Set(scene.errors)].slice(0, 8),
   });
@@ -410,7 +425,7 @@ export const shoot = async (
   viewports: readonly Viewport[]
 ): Promise<void> => {
   const list =
-    ENGINE === 'webkit' && !PROTO
+    ENGINE === 'webkit' && !PROTO && !HEIGHT
       ? viewports.filter((viewport) => CORE_NAMES.has(viewport.name))
       : viewports;
   for (const viewport of list) {
@@ -419,7 +434,7 @@ export const shoot = async (
     await quiet(scene.page, baseUrl, SETTLE_MS);
     await capture(scene, shot, viewport, { w: viewport.w, h: viewport.h }, false);
     const overflow = (await audit(scene.page)).verticalOverflow;
-    if (overflow > 8) {
+    if (overflow > 8 && !HEIGHT) {
       const tall = Math.min(viewport.h + overflow, FULL_PAGE_LIMIT);
       await scene.page.setViewportSize({ width: viewport.w, height: tall });
       await quiet(scene.page, baseUrl, SETTLE_MS);

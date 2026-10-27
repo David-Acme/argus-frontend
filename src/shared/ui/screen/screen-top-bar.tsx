@@ -52,6 +52,7 @@ function Updating({ label }: UpdatingProps) {
 export function ScreenTopBar({ title, meta, back, actions, updating }: ScreenTopBarProps) {
   return (
     <View
+      testID="screen-top-bar"
       className={clsx(
         'py-screen-bar-y flex-row items-center gap-2',
         title ? 'min-h-top-bar' : 'min-h-top-bar-compact'

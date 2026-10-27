@@ -7,6 +7,8 @@ import {
   CORE,
   DARK_ES,
   ENGINE,
+  HEIGHT,
+  HEIGHT_VIEWPORTS,
   LIGHT_ES,
   MAIN_LOOKS,
   PROTO,
@@ -139,11 +141,13 @@ const once = async (
 
 const looksOf = (state: StateSpec): readonly Look[] => {
   if (PROTO) return [LIGHT_ES, DARK_ES];
+  if (HEIGHT) return [LIGHT_ES];
   return state.main ? [LIGHT_ES, ...MAIN_LOOKS] : [LIGHT_ES];
 };
 
 const viewportsOf = (state: StateSpec, look: Look): readonly Viewport[] => {
   if (PROTO) return PROTO_VIEWPORTS;
+  if (HEIGHT) return HEIGHT_VIEWPORTS;
   return state.main && look === LIGHT_ES && ENGINE === 'chromium' ? VIEWPORTS : CORE;
 };
 
