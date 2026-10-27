@@ -146,29 +146,6 @@ export const share = (
   },
 });
 
-export const reminder = (
-  id: number,
-  title: string,
-  scheduledAt: number,
-  patch: Record<string, unknown> = {}
-): Row => ({
-  table: 'reminder',
-  row: {
-    id,
-    createdBy: 1,
-    targetUserId: 1,
-    title,
-    description: '',
-    scheduledAt,
-    recurrenceRule: null,
-    isCompleted: false,
-    completedAt: null,
-    createdAt: CREATED + id,
-    updatedAt: CREATED + id,
-    ...patch,
-  },
-});
-
 export const message = (id: number, patch: Record<string, unknown>): Row => ({
   table: 'conversation_message',
   row: {
@@ -222,9 +199,4 @@ export const PRODUCTIVITY: Row[] = [
   event(903, 'Feriado', MIDNIGHT, { isAllDay: true, endsAt: null }),
   event(904, 'Yoga', MIDNIGHT - DAY * 7 + HOUR * 7, { recurrenceRule: 'FREQ=WEEKLY' }),
   event(905, 'Cumpleaños de Luis', MIDNIGHT + DAY * 3 + HOUR * 20),
-  reminder(950, 'Pagar la luz', MIDNIGHT + HOUR * 17),
-  reminder(951, 'Regar las plantas', MIDNIGHT + HOUR * 8, {
-    isCompleted: true,
-    completedAt: MIDNIGHT + HOUR * 8,
-  }),
 ];

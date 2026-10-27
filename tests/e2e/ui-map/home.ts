@@ -19,25 +19,11 @@ import {
   job,
   notification,
 } from '../support/ui-map/backend';
-import {
-  HOUR,
-  LONG_TEXT,
-  MIDNIGHT,
-  NOW,
-  PRODUCTIVITY,
-  project,
-  reminder,
-  user,
-} from '../support/ui-map/data';
+import { LONG_TEXT, NOW, PRODUCTIVITY, project, user } from '../support/ui-map/data';
 import type { Row, ScreenSpec } from '../support/ui-map/scenario';
 import { button, say } from '../support/ui-map/text';
 
-const POPULATED: Row[] = [
-  ...PRODUCTIVITY,
-  ...CAMERAS,
-  ...NOTIFICATIONS,
-  reminder(952, 'Llamar al plomero', MIDNIGHT + HOUR * 11),
-];
+const POPULATED: Row[] = [...PRODUCTIVITY, ...CAMERAS, ...NOTIFICATIONS];
 
 const respond = (patch: Record<string, unknown>) => [
   { method: 'GET', path: '/notification/responses', info: [{ ...INCIDENT, ...patch }] },
@@ -93,6 +79,29 @@ const incoming =
     await sleep(1200);
   };
 
+const reminderCall = async (_scene: Scene, baseUrl: string): Promise<void> => {
+  await emit(baseUrl, [
+    {
+      frame: {
+        operation: 8,
+        option: 'call',
+        info: {
+          callId: 'call-43',
+          reason: 'Tomar la pastilla',
+          subject: 'Tomar la pastilla',
+          summary: '',
+          urgency: 'time_sensitive',
+          kind: 'agenda',
+          category: 'reminder',
+          reminderId: 961,
+          expiresAt: NOW + 3600,
+        },
+      },
+    },
+  ]);
+  await sleep(1200);
+};
+
 const manyProjects: Row[] = Array.from({ length: 14 }, (_, index) =>
   project(
     1000 + index,
@@ -109,17 +118,6 @@ const manyNotifications: Row[] = Array.from({ length: 46 }, (_, index) =>
     `Aviso número ${index + 1} con un título bastante largo para ver cómo se corta`,
     LONG_TEXT,
     { kind: 'system', urgency: 'passive' }
-  )
-);
-
-const manyReminders: Row[] = Array.from({ length: 12 }, (_, index) =>
-  reminder(
-    1100 + index,
-    index % 4 === 0 ? LONG_TEXT : `Recordatorio ${index + 1}`,
-    NOW + (index - 4) * HOUR * 3,
-    {
-      recurrenceRule: index % 5 === 0 ? 'FREQ=WEEKLY' : null,
-    }
   )
 );
 
@@ -251,10 +249,9 @@ export const HOME: ScreenSpec[] = [
           ...POPULATED,
           ...manyProjects,
           ...manyNotifications,
-          ...manyReminders,
           user(1, 'Ana María Alejandra', 'Ruiz de la Fuente', 'owner'),
         ],
-        notes: '14 projects, 46 notifications, 12 reminders, long titles and a long first name',
+        notes: '14 projects, 46 notifications, long titles and a long first name',
       },
       {
         state: 'before-context',
@@ -402,25 +399,21 @@ export const HOME: ScreenSpec[] = [
         notes: 'pointer over a rail tab (rail only from 640 px)',
       },
       {
-        state: 'reminders-read-only',
-        rows: [
-          ...POPULATED,
-          reminder(960, 'Sacar la basura', NOW - HOUR * 2),
-          reminder(961, 'Tomar la pastilla', NOW + HOUR, { recurrenceRule: 'FREQ=DAILY' }),
-        ],
-        notes: 'Argus manages reminders: shown read-only, with no check and no menu',
+        state: 'reminder-rings',
+        rows: POPULATED,
+        act: reminderCall,
+        notes: 'reminders are Argus memory: one reaches the app only as a call, with «En 10 min»',
       },
       {
         state: 'reminder-asks-argus',
-        rows: [...POPULATED, reminder(961, 'Tomar la pastilla', NOW + HOUR)],
+        rows: POPULATED,
         act: async (scene) => {
-          await scene.page
-            .getByRole('button', { name: /^Tomar la pastilla,/ })
-            .first()
-            .click();
+          await scene.page.keyboard.press('Control+k');
+          await scene.page.keyboard.type('pagar el agua');
           await sleep(900);
         },
-        notes: 'a tap on a reminder opens the Argus thread asking about it',
+        notes:
+          'there is no reminder list or form: Command offers asking Argus, never a reminder result',
       },
     ],
   },

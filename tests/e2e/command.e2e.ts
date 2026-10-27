@@ -81,7 +81,7 @@ const searchFor = async (page: Page, text: string, expected: string): Promise<vo
     .toBe(1);
 };
 
-test('Ctrl+K opens the palette, typing filters local data, and Esc and an outside click close it', async ({
+test('Ctrl+K opens the palette, typing filters local data but never a reminder, and Esc and an outside click close it', async ({
   app,
   second,
 }) => {
@@ -95,11 +95,11 @@ test('Ctrl+K opens the palette, typing filters local data, and Esc and an outsid
   await opens(page, 'Control+k');
   expect(await groupNames(page)).toEqual(['Actions', 'Go to']);
 
-  await searchFor(page, 'pay', 'Pay the light bill');
-  expect(await groupNames(page)).toEqual(['Ask Argus', 'Agenda', 'Actions']);
-  expect(await optionCount(page, 'Ask Argus to remind me “pay…”')).toBe(1);
-
   await searchFor(page, 'guitar', 'Guitar lesson');
+  expect(await groupNames(page)).toEqual(['Ask Argus', 'Agenda', 'Actions']);
+
+  await searchFor(page, 'pay', 'Ask Argus to remind me “pay…”');
+  expect(await groupNames(page)).toEqual(['Ask Argus', 'Actions']);
   expect(await optionCount(page, 'Pay the light bill')).toBe(0);
 
   await page.keyboard.press('Escape');
