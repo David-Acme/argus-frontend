@@ -233,4 +233,13 @@ describe('Media', () => {
     screenFocus.focused = true;
     act(() => useEffectsOverrides.setState({ reduceMotion: null }));
   });
+
+  test('a live tile can carry the eye corner while Argus looks, and a dormant one cannot', () => {
+    const { rerender } = render(
+      <Media name="Cocina" live="En vivo" eye={{ label: 'Argus mira' }} />
+    );
+    expect(screen.getByRole('status').textContent).toContain('Argus mira');
+    rerender(<Media name="Cocina" dormant="privacy" eye={{ label: 'Argus mira' }} />);
+    expect(screen.queryByText('Argus mira')).toBeNull();
+  });
 });

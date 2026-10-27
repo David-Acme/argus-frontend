@@ -182,4 +182,22 @@ describe('Field', () => {
     fireEvent.blur(input);
     expect(input).toBeDefined();
   });
+
+  test('a message field sends on Enter on the web and keeps Shift+Enter for a new line', () => {
+    const sent: string[] = [];
+    render(
+      <Field
+        kind="message"
+        placeholder="Escríbele a Argus"
+        value="Hola"
+        onChangeText={() => undefined}
+        submit={{ key: 'done', onSubmit: () => sent.push('send') }}
+      />
+    );
+    const input = screen.getByRole('textbox', { name: 'Escríbele a Argus' });
+    fireEvent.keyDown(input, { key: 'Enter', shiftKey: true });
+    expect(sent).toEqual([]);
+    fireEvent.keyDown(input, { key: 'Enter' });
+    expect(sent).toEqual(['send']);
+  });
 });

@@ -31,6 +31,15 @@ export function FieldDemo() {
       <LabCase id="multiline" block>
         <Field kind="multiline" label={copy.notes} value={notes} onChangeText={setNotes} />
       </LabCase>
+      <LabCase id="message" block>
+        <Field
+          kind="message"
+          placeholder={copy.askArgus}
+          value=""
+          onChangeText={noop}
+          submit={{ key: 'done', onSubmit: noop }}
+        />
+      </LabCase>
       <LabCase id="error" block>
         <Field
           placeholder={copy.remindPrompt}

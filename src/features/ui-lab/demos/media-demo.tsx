@@ -114,6 +114,11 @@ export function MediaDemo() {
       <LabCase id="stage-privacy" block>
         <Media variant="stage" name={copy.bedroom} detail={copy.private} dormant="privacy" />
       </LabCase>
+      <LabCase id="tile-eye" block>
+        <Media name={copy.kitchen} live={copy.live} eye={{ label: copy.argusWatching }}>
+          <Scene name="kitchen" />
+        </Media>
+      </LabCase>
       <LabCase id="patio" block>
         <Media name={copy.patio} live={copy.live} detail={copy.kitchenTime}>
           <Scene name="patio" />

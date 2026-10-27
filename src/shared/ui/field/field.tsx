@@ -4,10 +4,11 @@ import { TextInput, View } from 'react-native';
 import { inset, type as typeSteps, typeRoles, useThemeTokens } from '@/shared/theme';
 import { useTypeScale } from '@/shared/ui/text';
 import { CodeField, type CodeFieldProps } from './code-field';
-import { FRAME_BORDER, FieldShell, fieldState, frameClass } from './field-shell';
+import { FRAME_BORDER, FieldShell, fieldState, frameClass, messageFrameClass } from './field-shell';
 import {
   SECRET_TRAITS,
   TEXT_TRAITS,
+  messageSubmitTraits,
   submitTraits,
   type FieldSubmit,
   type InputTraits,
@@ -39,7 +40,10 @@ export type SecretFieldProps = FieldBase & {
 
 export type MultilineFieldProps = FieldBase & { kind: 'multiline' };
 
-export type FieldProps = TextFieldProps | SecretFieldProps | MultilineFieldProps | CodeFieldProps;
+export type MessageFieldProps = FieldBase & { kind: 'message'; submit?: FieldSubmit };
+
+export type FieldProps =
+  TextFieldProps | SecretFieldProps | MultilineFieldProps | MessageFieldProps | CodeFieldProps;
 
 type EntryProps = {
   label?: string;
@@ -52,6 +56,7 @@ type EntryProps = {
   ref?: Ref<TextInput>;
   traits: InputTraits;
   multiline: boolean;
+  message?: boolean;
 };
 
 const MULTILINE_LINES = 5;
@@ -78,17 +83,19 @@ function Entry({
   ref,
   traits,
   multiline,
+  message = false,
 }: EntryProps) {
   const { color } = useThemeTokens();
   const [focused, setFocused] = useState(false);
   const { style } = useTypeScale('entry');
   const cap = useMultilineCap(multiline);
+  const state = fieldState(focused, error);
   return (
-    <FieldShell label={label} hint={hint} error={error}>
+    <FieldShell label={label} hint={hint} error={error} top={message ? 'none' : 'field'}>
       <View
         className={clsx(
-          frameClass(fieldState(focused, error)),
-          multiline ? 'min-h-field-multi items-stretch' : 'min-h-field items-stretch'
+          message ? messageFrameClass(state) : frameClass(state),
+          multiline && !message ? 'min-h-field-multi items-stretch' : 'min-h-field items-stretch'
         )}
         style={FRAME_BORDER}>
         <TextInput
@@ -108,7 +115,7 @@ function Entry({
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
           {...traits}
-          {...submitTraits(submit)}
+          {...(message ? messageSubmitTraits(submit) : submitTraits(submit))}
           className={clsx(
             ENTRY_TEXT,
             'min-w-0 flex-1',
@@ -128,5 +135,7 @@ export function Field(props: FieldProps) {
       <Entry {...props} traits={SECRET_TRAITS[props.content ?? 'password']} multiline={false} />
     );
   if (props.kind === 'multiline') return <Entry {...props} traits={{}} multiline />;
+  if (props.kind === 'message')
+    return <Entry {...props} traits={TEXT_TRAITS.plain} multiline message />;
   return <Entry {...props} traits={TEXT_TRAITS[props.content ?? 'plain']} multiline={false} />;
 }

@@ -48,6 +48,9 @@ export function ButtonDemo() {
       <LabCase id="icon-fab">
         <Button iconOnly fab icon="plus" label={copy.add} onPress={noop} />
       </LabCase>
+      <LabCase id="icon-ink">
+        <Button iconOnly ink icon="mic" label={copy.talk} onPress={noop} />
+      </LabCase>
       <LabCase id="icon-plain">
         <Button iconOnly icon="more" label={copy.more} onPress={noop} />
       </LabCase>

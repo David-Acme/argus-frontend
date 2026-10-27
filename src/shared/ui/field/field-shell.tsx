@@ -12,7 +12,7 @@ export type FieldShellProps = {
   label?: string;
   hint?: string;
   error?: string;
-  top?: 'field' | 'code';
+  top?: 'field' | 'code' | 'none';
   children: ReactNode;
 };
 
@@ -26,8 +26,24 @@ const FRAME_STATE: Record<FieldState, string> = {
 
 export const FRAME_BORDER = { borderWidth: inset.field.border };
 
+const MESSAGE_STATE: Record<FieldState, string> = {
+  idle: 'bg-surface border-line',
+  focus: 'bg-surface border-text',
+  error: 'bg-surface border-alert',
+};
+
+const TOP: Record<NonNullable<FieldShellProps['top']>, string | undefined> = {
+  field: 'mt-field-top',
+  code: 'mt-field-code-top',
+  none: undefined,
+};
+
 export function frameClass(state: FieldState): string {
   return clsx('rounded-well px-field-x gap-field-gap flex-row', FRAME_STATE[state]);
+}
+
+export function messageFrameClass(state: FieldState): string {
+  return clsx('rounded-media px-field-x gap-field-gap flex-row', MESSAGE_STATE[state]);
 }
 
 export function fieldState(focused: boolean, error: string | undefined): FieldState {
@@ -59,7 +75,7 @@ function FieldNote({ hint, error }: FieldNoteProps) {
 
 export function FieldShell({ label, hint, error, top = 'field', children }: FieldShellProps) {
   return (
-    <View className={top === 'code' ? 'mt-field-code-top' : 'mt-field-top'}>
+    <View className={TOP[top]}>
       {label ? (
         <View className="mb-field-label-gap">
           <Text variant="control">{label}</Text>

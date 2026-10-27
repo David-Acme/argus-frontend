@@ -1,6 +1,7 @@
 export {
   Field,
   type FieldProps,
+  type MessageFieldProps,
   type MultilineFieldProps,
   type SecretFieldProps,
   type TextFieldProps,
