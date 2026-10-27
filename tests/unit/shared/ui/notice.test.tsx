@@ -27,14 +27,14 @@ describe('Notice', () => {
         icon="check"
         title="Nada pendiente hoy"
         action={{
-          label: 'Nuevo recordatorio',
+          label: 'Nuevo evento',
           onPress: () => undefined,
           primary: true,
           icon: 'plus',
         }}
       />
     );
-    expect(screen.getByRole('button', { name: 'Nuevo recordatorio' })).toBeDefined();
+    expect(screen.getByRole('button', { name: 'Nuevo evento' })).toBeDefined();
   });
 
   test('a centred empty card keeps its title, its line and its one action', () => {
@@ -45,12 +45,12 @@ describe('Notice', () => {
         icon="cal"
         title="Nada para hoy"
         body="Pídeselo a Argus o crea tu primer recordatorio."
-        action={{ label: 'Nuevo recordatorio', onPress: () => void (created += 1), primary: true }}
+        action={{ label: 'Nuevo evento', onPress: () => void (created += 1), primary: true }}
       />
     );
     expect(screen.getByRole('status')).toBeDefined();
     expect(screen.getByText('Pídeselo a Argus o crea tu primer recordatorio.')).toBeDefined();
-    fireEvent.click(screen.getByRole('button', { name: 'Nuevo recordatorio' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Nuevo evento' }));
     expect(created).toBe(1);
   });
 

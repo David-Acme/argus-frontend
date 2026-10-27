@@ -145,7 +145,7 @@ describe('Ahora', () => {
     state.agenda = agenda([]);
     render(<NowSection />);
     expect(screen.getByText('Nada pendiente hoy')).toBeDefined();
-    fireEvent.click(screen.getByRole('button', { name: 'Nuevo recordatorio' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Pídeselo a Argus' }));
     fireEvent.click(
       screen.getByRole('button', { name: 'Pedirle a Argus: Recuérdame pagar el agua' })
     );

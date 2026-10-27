@@ -33,7 +33,7 @@ export const agendaSections = {
   reopen: 'Marcar «{title}» como pendiente',
   'empty-title': 'Nada pendiente hoy',
   'empty-body': 'Pídele a Argus que te recuerde algo.',
-  'empty-action': 'Nuevo recordatorio',
+  'empty-action': 'Pídeselo a Argus',
   'empty-draft': 'Recuérdame ',
   ask: 'Pedirle a Argus: {text}',
   'ideas-title': 'Ideas para empezar',
