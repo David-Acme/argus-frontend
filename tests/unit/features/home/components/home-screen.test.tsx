@@ -16,7 +16,7 @@ const CALM: InicioHero = {
   aura: 'calm',
   greeting: 'Buenas tardes, Ana',
   sentence: 'Todo tranquilo.',
-  meta: 'En casa · Luis y tú en casa',
+  meta: 'Modo casa · Luis y tú en casa',
   alert: null,
   offlineAge: null,
 };
@@ -194,7 +194,7 @@ describe('Inicio on a phone', () => {
     render(<HomeScreen />);
     expect(screen.getByText('Buenas tardes, Ana')).toBeDefined();
     expect(screen.getByRole('heading', { name: 'Todo tranquilo.' })).toBeDefined();
-    expect(screen.getByText('En casa · Luis y tú en casa')).toBeDefined();
+    expect(screen.getByText('Modo casa · Luis y tú en casa')).toBeDefined();
     expect(order(ALL)).toEqual(['now', 'cameras', 'news']);
     expect(screen.queryByRole('button', { name: /Notificaciones/ })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Buscar o pedir a Argus' }));

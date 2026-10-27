@@ -84,7 +84,7 @@ const HERO: Hero = {
   aura: 'calm',
   greeting: 'Buenas tardes, Ana',
   sentence: 'Todo tranquilo.',
-  meta: 'En casa · Luis y tú en casa',
+  meta: 'Modo casa · Luis y tú en casa',
   alert: null,
   offlineAge: null,
 };
@@ -112,7 +112,7 @@ describe('InicioHero', () => {
   test('a phone hero is the sentence, its meta and stats that open their screen', () => {
     render(<InicioHero hero={HERO} place="hero" />);
     expect(screen.getByRole('heading', { name: 'Todo tranquilo.' })).toBeDefined();
-    expect(screen.getByText('En casa · Luis y tú en casa')).toBeDefined();
+    expect(screen.getByText('Modo casa · Luis y tú en casa')).toBeDefined();
     fireEvent.click(screen.getByRole('link', { name: '5 cámaras' }));
     expect(routes).toEqual(['/security']);
     expect(screen.queryByRole('button', { name: /Nuevo/ })).toBeNull();
@@ -135,7 +135,7 @@ describe('InicioHero', () => {
     setWindowWidth(1280);
     render(<InicioHero hero={{ ...HERO, phase: 'loading' }} place="band" />);
     expect(screen.getByRole('heading', { name: 'Buenas tardes, Ana' })).toBeDefined();
-    expect(screen.queryByText('En casa · Luis y tú en casa')).toBeNull();
+    expect(screen.queryByText('Modo casa · Luis y tú en casa')).toBeNull();
     expect(screen.queryByText('5')).toBeNull();
   });
 

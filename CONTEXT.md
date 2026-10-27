@@ -7026,7 +7026,12 @@ and T7 under one hero; every decision is a pure function in
   and stacks its first step, Novedades if any, Estado and «Prueba a
   decirle»; on a tablet also «Así te ayuda Argus» before the phrases and
   the day (Hoy) after them. With no mode and nobody known its hero meta is
-  «Conecta una cámara para que Argus vigile», never a blank. Presence that is unknown is never «sin datos»: a person reads
+  «Conecta una cámara para que Argus vigile», never a blank. The mode is
+  always named as a mode («Modo casa», «Modo noche», «Modo fuera», «Modo
+  armado»; en «Home mode»…) and nobody home reads «No hay nadie en casa»
+  («No one is home»), so «En casa · Nadie en casa» can no longer read as a
+  contradiction (phone run 2 #6; the spec's «En casa · Luis y tú en casa»
+  example predates it). Presence that is unknown is never «sin datos»: a person reads
   «Aún no sé si está en casa», me with the hint to connect a camera or the
   phone; one person whose presence is unknown is no section, and the hero
   names who is home only once someone's presence is known. Rutinas has no

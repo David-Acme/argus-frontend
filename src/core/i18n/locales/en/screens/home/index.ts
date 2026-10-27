@@ -57,13 +57,18 @@ export const home = {
       away: 'Watching your home.',
       offline: 'Offline.',
     },
-    mode: '{mode} mode',
+    mode: {
+      home: 'Home mode',
+      night: 'Night mode',
+      away: 'Away mode',
+      armed: 'Armed mode',
+    },
     watching: 'I keep watch',
     people: {
       'me-and-others': '{names} and you are home',
       others: '{names} at home',
       me: 'You are home',
-      nobody: 'Nobody home',
+      nobody: 'No one is home',
     },
     and: '{first} and {last}',
     stat: {
