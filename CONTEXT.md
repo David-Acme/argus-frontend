@@ -6628,12 +6628,8 @@ Seguridad: there is no episode route yet. Before the first answer with no local 
 it shows three skeleton rows in its card; an empty feed offers Seguridad; a failed
 first load offers Reintentar. A role without `guard.view` gets nothing.
 
-**Clips recientes.** Owner and guard only (`clips.view`). `useRecentClips` reads the
-two newest clips of each enabled camera outside privacy (`GET /camera/{id}/clips?limit=2`,
-there is no clip list across cameras) into one view-cache value (`camera.clips`,
-scope `recent`) and keeps the two newest. A clip has no poster on the wire, so its
-tile is the dark media frame with the play button; it opens its camera. The strip's
-latest-clip tile reads the same value.
+**Clips recientes.** Replaced on 2026-10-27 (see "Module surfaces and the Clips destination"):
+the strip shows only cameras, and the clips have their own destination and Inicio section.
 
 **Columns that grow.** The column mechanism is the one `p2/inicio-feed` landed
 (`ScreenColumn` `grows`, `useGrowsInColumn`). Cámaras is the section that grows in its
@@ -8347,6 +8343,72 @@ phone, tablet, desktop and web.
   their half-hour lists: their windows end at `24:00`, which the picker's
   0–23 hours cannot say.
 
+## Module surfaces and the Clips destination (2026-10-27, feat/clips-and-module-surfaces)
+
+The design, the history of the gating (it was never lost: `f41233e7`, `06645d93`, `f5968252`,
+`a92120b0`; the redesign commits carried it into `nav-sections`, `command-access` and
+`use-inicio-body`) and the pending parts are in
+`uiux-map/redesign/later-phases/briefs/M-module-surfaces.md`.
+
+**Why clips did not show.** Measured on the dev stack: the camera service recorded clips (147, 148
+in the log of the running container) and the app read them, so the data was there. The app hid them
+in three ways:
+
+- On a phone Inicio had no place for the «Clips recientes» section: `inicioStack` never listed
+  `clips`, only the wide desktop plan did.
+- The only clip a phone showed was the first tile of the cameras strip: a dark frame with a play
+  button. There is no poster on the wire, and a tap opened the live camera, not the clip.
+- The list itself lived three taps deep (camera → Grabaciones) as rows with a play icon.
+
+**The registry.** `shared/libs/surfaces` resolves `ModuleSurfaces` declarations against the live
+`AccessView`. A contribution is offered when its module is active, its capabilities are held, its
+route opens and its `allows` rule passes. `features/surfaces/model/<module>-surfaces.ts` declare
+`core`, `surveillance` and `productivity`. `(app)/_layout.tsx` provides them through
+`SurfaceProvider`.
+
+Inicio (`inicio-layout.ts` reads each contribution's placement per form), the bar, the sheet, the
+rail and the sidebar (`navigation/model/nav-model.ts`) and the command's jumps, search kinds and
+create actions (`command-access.ts`) read only the resolved lists. No shell file names a module.
+`registryProblems` is asserted empty in `module-surfaces.test.tsx`, which also renders the model
+for every role, active and inactive, with 0, 1, 2 and 10 modules (8 test-only fakes, never
+shipped).
+
+**Navigation (owner-approved shape).**
+
+- Phone: Inicio · pin 1 · Argus · pin 2 · Todo.
+- «Todo» sheet: search row, a 4-column module grid of at most 8, General; at full height,
+  expandable module rows. A long press pins a module to the bar or to the quick-access row.
+- Tablet: a rail that unfolds in place into the sidebar.
+- Desktop: core, «Módulos» with sub-destinations, account at the foot.
+- Pins: `navigation.pins` in the view cache, kept across a context resync.
+- «Tú» moved to an avatar button in the phone's Inicio header.
+- `Nav` takes the new parts in one `more` prop (`foot`, `modules`, `fold`), so it stays under
+  ten props.
+
+**No flash.** `EntryGate` holds the splash for any signed-in route until the persisted or live
+context is known, for at most `CONTEXT_WAIT_MS`. Before, it held only on module routes.
+`SurfaceSlot` fades a section in or out when a module changes live. `SurfaceGroup` skips that on
+the first mount, and Reduce Motion skips it entirely.
+
+**Clips.**
+
+- **The feed.** A `RemoteFeed` (`clipFeed`, view-cache key `camera.clip-feed`, pinned scope
+  `all`, a camera filter as scope `camera:<id>`). It reads the shared paging shape
+  `GET /camera/clips?limit=&cursor=&cameraId=` → `{items, nextCursor, hasMore}`, which the backend
+  paging package lands; until then the deployed camera service has no such route and the list
+  reads as failed. It is refreshed by `ResourceChanged (camera, clips)`.
+- **The Clips screen.** Paged with `useInfiniteList` and the new `Screen` `onEndReached` (a
+  worklet edge on the scroll, 480 px from the end), plus «Cargar clips anteriores» for a list
+  shorter than the window. It shows a grid of tiles, 2, 3 or 4 columns by its own measured width,
+  and camera chips. Its empty state is centred and depends on the case: privacy, recording off, or
+  no clips.
+- **Posters.** `clipPosters` loads two at a time from `GET /camera/{id}/clips/{clipId}/poster`,
+  caps at 160 per session, remembers misses, and clears on sign-out.
+- **The player.** `/clips/[id]` keeps the stage after the end with «Ver de nuevo»
+  (`useClipPlayback().replay`). The Owner can delete a clip.
+- **Elsewhere.** `/cameras/[id]/recordings` redirects to `/clips?camera=<id>`. Tamper evidence
+  reads the same feed path.
+
 ## Live camera previews (2026-10-27, owner: «en tiempo real, eficiente y ordenado»)
 
 Every camera tile outside the full view plays live: Inicio's cameras section (strip and
@@ -8380,3 +8442,31 @@ side is the backend's `services/camera/CONTEXT.md` › "Live previews".
   on a transparent canvas; without WebCodecs the tile keeps its still.
 - **Stills only where needed.** `CameraThumbnailPoller` skips a camera that is playing
   live; it still paints every tile once before its video starts.
+
+### The approved follow-ups (2026-10-27)
+
+- **Search in «Todo».** Typing in the sheet's field searches without opening the palette. Matching
+  module sections come first; the rest comes from `useCommandSearch`, the same paged provider the
+  palette uses, with «Cargar más resultados». The registry feeds the palette only the jumps,
+  search kinds and create actions, each jump with its own icon and label.
+- **Atención.** A module contributes attention probes: components that read their own data and
+  report items into `attentionStore` (`shared/libs/surfaces`). `AttentionProbes`, mounted once in
+  the navigation, runs the probes the live view allows. Inicio's «Atención» lists the items and is
+  absent when there are none. Today's source is surveillance's camera that is on but not
+  answering.
+- **One card per module.** A module contributes `card`. «Tus módulos» shows the top four, ranked
+  by attention and then by priority, with «Ver todos los módulos» opening the full sheet. The
+  cards, the probe and its model live in `features/surfaces`, so a test that mocks a domain
+  feature does not lose them.
+- **Badges.** A pinned module's tab counts its own attention, and «Todo» counts the attention of
+  the modules outside the bar (`entryCount`, `hiddenAttention`).
+- **Swipe up.** A swipe up on the bar opens the sheet: an RNGH pan that waits for 12 px up, fails
+  sideways and is off while Argus listens.
+- **Personalizar Inicio.** Hide and reorder the Inicio sections; every section carries a label. The
+  choice is kept in the view cache (`inicio.prefs`), read on the first frame, and survives a
+  context resync. A chosen order leads every form, and the rest follow Argus's order.
+- **Clips.** The list reads `useFeedList`, with no paging wired in the feature. The first page
+  sends an empty `cursor=` and each next page sends back the string it received. The Clips screens
+  preload when the shell idles (`useClipsRuntime`, `lazyScreen.preload`). `LazyScreen` reads the
+  resolved screen in its first render, so opening Clips shows no blank frame. The «Todo» sheet is
+  mounted with the bar, so opening it never waits.

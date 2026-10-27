@@ -64,7 +64,18 @@ export function NavTab({ item, selected, layout, onSelect }: TabProps) {
         className={clsx(FRAME, selected && 'bg-tab-on')}>
         <Icon name={item.icon} size={layout.icon} tone={selected ? 'text' : 'text-3'} />
         <TabLabel label={item.label} labelled={layout.labelled} dim={!selected} />
+        {item.count ? <TabCount count={item.count} /> : null}
       </PressableSurface>
+    </View>
+  );
+}
+
+export function TabCount({ count }: { count: string }) {
+  return (
+    <View className="bg-alert px-nav-count-x py-nav-count-y absolute top-0 right-1/4 rounded-full">
+      <Text variant="count" tone="on-ink">
+        {count}
+      </Text>
     </View>
   );
 }

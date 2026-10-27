@@ -6,6 +6,7 @@ import { useAccessView } from '@/shared/hooks/use-capabilities';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import type { InfiniteListState } from '@/shared/hooks/use-infinite-list';
 import { useTranslation } from '@/shared/hooks/use-translation';
+import { useSurfaces } from '@/shared/libs/surfaces';
 import type { CommandGroup, CommandInk, CommandItem } from '@/shared/ui/command';
 import type { IconGlyph } from '@/shared/ui/icon';
 import { useCommandResults } from '@/features/command/hooks/use-command-results';
@@ -94,7 +95,7 @@ export function useCommandSearch({
 }: CommandSearchInput): CommandSearchState {
   const { t } = useTranslation();
   const date = useDateFormatter();
-  const access = commandAccess(useAccessView(), useHasProjects());
+  const access = commandAccess(useAccessView(), useHasProjects(), useSurfaces());
   const groups = searchGroups(access.search);
   const current = scope === 'all' || groups.includes(scope) ? scope : 'all';
   const entryItem = useEntryItem(openedAt, access);

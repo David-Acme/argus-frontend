@@ -7,7 +7,7 @@ import { cameraPrivacyMasked } from '@/shared/libs/camera-privacy';
 import { Avatar } from '@/shared/ui/avatar';
 import { Row } from '@/shared/ui/row';
 import { Section } from '@/shared/ui/section';
-import { useCameraClips } from '@/features/cameras/hooks/use-camera-clips';
+import { useClipFeed } from '@/features/cameras/hooks/use-clip-feed';
 import {
   clipsToday,
   recordingsLineOf,
@@ -35,16 +35,16 @@ const RECORDINGS_LINE = {
 function useRecordingsMeta(camera: ICameraCacheRow, clips: boolean): string {
   const { t } = useTranslation();
   const now = useNow(MINUTE_MS);
-  const state = useCameraClips(camera.id, clips && camera.recordMode !== 'off');
+  const state = useClipFeed(camera.id, clips && camera.recordMode !== 'off');
   const line = recordingsLineOf({
     recordMode: camera.recordMode,
     masked: cameraPrivacyMasked(camera.privacyState),
     enabled: camera.isEnabled,
     status: state.status,
-    hasClips: state.clips.length > 0,
+    hasClips: state.rows.length > 0,
   });
   if (line !== 'count') return t(RECORDINGS_LINE[line]);
-  const count = clipsToday(state.clips, now);
+  const count = clipsToday(state.rows, now);
   if (count === 0) return t('screens.cameras.rows.recordings-none');
   if (count === 1) return t('screens.cameras.rows.recordings-one');
   return t('screens.cameras.rows.recordings-many', { count: String(count) });
@@ -55,8 +55,8 @@ export function LiveRows({ camera, clips, sections }: LiveRowsProps) {
   const router = useRouter();
   const recordings = useRecordingsMeta(camera, clips);
   const zones = zoneNames(camera.zones);
-  const open = (child: 'recordings' | 'zones' | 'settings') =>
-    router.push(`/cameras/${camera.id}/${child}`);
+  const open = (child: 'zones' | 'settings') => router.push(`/cameras/${camera.id}/${child}`);
+  const openClips = () => router.push({ pathname: '/clips', params: { camera: camera.id } });
   return (
     <Section>
       {clips ? (
@@ -65,7 +65,7 @@ export function LiveRows({ camera, clips, sections }: LiveRowsProps) {
           title={t('screens.cameras.rows.recordings')}
           meta={recordings}
           chevron
-          onPress={() => open('recordings')}
+          onPress={openClips}
         />
       ) : null}
       <Row

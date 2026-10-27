@@ -1,6 +1,8 @@
 import { clsx } from 'clsx';
 import { View } from 'react-native';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { useAnimatedStyle, withSpring } from 'react-native-reanimated';
+import { scheduleOnRN } from 'react-native-worklets';
 import { useNavOffsets } from '@/shared/hooks/use-bottom-nav-inset';
 import { motion, useEffects, useNavBarLayout, useThemeTokens } from '@/shared/theme';
 import { Aura } from '@/shared/ui/aura';
@@ -14,6 +16,12 @@ import { useHoldToTalk } from './use-hold-to-talk';
 type ListenCapProps = { label: string; solid: boolean; bottom: number };
 
 const COLLAPSED_SCALE = 0.9;
+
+const SWIPE_DISTANCE = 32;
+
+const SWIPE_START = -12;
+
+const SWIPE_SIDEWAYS = 24;
 
 function ListenCap({ label, solid, bottom }: ListenCapProps) {
   const { elevation } = useThemeTokens();
@@ -37,6 +45,17 @@ function ListenCap({ label, solid, bottom }: ListenCapProps) {
   );
 }
 
+function useSwipeUp(onSwipeUp: (() => void) | undefined, listening: boolean) {
+  const open = () => onSwipeUp?.();
+  return Gesture.Pan()
+    .enabled(onSwipeUp !== undefined && !listening)
+    .activeOffsetY(SWIPE_START)
+    .failOffsetX([-SWIPE_SIDEWAYS, SWIPE_SIDEWAYS])
+    .onEnd((event) => {
+      if (event.translationY < -SWIPE_DISTANCE) scheduleOnRN(open);
+    });
+}
+
 function useCollapse(gap: number) {
   const { reduceMotion } = useEffects();
   return useAnimatedStyle(() => {
@@ -52,7 +71,16 @@ function useCollapse(gap: number) {
   });
 }
 
-export function NavBar({ items, active, onSelect, voice, copy, presence, listening }: NavProps) {
+export function NavBar({
+  items,
+  active,
+  onSelect,
+  voice,
+  copy,
+  presence,
+  listening,
+  more,
+}: NavProps) {
   const { reduceTransparency } = useEffects();
   const { elevation } = useThemeTokens();
   const layout = useNavBarLayout();
@@ -60,6 +88,7 @@ export function NavBar({ items, active, onSelect, voice, copy, presence, listeni
   const { mode, target, handlers } = useHoldToTalk(voice);
   const collapse = useCollapse(layout.gap);
   const shown = mode === 'off' ? (listening ?? 'off') : mode;
+  const swipe = useSwipeUp(more?.onSwipeUp, shown !== 'off');
   const frame = {
     height: layout.bar,
     bottom: offsets.footprint - layout.bar,
@@ -77,35 +106,37 @@ export function NavBar({ items, active, onSelect, voice, copy, presence, listeni
           />
         </>
       )}
-      <Animated.View
-        role="tablist"
-        aria-label={copy.navigation}
-        className="inset-x-nav-bar-x px-nav-bar-pad bg-surface border-fill-press absolute flex-row items-center justify-center rounded-full border-t"
-        style={[frame, collapse]}>
-        {items.map((item) =>
-          item.argus ? (
-            <ArgusTab
-              key={item.key}
-              item={item}
-              selected={active === item.key}
-              hint={copy.argusHint}
-              layout={layout}
-              listening={shown !== 'off'}
-              target={target}
-              handlers={handlers}
-              presence={presence}
-            />
-          ) : (
-            <NavTab
-              key={item.key}
-              item={item}
-              selected={active === item.key}
-              layout={layout}
-              onSelect={onSelect}
-            />
-          )
-        )}
-      </Animated.View>
+      <GestureDetector gesture={swipe}>
+        <Animated.View
+          role="tablist"
+          aria-label={copy.navigation}
+          className="inset-x-nav-bar-x px-nav-bar-pad bg-surface border-fill-press absolute flex-row items-center justify-center rounded-full border-t"
+          style={[frame, collapse]}>
+          {items.map((item) =>
+            item.argus ? (
+              <ArgusTab
+                key={item.key}
+                item={item}
+                selected={active === item.key}
+                hint={copy.argusHint}
+                layout={layout}
+                listening={shown !== 'off'}
+                target={target}
+                handlers={handlers}
+                presence={presence}
+              />
+            ) : (
+              <NavTab
+                key={item.key}
+                item={item}
+                selected={active === item.key}
+                layout={layout}
+                onSelect={onSelect}
+              />
+            )
+          )}
+        </Animated.View>
+      </GestureDetector>
     </>
   );
 }

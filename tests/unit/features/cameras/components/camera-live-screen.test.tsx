@@ -2,7 +2,7 @@ import { afterEach, describe, expect, mock, test } from 'bun:test';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { View } from 'react-native';
-import type { CameraClipsState } from '@/features/cameras/hooks/use-camera-clips';
+import type { ICameraClip } from '@/core/interfaces';
 import type { CameraLive } from '@/features/cameras/hooks/use-camera-live';
 import { screenFocus } from '../../../shared/ui/screen-focus';
 import { setWindowSize, setWindowWidth } from '../../../shared/ui/window-width';
@@ -23,7 +23,9 @@ const pushed: string[] = [];
 
 let view: CameraLive | null = liveView();
 
-let clips: CameraClipsState;
+type ClipsState = { rows: ICameraClip[]; status: 'ready' };
+
+let clips: ClipsState;
 
 const HOLD_WAIT_MS = 300;
 
@@ -31,7 +33,8 @@ mock.module('expo-router', () => ({
   Redirect: ({ href }: { href: string }) => <span data-testid="redirect">{href}</span>,
   useLocalSearchParams: () => ({ id: '3' }),
   useRouter: () => ({
-    push: (href: string) => pushed.push(href),
+    push: (href: string | { pathname: string }) =>
+      pushed.push(typeof href === 'string' ? href : href.pathname),
     back: () => pushed.push('back'),
     canGoBack: () => true,
     replace: (href: string) => pushed.push(href),
@@ -46,7 +49,7 @@ mock.module('@/features/cameras/hooks/use-camera-live', () => ({
 
 mock.module('@/features/cameras/hooks/use-camera-meta', () => ({ useCameraMeta: () => 'Casa' }));
 
-mock.module('@/features/cameras/hooks/use-camera-clips', () => ({ useCameraClips: () => clips }));
+mock.module('@/features/cameras/hooks/use-clip-feed', () => ({ useClipFeed: () => clips }));
 
 mock.module('@/features/cameras/components/camera-live-view', () => ({
   CameraLiveView: () => <span data-testid="player" />,
@@ -100,9 +103,9 @@ const { PtzPad } = await import('@/features/cameras/components/live/ptz-pad');
 
 const NOW = Date.now();
 
-function clipsState(count: number): CameraClipsState {
+function clipsState(count: number): ClipsState {
   return {
-    clips: Array.from({ length: count }, (_, index) => ({
+    rows: Array.from({ length: count }, (_, index) => ({
       id: String(index),
       cameraId: '3',
       trigger: 'event',
@@ -115,11 +118,6 @@ function clipsState(count: number): CameraClipsState {
       expiresAt: 0,
     })),
     status: 'ready',
-    hasMore: false,
-    loadingMore: false,
-    loadMore: () => undefined,
-    forget: () => undefined,
-    reload: async () => undefined,
   };
 }
 
@@ -182,7 +180,7 @@ describe('the live camera screen', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Grabaciones, Ninguna hoy' }));
     fireEvent.click(screen.getByRole('button', { name: /^Zonas/ }));
     fireEvent.click(screen.getByRole('button', { name: /^Ajustes de la cámara/ }));
-    expect(pushed).toEqual(['/cameras/3/recordings', '/cameras/3/zones', '/cameras/3/settings']);
+    expect(pushed).toEqual(['/clips', '/cameras/3/zones', '/cameras/3/settings']);
   });
 
   test('a camera with no zones and no recordings says so and still leads somewhere', () => {

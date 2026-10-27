@@ -4,14 +4,12 @@ import type { TranslateFn, TranslationKey } from '@/core/types';
 import { ASSISTANT_THREAD_HREF } from '@/shared/constants';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import type { CommandIntent, CommandItem, CommandScopes, CommandSource } from '@/shared/ui/command';
-import type { IconGlyph } from '@/shared/ui/icon';
 import { useAssistantChat } from '@/features/voice';
 import { SEARCH_GROUP_TITLES, useCommandSearch } from '@/features/command/hooks/use-command-search';
 import {
   createHref,
   type CommandAccess,
   type CreateKind,
-  type SectionKey,
 } from '@/features/command/model/command-access';
 import {
   actionMatches,
@@ -26,22 +24,6 @@ export type CommandSourceState = {
   source: CommandSource;
   onAsk?: (query: string) => void;
 };
-
-const SECTION_ICONS: Readonly<Record<SectionKey, IconGlyph>> = {
-  home: 'home',
-  security: 'shield',
-  argus: 'mic',
-  agenda: 'cal',
-  you: 'user',
-};
-
-const SECTION_LABELS = {
-  home: 'screens.command.section-home',
-  security: 'screens.command.section-security',
-  argus: 'screens.command.section-argus',
-  agenda: 'screens.command.section-agenda',
-  you: 'screens.command.section-you',
-} as const satisfies Record<SectionKey, TranslationKey>;
 
 const CREATE_LABELS = {
   reminder: 'screens.command.ask-reminder',
@@ -73,10 +55,10 @@ function scopeChips({ groups, current, onChange, t }: ScopeChipsInput): CommandS
 function useSectionItems(sections: CommandAccess['sections']): CommandItem[] {
   const router = useRouter();
   const { t } = useTranslation();
-  return sections.map(({ key, href, shortcut }) => ({
+  return sections.map(({ key, href, icon, label, shortcut }) => ({
     id: `section:${key}`,
-    label: t(SECTION_LABELS[key]),
-    icon: SECTION_ICONS[key],
+    label: t(label),
+    icon,
     shortcut,
     onRun: () => router.navigate(href),
   }));

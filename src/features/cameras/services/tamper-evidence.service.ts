@@ -1,7 +1,7 @@
 import type { ICameraClip } from '@/core/interfaces';
 import { viewCacheService } from '@/core/services/view-cache.service';
 import { VIEW_CACHE_KEYS } from '@/shared/constants';
-import { clipRowsOf } from '@/features/cameras/model/camera-clips';
+import { clipFeedScope } from '@/features/cameras/model/camera-clips';
 import {
   TAMPER_EVIDENCE_KEEP,
   evidenceScope,
@@ -47,9 +47,9 @@ class TamperEvidenceService {
   }
 
   private async fetch(target: TamperEvidenceTarget): Promise<TamperEvidence | null> {
-    const listed = await cameraClipsService.list(String(target.cameraId));
-    if (!listed.ok) return null;
-    const picked = pickEvidenceClips(clipRowsOf(listed.info), target);
+    const listed = await cameraClipsService.page(clipFeedScope(String(target.cameraId)), null);
+    if (!listed.ok || !listed.info) return null;
+    const picked = pickEvidenceClips(listed.info.rows, target);
     if (picked.length === 0) return null;
     const items: TamperEvidenceItem[] = [];
     for (const clip of picked) {

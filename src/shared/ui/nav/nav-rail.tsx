@@ -5,6 +5,7 @@ import { Icon } from '@/shared/ui/icon';
 import { Presence, useCentrePresence, type PresenceState } from '@/shared/ui/presence';
 import { PressableSurface } from '@/shared/ui/pressable';
 import { Text } from '@/shared/ui/text';
+import { TabCount } from './nav-tab';
 import type { NavItem, NavProps } from './nav-types';
 
 type RailItemProps = Pick<NavProps, 'presence' | 'onSelect' | 'voice'> & {
@@ -43,11 +44,12 @@ function RailItem({ item, selected, onSelect, voice, presence }: RailItemProps) 
       <Text variant="tab" tone={selected ? 'default' : '3'} numberOfLines={1}>
         {item.label}
       </Text>
+      {item.count ? <TabCount count={item.count} /> : null}
     </PressableSurface>
   );
 }
 
-export function NavRail({ items, active, onSelect, voice, copy, presence, settings }: NavProps) {
+export function NavRail({ items, active, onSelect, voice, copy, presence, more }: NavProps) {
   return (
     <View
       role="tablist"
@@ -65,14 +67,15 @@ export function NavRail({ items, active, onSelect, voice, copy, presence, settin
         />
       ))}
       <View className="flex-1" />
-      {settings ? (
+      {(more?.foot ?? []).map((item) => (
         <RailItem
-          item={settings}
-          selected={active === settings.key}
+          key={item.key}
+          item={item}
+          selected={active === item.key}
           onSelect={onSelect}
           voice={voice}
         />
-      ) : null}
+      ))}
     </View>
   );
 }

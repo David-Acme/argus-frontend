@@ -23,6 +23,7 @@ export type ScreenProps = ScreenTopBarProps & {
   aura?: AuraTone;
   refresh?: ScreenRefresh;
   columns?: boolean | 'panes';
+  onEndReached?: () => void;
   children: ReactNode;
 };
 
@@ -49,12 +50,12 @@ function hasTopBar({ title, meta, back, actions, updating }: ScreenTopBarProps):
   return Boolean(title || meta || back || actions || updating);
 }
 
-export function Screen({ aura, refresh, columns, children, ...bar }: ScreenProps) {
+export function Screen({ aura, refresh, columns, onEndReached, children, ...bar }: ScreenProps) {
   const window = useWindowLayout();
   const insets = useContext(SafeAreaInsetsContext);
   const top = insets?.top ?? 0;
   const { clearance } = useNavOffsets();
-  const { onScroll, auraHidden, band } = useScreenScroll(auraField.height, top);
+  const { onScroll, auraHidden, band } = useScreenScroll(auraField.height, top, onEndReached);
   const bandFrame = { height: top };
   const desktop = window.windowClass === 'expanded' || window.windowClass === 'wide';
   const header = hasTopBar(bar) ? <ScreenTopBar {...bar} /> : null;

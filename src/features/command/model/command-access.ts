@@ -1,22 +1,21 @@
 import type { Href } from 'expo-router';
-import type { TableName } from '@/core/types';
-import { ASSISTANT_THREAD_HREF, CAPABILITY, NEW_ITEM_PARAM } from '@/shared/constants';
-import {
-  hasCapability,
-  peopleAccessOf,
-  tableAllowed,
-  type AccessView,
-} from '@/shared/libs/capabilities';
+import type { TranslationKey } from '@/core/types';
+import { ASSISTANT_THREAD_HREF, NEW_ITEM_PARAM } from '@/shared/constants';
+import type { AccessView } from '@/shared/libs/capabilities';
 import { routeFallback } from '@/shared/libs/route-access';
+import type { ResolvedSurfaces } from '@/shared/libs/surfaces';
+import type { IconGlyph } from '@/shared/ui/icon';
 import type { SearchEntry, SearchKind } from './command-search';
 
 export type CreateKind = 'reminder' | 'event' | 'task' | 'project';
 
-export type SectionKey = 'home' | 'security' | 'argus' | 'agenda' | 'you';
-
-type Path = Extract<Href, string>;
-
-export type SectionJump = { key: SectionKey; href: Path; shortcut: string };
+export type SectionJump = {
+  key: string;
+  href: string;
+  icon: IconGlyph;
+  label: TranslationKey;
+  shortcut: string;
+};
 
 export type CommandAccess = {
   search: ReadonlySet<SearchKind>;
@@ -26,48 +25,39 @@ export type CommandAccess = {
   people: '/users' | '/people' | null;
 };
 
-const SECTIONS: readonly { key: SectionKey; href: Path }[] = [
-  { key: 'home', href: '/' },
-  { key: 'security', href: '/security' },
-  { key: 'argus', href: ASSISTANT_THREAD_HREF },
-  { key: 'agenda', href: '/agenda' },
-  { key: 'you', href: '/profile' },
-];
+const PEOPLE_ROUTES = ['/users', '/people'] as const;
 
-const PEOPLE_ROUTES = ['/users', '/people'] as const satisfies readonly Path[];
+const SEARCH_KINDS: readonly SearchKind[] = ['event', 'task', 'project', 'person', 'camera'];
 
-const allowedOf = <T>(pairs: readonly (readonly [T, boolean])[]): T[] =>
-  pairs.filter(([, allowed]) => allowed).map(([value]) => value);
+const CREATE_KINDS: readonly CreateKind[] = ['reminder', 'event', 'task', 'project'];
 
-export function commandAccess(view: AccessView, hasProjects: boolean): CommandAccess {
+export function commandAccess(
+  view: AccessView,
+  hasProjects: boolean,
+  surfaces: ResolvedSurfaces
+): CommandAccess {
   const opens = (href: string) => routeFallback(href, view) === null;
-  const reads = (table: TableName) => tableAllowed(view, table, 'read');
-  const creates = (table: TableName) => tableAllowed(view, table, 'create');
-  const agenda = opens('/agenda');
-  const projects = opens('/projects');
-  const asks = opens(ASSISTANT_THREAD_HREF);
-  const people = PEOPLE_ROUTES.find(opens) ?? null;
-  const search = allowedOf<SearchKind>([
-    ['event', agenda && reads('calendar_event')],
-    ['task', projects && reads('project_task')],
-    ['project', projects && reads('project')],
-    ['person', people !== null && peopleAccessOf(view).receivesDirectory],
-    ['camera', opens('/cameras') && reads('camera')],
-  ]);
   return {
-    search: new Set(search),
-    create: allowedOf<CreateKind>([
-      ['reminder', asks && hasCapability(view, CAPABILITY.remindersWrite)],
-      ['event', agenda && creates('calendar_event')],
-      ['task', projects && hasProjects && creates('project_task')],
-      ['project', projects && creates('project')],
-    ]),
-    sections: SECTIONS.filter(({ href }) => opens(href)).map((section, at) => ({
-      ...section,
-      shortcut: String(at + 1),
-    })),
-    asks,
-    people,
+    search: new Set(SEARCH_KINDS.filter((kind) => surfaces.search.has(kind))),
+    create: CREATE_KINDS.filter(
+      (kind) => surfaces.actions.has(kind) && (kind !== 'task' || hasProjects)
+    ),
+    sections: surfaces.destinations
+      .flatMap((destination) =>
+        destination.jump
+          ? [
+              {
+                key: destination.id,
+                href: destination.href,
+                icon: destination.icon,
+                label: destination.jump,
+              },
+            ]
+          : []
+      )
+      .map((section, at) => ({ ...section, shortcut: String(at + 1) })),
+    asks: opens(ASSISTANT_THREAD_HREF),
+    people: PEOPLE_ROUTES.find(opens) ?? null,
   };
 }
 

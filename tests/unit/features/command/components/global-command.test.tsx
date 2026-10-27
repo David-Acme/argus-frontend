@@ -9,6 +9,7 @@ import { screenFocus } from '../../../shared/ui/screen-focus';
 import '../../../shared/ui/translation-stub';
 import { accessFor, viewFor } from '@tests/support/access-fixtures';
 import { InfiniteListStub } from '@tests/support/infinite-list-stub';
+import { surfacesFor } from '@tests/support/app-surfaces';
 import { accessView } from '@/shared/libs/capabilities';
 
 type Calls = string[];
@@ -80,6 +81,7 @@ mock.module('@/features/voice', () => ({
   }),
 }));
 mock.module('@/shared/hooks/use-capabilities', () => ({ useAccessView: () => view }));
+mock.module('@/shared/libs/surfaces', () => ({ useSurfaces: () => surfacesFor(view) }));
 mock.module('@/shared/hooks/use-cached-rows', () => ({
   useViewCacheValue: (key: string) =>
     key === VIEW_CACHE_KEYS.dashboardSummary ? { projectsTotal: 0 } : null,
@@ -174,7 +176,7 @@ describe('GlobalCommand', () => {
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 
-  test('Ctrl+K opens the palette with the new-item actions and the five sections with their keys', () => {
+  test('Ctrl+K opens the palette with the new-item actions and the sections the registry offers, with their keys', () => {
     render(<GlobalCommand />);
     press('k', { ctrlKey: true });
     expect(screen.getByRole('dialog', { name: 'Buscar o pedir a Argus' })).toBeDefined();
@@ -184,13 +186,14 @@ describe('GlobalCommand', () => {
       'Nuevo evento',
       'Nuevo proyecto',
       'Inicio',
-      'Seguridad',
       'Argus',
+      'Seguridad',
+      'Clips',
       'Agenda',
       'Tú',
     ]);
     expect(screen.getByText('N')).toBeDefined();
-    expect(screen.getByText('5')).toBeDefined();
+    expect(screen.getByText('6')).toBeDefined();
     expect(watched).toEqual([]);
   });
 

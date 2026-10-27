@@ -1,16 +1,13 @@
 import { describe, expect, test } from 'bun:test';
 import { localeDictionaries } from '@/core/i18n/locales';
 import { translate } from '@/core/i18n/translate';
-import type { ICameraClip } from '@/core/interfaces';
 import type { TranslateFn } from '@/core/types';
 import { rowMoment, tileMoment, type MomentFormat } from '@/features/home/model/camera-moments';
 import {
   cameraTiles,
-  clipTiles,
   gridColumns,
   gridLimit,
   gridRows,
-  stripItems,
   tileDetail,
   type CameraTileSource,
 } from '@/features/home/model/camera-tiles';
@@ -41,21 +38,6 @@ function source(overrides: Partial<CameraTileSource>): CameraTileSource {
   };
 }
 
-function clip(id: string, cameraId: string, startedAt: number): ICameraClip {
-  return {
-    id,
-    cameraId,
-    trigger: 'motion',
-    contentType: 'video/mp4',
-    codec: 'h264',
-    startedAt,
-    durationMs: 12000,
-    byteSize: 1000,
-    createdAt: startedAt,
-    expiresAt: startedAt + 86400,
-  };
-}
-
 describe('Inicio camera tiles', () => {
   test('live cameras come first and the rest keep their order after them', () => {
     const tiles = cameraTiles(
@@ -78,24 +60,6 @@ describe('Inicio camera tiles', () => {
 
   test('a turned-off camera reads as off even when its mask is on', () => {
     expect(cameraTiles([source({ status: 'disabled', masked: true })], 1)[0]?.state).toBe('off');
-  });
-
-  test('the latest clip leads the strip, named after a camera that still exists', () => {
-    const sources = [source({ id: '1', name: 'Puerta principal' }), source({ id: '2' })];
-    const clips = clipTiles(
-      [clip('7', '9', 900), clip('5', '1', 500), clip('6', '2', 400)],
-      sources,
-      1
-    );
-    expect(clips).toEqual([
-      { id: '5', cameraId: '1', cameraName: 'Puerta principal', at: 500_000 },
-    ]);
-    const items = stripItems(clips[0] ?? null, cameraTiles(sources, 6));
-    expect(items.map((item) => item.kind)).toEqual(['clip', 'camera', 'camera']);
-    expect(stripItems(null, cameraTiles(sources, 6)).map((item) => item.kind)).toEqual([
-      'camera',
-      'camera',
-    ]);
   });
 
   test('the desktop grid shows four cameras, six when the column is wide', () => {

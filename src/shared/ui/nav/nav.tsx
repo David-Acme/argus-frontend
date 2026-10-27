@@ -6,7 +6,8 @@ import type { NavProps } from './nav-types';
 
 export function Nav(props: NavProps) {
   const { navigation } = useWindowLayout();
-  if (navigation === 'sidebar') return <NavSidebar {...props} />;
+  if (navigation === 'sidebar' || (navigation === 'rail' && props.more?.fold))
+    return <NavSidebar {...props} />;
   if (navigation === 'rail') return <NavRail {...props} />;
   return <NavBar {...props} />;
 }

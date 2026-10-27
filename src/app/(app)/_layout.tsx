@@ -6,12 +6,14 @@ import { ModuleNotices } from '@/features/modules';
 import { GlobalCommand, useCommandLauncher } from '@/features/command';
 import { ArgusListening, useArgusVoice, useCallPush } from '@/features/voice';
 import { useBeaconController } from '@/features/proximity';
-import { useTamperEvidenceKeeper } from '@/features/cameras';
+import { useClipsRuntime, useTamperEvidenceKeeper } from '@/features/cameras';
 import { useNotificationPermission, usePushRegistration } from '@/features/notification';
 import { AppNavigation } from '@/features/navigation';
+import { APP_SURFACES } from '@/features/surfaces';
 import { useConversationRuntime } from '@/features/conversations';
 import { NAV_FADE_MS } from '@/shared/constants';
 import { BG_COLORS } from '@/shared/components/layout/navigation-theme';
+import { SurfaceProvider } from '@/shared/libs/surfaces';
 
 function DeepLinkRestore() {
   useDeepLinkRestore();
@@ -27,27 +29,30 @@ export default function AppLayout() {
   useCallPush();
   useBeaconController();
   useTamperEvidenceKeeper();
+  useClipsRuntime();
   useConversationRuntime();
   const { voice, listening } = useArgusVoice();
 
   return (
-    <EntryGate>
-      <PrivacyGate>
-        <AppNavigation voice={voice} listening={listening} onCommand={() => command.open()}>
-          <ModuleNotices />
-          <GlobalCommand />
-          <DeepLinkRestore />
-          <Stack
-            screenOptions={{
-              headerShown: false,
-              animation: 'fade',
-              animationDuration: NAV_FADE_MS,
-              contentStyle: { backgroundColor: BG_COLORS[theme === 'dark' ? 'dark' : 'light'] },
-            }}
-          />
-        </AppNavigation>
-        <ArgusListening />
-      </PrivacyGate>
-    </EntryGate>
+    <SurfaceProvider registry={APP_SURFACES}>
+      <EntryGate>
+        <PrivacyGate>
+          <AppNavigation voice={voice} listening={listening} onCommand={() => command.open()}>
+            <ModuleNotices />
+            <GlobalCommand />
+            <DeepLinkRestore />
+            <Stack
+              screenOptions={{
+                headerShown: false,
+                animation: 'fade',
+                animationDuration: NAV_FADE_MS,
+                contentStyle: { backgroundColor: BG_COLORS[theme === 'dark' ? 'dark' : 'light'] },
+              }}
+            />
+          </AppNavigation>
+          <ArgusListening />
+        </PrivacyGate>
+      </EntryGate>
+    </SurfaceProvider>
   );
 }

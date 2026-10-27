@@ -44,12 +44,59 @@ mock.module(
   '@/features/navigation/hooks/use-section-keys',
   () => import('@/features/navigation/hooks/use-section-keys.web')
 );
-mock.module('@/shared/hooks/use-cached-rows', () => ({ useViewCacheValue: () => 3 }));
-mock.module('@/features/cameras', () => ({ useCameraCounts: () => ({ online: 5, total: 6 }) }));
+mock.module('@/shared/hooks/use-cached-rows', () => ({
+  useViewCacheRows: () => [],
+  useViewCacheValue: (key: string) => (key === 'dashboard.unread' ? 3 : null),
+}));
+mock.module('@/features/command', () => ({
+  useCommandSearch: ({ query }: { query: string }) => ({
+    results: query
+      ? [
+          {
+            title: 'Cámaras',
+            items: [{ id: 'camera:3', label: 'Cocina', icon: 'cam', onRun: () => undefined }],
+          },
+        ]
+      : [],
+    paging: {
+      footer: 'none',
+      loading: false,
+      onEndReached: () => undefined,
+      retry: () => undefined,
+    },
+    pending: false,
+  }),
+}));
+mock.module('@/features/cameras', () => ({
+  useCameraCounts: () => ({ online: 5, total: 6 }),
+  RecentClipsCard: () => null,
+  CameraAttention: () => null,
+  SecurityCard: () => null,
+}));
+mock.module('@/features/home', () => {
+  const Section = () => null;
+  return {
+    NowSection: Section,
+    ProjectsSection: Section,
+    TodaySection: Section,
+    TomorrowSection: Section,
+    CamerasSection: Section,
+    HappenedSection: Section,
+    HomePeopleSection: Section,
+    NewsSection: Section,
+    HelpSection: Section,
+    SystemSection: Section,
+    WatchSection: Section,
+    AttentionSection: Section,
+    ModuleCards: Section,
+  };
+});
 mock.module('@/features/security', () => ({ useGuardHeadline: () => 'home' }));
 
 const { AppNavigation } = await import('@/features/navigation/components/app-navigation');
 const { NavStatusBlock } = await import('@/features/navigation/components/nav-status-block');
+const { APP_SURFACES } = await import('@/features/surfaces');
+const { SurfaceProvider } = await import('@/shared/libs/surfaces');
 
 function setWindowWidth(width: number) {
   Object.defineProperty(document.documentElement, 'clientWidth', {
@@ -71,15 +118,17 @@ function Inset() {
 
 function mount(listen: string[] = [], commands: string[] = []) {
   return render(
-    <AppNavigation
-      voice={{
-        onOpenChat: () => void listen.push('chat'),
-        onListenStart: () => void listen.push('start'),
-        onListenEnd: () => void listen.push('end'),
-      }}
-      onCommand={() => void commands.push('command')}>
-      <Inset />
-    </AppNavigation>
+    <SurfaceProvider registry={APP_SURFACES}>
+      <AppNavigation
+        voice={{
+          onOpenChat: () => void listen.push('chat'),
+          onListenStart: () => void listen.push('start'),
+          onListenEnd: () => void listen.push('end'),
+        }}
+        onCommand={() => void commands.push('command')}>
+        <Inset />
+      </AppNavigation>
+    </SurfaceProvider>
   );
 }
 
@@ -93,10 +142,17 @@ afterEach(() => {
 });
 
 describe('AppNavigation', () => {
-  test('a phone gets the bar with the tabs the capabilities allow, and the content clears it', () => {
+  test('a phone: Inicio, two modules, Argus in the centre, Todo; the content clears the bar', () => {
     const listen: string[] = [];
     mount(listen);
-    expect(screen.getAllByRole('tab').length).toBe(5);
+    const tabs = screen.getAllByRole('tab').map((tab) => tab.getAttribute('aria-label'));
+    expect(tabs).toEqual([
+      'Inicio',
+      'Seguridad',
+      'Argus: toca para escribir, mantén para hablar',
+      'Agenda',
+      'Todo',
+    ]);
     expect(screen.getByText('bar-inset')).toBeDefined();
     fireEvent.click(screen.getByRole('tab', { name: 'Agenda' }));
     fireEvent.click(
@@ -106,12 +162,23 @@ describe('AppNavigation', () => {
     expect(listen).toEqual(['chat']);
   });
 
-  test('a guest sees three tabs and a pushed child route keeps its tab selected', () => {
+  test('a guest has no module: Inicio, Argus, Todo, and a profile route lights Todo', () => {
     route.role = 'guest';
     route.pathname = '/profile';
     mount();
     expect(screen.getAllByRole('tab').length).toBe(3);
-    expect(screen.getByRole('tab', { name: 'Tú' }).getAttribute('aria-selected')).toBe('true');
+    expect(screen.getByRole('tab', { name: 'Todo' }).getAttribute('aria-selected')).toBe('true');
+  });
+
+  test('one module keeps four even slots: Inicio, it, Argus, Todo', () => {
+    route.modules = ['productivity'];
+    mount();
+    expect(screen.getAllByRole('tab').map((tab) => tab.getAttribute('aria-label'))).toEqual([
+      'Inicio',
+      'Agenda',
+      'Argus: toca para escribir, mantén para hablar',
+      'Todo',
+    ]);
   });
 
   test('a full-screen pushed route hides the bar and gives back its inset', () => {
@@ -121,42 +188,57 @@ describe('AppNavigation', () => {
     expect(screen.getByText('no-inset')).toBeDefined();
   });
 
-  test('Inicio from another tab dismisses to the root, and the active tab stays put', () => {
+  test('Inicio from a module dismisses to the root, and the active module stays put', () => {
     route.pathname = '/agenda';
     route.canDismiss = true;
     mount();
     fireEvent.click(screen.getByRole('tab', { name: 'Inicio' }));
     fireEvent.click(screen.getByRole('tab', { name: 'Agenda' }));
-    fireEvent.click(screen.getByRole('tab', { name: 'Tú' }));
-    expect(route.log).toEqual(['dismiss:/', 'replace:/profile']);
+    expect(route.log).toEqual(['dismiss:/']);
   });
 
-  test('a laptop gets the sidebar with the command field, the status block, Ajustes and keys 1 to 5', () => {
+  test('a laptop: the core, the Módulos group with its sections, the account, the status and keys', () => {
     setWindowWidth(1280);
     route.pathname = '/settings/modules';
     const commands: string[] = [];
     mount([], commands);
     expect(screen.getByText('no-inset')).toBeDefined();
     expect(screen.getByRole('tab', { name: 'Ajustes' }).getAttribute('aria-selected')).toBe('true');
+    expect(screen.getByText('Módulos')).toBeDefined();
+    expect(screen.getByRole('tab', { name: 'Seguridad' })).toBeDefined();
+    expect(screen.getByRole('tab', { name: 'Tú' })).toBeDefined();
     expect(screen.getByText('Argus de Casa')).toBeDefined();
-    expect(screen.getByText('En casa')).toBeDefined();
-    expect(screen.getByText('5 de 6')).toBeDefined();
-    expect(screen.queryByText('1')).toBeNull();
-    expect(screen.getAllByText('3').length).toBe(2);
-    expect(screen.getByText('5')).toBeDefined();
     fireEvent.click(screen.getByRole('button', { name: 'Buscar o pedir…' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Pregúntale a Argus…' }));
-    expect(commands).toEqual(['command', 'command']);
-    fireEvent.keyDown(window, { key: '2' });
-    fireEvent.keyDown(window, { key: '4', ctrlKey: true });
-    expect(route.log).toEqual(['replace:/security']);
+    expect(commands).toEqual(['command']);
+    fireEvent.click(screen.getByRole('button', { name: 'Ver los apartados de Seguridad' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Clips' }));
+    expect(route.log).toEqual(['replace:/clips']);
   });
 
-  test('a tablet gets the rail without the sidebar extras', () => {
+  test('a guest on a laptop has no empty Módulos group', () => {
+    setWindowWidth(1280);
+    route.role = 'guest';
+    mount();
+    expect(screen.queryByText('Módulos')).toBeNull();
+  });
+
+  test('a tablet folds the list into a rail that unfolds in place', () => {
     setWindowWidth(768);
     mount();
-    expect(screen.getAllByRole('tab').length).toBe(5);
+    expect(screen.getAllByRole('tab').map((tab) => tab.getAttribute('aria-label'))).toEqual([
+      'Menú',
+      'Inicio',
+      'Argus',
+      'Seguridad',
+      'Agenda',
+      'Todo',
+      'Tú',
+    ]);
     expect(screen.queryByText('Argus de Casa')).toBeNull();
+    fireEvent.click(screen.getByRole('tab', { name: 'Menú' }));
+    expect(screen.getByText('Módulos')).toBeDefined();
+    fireEvent.click(screen.getByRole('button', { name: 'Plegar el menú' }));
+    expect(screen.queryByText('Módulos')).toBeNull();
   });
 
   test('the status block reads the mode and drops the cameras row without camera access', () => {

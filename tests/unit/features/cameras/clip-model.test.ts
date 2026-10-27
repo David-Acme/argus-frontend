@@ -7,18 +7,26 @@ import {
   splitClipFile,
 } from '@/features/cameras/model/clip-media';
 import {
+  CLIP_FEED_ALL,
+  clipColumns,
+  clipContentOf,
+  clipDetail,
+  clipFacts,
+  clipFeedCamera,
+  clipFeedPath,
+  clipFeedScope,
+  clipGridRows,
   clipImageUri,
+  clipMoment,
   clipOfRow,
-  clipRowSubtitle,
+  clipPageOf,
   clipRowsOf,
-  clipSourceIds,
   clipTriggerLabelKey,
+  compareClips,
   formatClipDuration,
   formatClipSize,
   isImageClip,
-  mergeClipPages,
-  newestClips,
-  olderClipCursor,
+  visibleClips,
 } from '@/features/cameras/model/camera-clips';
 import {
   recordModeLabelKey,
@@ -58,11 +66,20 @@ function videoTrak(trackId: number, timescale: number): number[] {
 }
 
 function initSegment(traks: number[][]): Uint8Array {
-  return new Uint8Array([...box('ftyp', ascii('iso5')), ...box('moov', [...box('mvhd', be32(0)), ...traks.flat()])]);
+  return new Uint8Array([
+    ...box('ftyp', ascii('iso5')),
+    ...box('moov', [...box('mvhd', be32(0)), ...traks.flat()]),
+  ]);
 }
 
 function fragment(track: number, flags: number, payload: number[]): Uint8Array {
-  const tfhd = box('tfhd', [...be32(0x020038), ...be32(track), ...be32(3000), ...be32(payload.length), ...be32(flags)]);
+  const tfhd = box('tfhd', [
+    ...be32(0x020038),
+    ...be32(track),
+    ...be32(3000),
+    ...be32(payload.length),
+    ...be32(flags),
+  ]);
   const tfdt = box('tfdt', [...be32(0x01000000), ...be32(0), ...be32(90000)]);
   const trunBody = [...be32(0x000001), ...be32(1), ...be32(0)];
   const traf = box('traf', [...tfhd, ...tfdt, ...box('trun', trunBody)]);
@@ -99,7 +116,9 @@ describe('clip media', () => {
     expect(split.fragments[0]?.keyframe).toBe(true);
     expect(split.fragments[1]?.keyframe).toBe(false);
     expect(new TextDecoder().decode(split.init.subarray(4, 8))).toBe('moov');
-    expect(new TextDecoder().decode(split.fragments[0]?.bytes.subarray(4, 8) ?? new Uint8Array())).toBe('moof');
+    expect(
+      new TextDecoder().decode(split.fragments[0]?.bytes.subarray(4, 8) ?? new Uint8Array())
+    ).toBe('moof');
   });
 
   test('a stream without an init segment is refused', () => {
@@ -160,7 +179,13 @@ describe('clip rows', () => {
   });
 
   test('tamper and look clips keep their trigger, and their pictures read as images', () => {
-    const frame = clipOfRow({ id: 5, cameraId: 4, trigger: 'tamper', contentType: 'image/jpeg', durationMs: 0 });
+    const frame = clipOfRow({
+      id: 5,
+      cameraId: 4,
+      trigger: 'tamper',
+      contentType: 'image/jpeg',
+      durationMs: 0,
+    });
     const crop = clipOfRow({ id: 6, cameraId: 4, trigger: 'look', contentType: 'image/jpeg' });
     const video = clipOfRow({ id: 7, cameraId: 4, trigger: 'tamper', contentType: 'video/mp4' });
     expect(frame?.trigger).toBe('tamper');
@@ -170,21 +195,6 @@ describe('clip rows', () => {
     expect(clipTriggerLabelKey('tamper')).toBe('screens.cameras.clips.trigger.tamper');
     expect(clipTriggerLabelKey('look')).toBe('screens.cameras.clips.trigger.look');
     expect(clipImageUri('image/jpeg', 'AAAA')).toBe('data:image/jpeg;base64,AAAA');
-  });
-
-  test('pages merge once and the cursor walks backwards from the oldest row', () => {
-    const first = clipRowsOf(payload);
-    const page: ICameraClips = {
-      cameraId: 4,
-      clips: [
-        { ...payload.clips[1]!, id: 8 },
-        { ...payload.clips[1]!, id: 7 },
-      ],
-    };
-    const merged = mergeClipPages(first, clipRowsOf(page));
-    expect(merged.map((row) => row.id)).toEqual(['9', '8', '7']);
-    expect(olderClipCursor(merged)).toEqual({ before: 1699990025, beforeId: 7 });
-    expect(olderClipCursor([])).toBeNull();
   });
 
   test('labels carry the clip numbers the row holds', () => {
@@ -197,7 +207,8 @@ describe('clip rows', () => {
     expect(formatClipSize(900_000)).toBe('879 KB');
     expect(formatClipSize(0)).toBe('');
     expect(clipTriggerLabelKey('continuous')).toBe('screens.cameras.clips.trigger.continuous');
-    expect(clipRowSubtitle(t, clip, '12 oct')).toBe('12 oct · 0:21 · 4.3 MB · screens.cameras.clips.trigger.motion');
+    expect(clipFacts(t, clip)).toBe('0:21 · 4.3 MB · screens.cameras.clips.trigger.motion');
+    expect(clipDetail(clip, 'hoy 14:02')).toBe('hoy 14:02 · 0:21');
   });
 });
 
@@ -212,26 +223,82 @@ describe('record modes', () => {
     expect(recordsSomething('motion')).toBe(true);
   });
 
-  test('the newest clips across cameras come first, a tie broken by the higher id', () => {
-    const rows = clipRowsOf({
-      cameraId: 0,
-      clips: [
-        { id: 3, cameraId: 1, startedAt: 100 },
-        { id: 9, cameraId: 2, startedAt: 300 },
-        { id: 4, cameraId: 1, startedAt: 300 },
-      ] as unknown as ICameraClips['clips'],
-    });
-    expect(newestClips(rows, 2).map((clip) => clip.id)).toEqual(['9', '4']);
+  test('a feed scope names a camera or every camera, and the camera is a filter of the one route', () => {
+    expect(clipFeedScope(null)).toBe(CLIP_FEED_ALL);
+    expect(clipFeedScope('4')).toBe('camera:4');
+    expect(clipFeedCamera('camera:4')).toBe('4');
+    expect(clipFeedCamera(CLIP_FEED_ALL)).toBeNull();
+    expect(clipFeedPath(CLIP_FEED_ALL, null, 24)).toBe('/camera/clips?limit=24&cursor=');
+    expect(clipFeedPath('camera:4', 'abc=', 24)).toBe(
+      '/camera/clips?limit=24&cursor=abc%3D&cameraId=4'
+    );
   });
 
-  test('clips are read only from enabled, saved cameras outside privacy', () => {
-    const camera = { isEnabled: true, privacyState: 'off' as const, privacyObeyed: false };
-    expect(
-      clipSourceIds([
-        { ...camera, id: '1' },
-        { ...camera, id: '2', isEnabled: false },
-        { ...camera, id: '3', privacyState: 'on' },
-      ])
-    ).toEqual(['1']);
+  test('a page with more carries its opaque cursor, the last page ends the feed', () => {
+    const wire = {
+      hasMore: true,
+      nextCursor: 'opaque',
+      items: [
+        { id: 3, cameraId: 1, createdAt: 100 },
+        { id: 9, cameraId: 2, createdAt: 300 },
+        { id: 4, cameraId: 1, createdAt: 300 },
+      ],
+    };
+    const full = clipPageOf(wire);
+    expect(full.rows.map((clip) => clip.id)).toEqual(['9', '4', '3']);
+    expect(full.next).toBe('opaque');
+    expect(clipPageOf({ ...wire, hasMore: false }).next).toBeNull();
+    expect(clipPageOf({ ...wire, nextCursor: null }).next).toBeNull();
+    expect(clipPageOf('nonsense')).toEqual({ rows: [], next: null });
+    expect([...full.rows].sort(compareClips)[0]?.id).toBe('9');
+  });
+
+  test('only the clips of a known camera are shown', () => {
+    const rows = clipRowsOf({
+      clips: [
+        { id: 1, cameraId: 1 },
+        { id: 2, cameraId: 7 },
+      ],
+    });
+    expect(visibleClips(rows, new Map([['1', 'Cocina']])).map((clip) => clip.id)).toEqual(['1']);
+  });
+
+  test('a poster answer is read or refused', () => {
+    expect(clipContentOf({ base64: 'AAAA' })).toEqual({
+      mimeType: 'image/jpeg',
+      base64: 'AAAA',
+      durationMs: 0,
+    });
+    expect(clipContentOf({ base64: '' })).toBeNull();
+    expect(clipContentOf(null)).toBeNull();
+  });
+
+  test('the moment reads today, yesterday or the day, and the grid fills rows left to right', () => {
+    const now = new Date(2026, 9, 27, 18, 0).getTime();
+    const moment = (at: number) =>
+      clipMoment({
+        at,
+        now,
+        t: ((key: string, params?: { time?: string }) =>
+          `${key}:${params?.time ?? ''}`) as unknown as TranslateFn,
+        time: () => '14:02',
+        day: () => '25 oct',
+      });
+    expect(moment(new Date(2026, 9, 27, 14, 2).getTime())).toBe(
+      'screens.cameras.clips.today-at:14:02'
+    );
+    expect(moment(new Date(2026, 9, 26, 14, 2).getTime())).toBe(
+      'screens.cameras.clips.yesterday-at:14:02'
+    );
+    expect(moment(new Date(2026, 9, 25, 14, 2).getTime())).toBe(
+      'screens.cameras.clips.day-at:14:02'
+    );
+    expect(clipColumns(400, 560, 1400)).toBe(2);
+    expect(clipColumns(700, 560, 1400)).toBe(3);
+    expect(clipColumns(1500, 560, 1400)).toBe(4);
+    expect(clipGridRows([1, 2, 3], 2)).toEqual([
+      [1, 2],
+      [3, null],
+    ]);
   });
 });

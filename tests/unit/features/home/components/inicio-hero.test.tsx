@@ -54,6 +54,10 @@ mock.module('@/features/cameras', () => ({
 
 mock.module('@/features/safety', () => ({ PanicButton: marker('sos') }));
 
+mock.module('@/features/home/components/hero/module-shortcuts', () => ({
+  ModuleShortcuts: marker('shortcuts'),
+}));
+
 mock.module('@/shared/ui/presence', () => ({
   Presence: marker('estela'),
   useHeroPresence: () => false,

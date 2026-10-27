@@ -1,104 +1,52 @@
+import type { InicioColumnId, InicioForm, InicioSurface } from '@/shared/libs/surfaces';
 import { size } from '@/shared/theme/tokens';
 import type { StatPlace } from './inicio-stats';
 
-export type InicioSection =
-  | 'lead'
-  | 'now'
-  | 'today'
-  | 'tomorrow'
-  | 'news'
-  | 'cameras'
-  | 'happened'
-  | 'people'
-  | 'projects'
-  | 'clips'
-  | 'watch'
-  | 'system'
-  | 'help';
+export type InicioSignal = 'news' | 'tiles' | 'watch' | 'night' | 'day' | 'sparse' | 'tablet';
 
-export type InicioReads = {
-  agenda: boolean;
-  news: boolean;
-  cameras: boolean;
-  tiles: boolean;
-  people: boolean;
-  watch: boolean;
-  night: boolean;
-  system: boolean;
-  sparse: boolean;
-};
-
-export type InicioColumnId = 'agenda' | 'news' | 'cameras' | 'side' | 'lead';
+export type InicioSignals = ReadonlySet<InicioSignal | string>;
 
 export type InicioColumn = {
-  id: InicioColumnId;
-  sections: readonly InicioSection[];
+  id: InicioColumnId | 'lead';
+  sections: readonly string[];
   grows: number;
   width?: number;
   max?: number;
 };
 
-type ColumnPlan = Omit<InicioColumn, 'grows'> & { grow?: InicioSection };
+type ColumnFrame = { id: InicioColumnId; width?: number; max?: number };
 
-const AGENDA: readonly InicioSection[] = ['now', 'today', 'tomorrow'];
+type ColumnPlan = ColumnFrame & { sections: string[]; grow?: string };
 
-const when = (shown: boolean, ...sections: InicioSection[]): InicioSection[] =>
-  shown ? sections : [];
+export const LEAD = 'lead';
 
-function bandPlans(reads: InicioReads): ColumnPlan[] {
-  return [
-    {
-      id: 'agenda',
-      sections: [...when(reads.watch, 'watch'), ...when(reads.agenda, ...AGENDA)],
-      width: size.columnSide,
-    },
-    { id: 'news', sections: when(reads.news, 'news') },
-    {
-      id: 'side',
-      sections: [
-        ...when(reads.cameras && reads.tiles, 'cameras'),
-        ...when(reads.people, 'people'),
-        ...when(reads.system && reads.sparse, 'system'),
-        ...when(reads.sparse, 'help'),
-      ],
-      grow: 'cameras',
-      width: size.columnAside,
-    },
-  ];
-}
+const BAND_COLUMNS: readonly ColumnFrame[] = [
+  { id: 'agenda', width: size.columnSide },
+  { id: 'news' },
+  { id: 'side', width: size.columnAside },
+];
 
-function widePlans(reads: InicioReads): ColumnPlan[] {
-  return [
-    {
-      id: 'agenda',
-      sections: [...when(reads.watch, 'watch'), ...when(reads.agenda, ...AGENDA)],
-      width: size.columnWide,
-    },
-    { id: 'news', sections: when(reads.news, 'news'), max: size.columnFeed },
-    {
-      id: 'cameras',
-      sections: [
-        ...when(reads.cameras && reads.tiles, 'cameras'),
-        ...when(reads.cameras, 'happened'),
-      ],
-      grow: 'cameras',
-    },
-    {
-      id: 'side',
-      sections: [
-        ...when(reads.people, 'people'),
-        ...when(reads.agenda, 'projects'),
-        ...when(reads.cameras, 'clips'),
-        ...when(reads.system, 'system'),
-        ...when(reads.sparse, 'help'),
-      ],
-      width: size.columnWide,
-    },
-  ];
-}
+const WIDE_COLUMNS: readonly ColumnFrame[] = [
+  { id: 'agenda', width: size.columnWide },
+  { id: 'news', max: size.columnFeed },
+  { id: 'cameras' },
+  { id: 'side', width: size.columnWide },
+];
 
-function growIndex(sections: readonly InicioSection[], grow: InicioSection | undefined): number {
-  return grow === undefined ? -1 : sections.indexOf(grow);
+type Slot = { id: string; order: number; column?: InicioColumnId; grows?: boolean };
+
+function slotsOf(
+  surfaces: readonly Pick<InicioSurface, 'id' | 'places'>[],
+  form: InicioForm,
+  signals: InicioSignals
+): Slot[] {
+  return surfaces
+    .flatMap((surface) => {
+      const place = surface.places[form];
+      if (!place || (place.when !== undefined && !signals.has(place.when))) return [];
+      return [{ id: surface.id, order: place.order, column: place.column, grows: place.grows }];
+    })
+    .sort((left, right) => left.order - right.order);
 }
 
 function flexible(columns: ColumnPlan[]): ColumnPlan[] {
@@ -108,36 +56,38 @@ function flexible(columns: ColumnPlan[]): ColumnPlan[] {
   );
 }
 
-export function inicioColumns(place: StatPlace, reads: InicioReads): InicioColumn[] {
-  const plans = place === 'band' ? bandPlans(reads) : widePlans(reads);
+export function inicioColumns(
+  place: StatPlace,
+  surfaces: readonly Pick<InicioSurface, 'id' | 'places'>[],
+  signals: InicioSignals
+): InicioColumn[] {
+  const form: InicioForm = place === 'band' ? 'band' : 'wide';
+  const slots = slotsOf(surfaces, form, signals);
+  const plans = (form === 'band' ? BAND_COLUMNS : WIDE_COLUMNS).map((frame): ColumnPlan => {
+    const mine = slots.filter((slot) => slot.column === frame.id);
+    return {
+      ...frame,
+      sections: mine.map((slot) => slot.id),
+      grow: mine.find((slot) => slot.grows)?.id,
+    };
+  });
   const filled = plans.filter((column) => column.sections.length > 0);
-  const [first, ...rest] = flexible(filled.length > 0 ? filled : [{ id: 'lead', sections: [] }]);
-  if (!first) return [];
-  const lead: ColumnPlan = { ...first, sections: ['lead', ...first.sections] };
+  const [first, ...rest] = flexible(filled);
+  if (!first) return [{ id: LEAD, sections: [LEAD], grows: -1 }];
+  const lead: ColumnPlan = { ...first, sections: [LEAD, ...first.sections] };
   return [lead, ...rest].map(({ grow, ...column }) => ({
     ...column,
-    grows: growIndex(column.sections, grow),
+    grows: grow === undefined ? -1 : column.sections.indexOf(grow),
   }));
 }
 
 export function inicioStack(
-  reads: InicioReads,
-  firstStep: boolean,
-  tablet = false
-): InicioSection[] {
-  if (firstStep)
-    return [
-      'lead',
-      ...when(reads.news, 'news'),
-      ...when(reads.system, 'system'),
-      ...when(tablet, 'help'),
-      ...when(tablet && reads.agenda, 'today'),
-    ];
+  surfaces: readonly Pick<InicioSurface, 'id' | 'places'>[],
+  signals: InicioSignals,
+  firstStep: boolean
+): string[] {
   return [
-    'lead',
-    ...when(reads.watch, 'watch'),
-    ...when(reads.agenda, reads.night ? 'tomorrow' : 'now'),
-    ...when(reads.cameras && reads.tiles, 'cameras'),
-    ...when(reads.news, 'news'),
+    LEAD,
+    ...slotsOf(surfaces, firstStep ? 'first' : 'stack', signals).map((slot) => slot.id),
   ];
 }

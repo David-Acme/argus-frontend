@@ -1,12 +1,13 @@
 import { clsx } from 'clsx';
-import { View } from 'react-native';
+import { useState } from 'react';
+import { ScrollView, View } from 'react-native';
 import { layout, size } from '@/shared/theme';
 import { Icon } from '@/shared/ui/icon';
 import { Presence } from '@/shared/ui/presence';
 import { PressableSurface } from '@/shared/ui/pressable';
 import { Text } from '@/shared/ui/text';
 import { KeyHint } from './key-hint';
-import type { NavItem, NavProps } from './nav-types';
+import type { NavItem, NavModules, NavProps } from './nav-types';
 
 type SideItemProps = Pick<NavProps, 'onSelect' | 'voice'> & {
   item: NavItem;
@@ -15,9 +16,16 @@ type SideItemProps = Pick<NavProps, 'onSelect' | 'voice'> & {
 
 type CommandProps = { label: string; shortcut: string; onPress: () => void };
 
+type ModuleGroupProps = Pick<NavProps, 'onSelect' | 'voice' | 'active'> & {
+  modules: NavModules;
+  activeChild?: string | null;
+};
+
 const SIDE = { width: layout.sidebar };
 
 const SLOP = (size.target - size.navItem) / 2;
+
+const SHRINK = { flexGrow: 0, flexShrink: 1 };
 
 function Trailing({ item, selected }: Pick<SideItemProps, 'item' | 'selected'>) {
   if (item.count)
@@ -32,6 +40,57 @@ function Trailing({ item, selected }: Pick<SideItemProps, 'item' | 'selected'>) 
   return (
     <View className="ml-auto">
       <KeyHint label={item.shortcut} reveal={!selected} />
+    </View>
+  );
+}
+
+function ModuleGroup({ modules, active, activeChild, onSelect, voice }: ModuleGroupProps) {
+  const [open, setOpen] = useState<string | null>(active);
+  return (
+    <View className="gap-nav-side-gap">
+      <View className="px-nav-item-x pt-3">
+        <Text variant="groupTitle" tone="3">
+          {modules.label}
+        </Text>
+      </View>
+      {modules.items.map((item) => {
+        const shown = open === item.key;
+        return (
+          <View key={item.key} className="gap-nav-side-gap">
+            <View className="flex-row items-center">
+              <View className="min-w-0 flex-1">
+                <SideItem
+                  item={item}
+                  selected={active === item.key}
+                  onSelect={onSelect}
+                  voice={voice}
+                />
+              </View>
+              {item.children && item.children.length > 0 ? (
+                <PressableSurface
+                  a11y={{ label: modules.expandLabel(item.label), role: 'button', expanded: shown }}
+                  onPress={() => setOpen(shown ? null : item.key)}
+                  hitSlop={SLOP}
+                  className="min-h-nav-item rounded-control web:hover:bg-fill items-center justify-center px-2">
+                  <Icon name={shown ? 'chevu' : 'chevd'} size="small" tone="text-3" />
+                </PressableSurface>
+              ) : null}
+            </View>
+            {shown
+              ? (item.children ?? []).map((child) => (
+                  <View key={child.key} className="pl-6">
+                    <SideItem
+                      item={child}
+                      selected={activeChild === child.key}
+                      onSelect={onSelect}
+                      voice={voice}
+                    />
+                  </View>
+                ))
+              : null}
+          </View>
+        );
+      })}
     </View>
   );
 }
@@ -74,7 +133,9 @@ function Command({ label, shortcut, onPress }: CommandProps) {
 }
 
 export function NavSidebar(props: NavProps) {
-  const { items, active, onSelect, voice, copy, presence, onCommand, status, settings } = props;
+  const { items, active, onSelect, voice, copy, presence, onCommand, status, more } = props;
+  const modules = more?.modules;
+  const fold = more?.fold;
   const brand = items.find((item) => item.argus);
   return (
     <View
@@ -85,6 +146,17 @@ export function NavSidebar(props: NavProps) {
       <View className="px-nav-brand-x pb-nav-brand-bottom gap-nav-brand-gap flex-row items-center">
         {presence ? <Presence state={presence} size={size.presenceBrand} paused /> : null}
         <Text variant="brand">{brand?.label ?? copy.navigation}</Text>
+        {fold ? (
+          <View className="ml-auto">
+            <PressableSurface
+              a11y={{ label: fold.label, role: 'button' }}
+              onPress={fold.onCollapse}
+              hitSlop={SLOP}
+              className="min-h-nav-item rounded-control web:hover:bg-fill items-center justify-center px-2">
+              <Icon name="chevl" size="small" tone="text-2" />
+            </PressableSurface>
+          </View>
+        ) : null}
       </View>
       {onCommand ? (
         <Command label={copy.command} shortcut={copy.commandKey} onPress={onCommand} />
@@ -98,16 +170,28 @@ export function NavSidebar(props: NavProps) {
           voice={voice}
         />
       ))}
+      {modules && modules.items.length > 0 ? (
+        <ScrollView style={SHRINK} showsVerticalScrollIndicator={false}>
+          <ModuleGroup
+            modules={modules}
+            active={active}
+            activeChild={modules.activeChild}
+            onSelect={onSelect}
+            voice={voice}
+          />
+        </ScrollView>
+      ) : null}
       <View className="flex-1" />
       {status}
-      {settings ? (
+      {(more?.foot ?? []).map((item) => (
         <SideItem
-          item={settings}
-          selected={active === settings.key}
+          key={item.key}
+          item={item}
+          selected={active === item.key}
           onSelect={onSelect}
           voice={voice}
         />
-      ) : null}
+      ))}
     </View>
   );
 }

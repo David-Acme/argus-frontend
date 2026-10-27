@@ -126,6 +126,7 @@ mock.module('react-native-reanimated', async () => {
     },
     FadeIn: chain(),
     FadeOut: chain(),
+    LayoutAnimationConfig: ({ children }: { children: ReactNode }) => children,
     LinearTransition: chain(),
     SlideInUp: chain(),
     SlideOutUp: chain(),

@@ -10,6 +10,7 @@ import { useAskArgus } from '@/features/home/hooks/use-ask-argus';
 import type { InicioHero } from '@/features/home/hooks/use-inicio-hero';
 import { InicioAlert } from './inicio-alert';
 import type { FirstStep } from '@/features/home/model/inicio-states';
+import { ModuleShortcuts } from '@/features/home/components/hero/module-shortcuts';
 
 export type InicioLeadProps = {
   hero: InicioHero;
@@ -99,6 +100,7 @@ function AgendaSkeleton({ announced }: AgendaSkeletonProps) {
 export function InicioLead({ hero, firstStep, sos, band }: InicioLeadProps) {
   return (
     <>
+      {band ? null : <ModuleShortcuts />}
       {band && hero.offlineAge ? (
         <Spaced>
           <OfflineNotice age={hero.offlineAge} />
