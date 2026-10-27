@@ -7,11 +7,28 @@ import type {
   IServiceResponse,
 } from '@/core/interfaces';
 import { DatabaseService } from './database.service';
+import { wordClauses, type PageSegment } from './paging';
+import { SEARCH_PAGE_SIZE } from '@/shared/constants';
 import { httpService, idempotentConfig } from '@/core/services/http';
+
+const CLOSED_TASK_STATUSES = ['done', 'canceled'];
 
 class ProjectTaskService extends DatabaseService<'project_task'> {
   constructor() {
     super('project_task');
+  }
+
+  searchOpen(words: readonly string[], dated: boolean): PageSegment<ProjectTaskModel> {
+    return this.keysetSegment({
+      clauses: [
+        Q.where('status', Q.notIn(CLOSED_TASK_STATUSES)),
+        Q.where('due_at', dated ? Q.notEq(null) : Q.eq(null)),
+        ...wordClauses(['title'], words),
+      ],
+      sort: dated ? { column: 'due_at', order: 'asc' } : { column: 'created_at', order: 'desc' },
+      columns: ['title', 'status', 'due_at', 'project_id'],
+      pageSize: SEARCH_PAGE_SIZE,
+    });
   }
 
   observeAll(): Observable<ProjectTaskModel[]> {

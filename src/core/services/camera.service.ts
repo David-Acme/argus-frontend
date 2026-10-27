@@ -3,12 +3,23 @@ import type { Observable } from 'rxjs';
 import type { CameraModel } from '@/core/database';
 import type { ICameraCreate, ICameraDeviceStatus, ICameraSettings, ICameraUpdate, IServiceResponse } from '@/core/interfaces';
 import { DatabaseService } from './database.service';
+import { wordClauses, type PageSegment } from './paging';
+import { SEARCH_PAGE_SIZE } from '@/shared/constants';
 import { CAMERA_SOURCE_COLUMNS } from './view-cache/camera.projection';
 import { httpService } from '@/core/services/http';
 
 class CameraService extends DatabaseService<'camera'> {
   constructor() {
     super('camera');
+  }
+
+  search(words: readonly string[]): PageSegment<CameraModel> {
+    return this.keysetSegment({
+      clauses: wordClauses(['name'], words),
+      sort: { column: 'created_at', order: 'asc' },
+      columns: ['name'],
+      pageSize: SEARCH_PAGE_SIZE,
+    });
   }
 
   observeList(): Observable<CameraModel[]> {

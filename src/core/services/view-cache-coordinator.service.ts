@@ -11,13 +11,10 @@ import { userInvitationService } from '@/core/services/user-invitation.service';
 import { userService } from '@/core/services/user.service';
 import { viewCacheService } from '@/core/services/view-cache.service';
 import { zoneService } from '@/core/services/zone.service';
-import type { KeysetWindow } from '@/core/types';
 import {
-  NOTIFICATION_FEED_SCOPE,
   MODULE_IDS,
   RETIRED_VIEW_CACHE_KEYS,
   VIEW_CACHE_KEYS,
-  VIEW_CACHE_LIST_LIMIT,
 } from '@/shared/constants';
 import {
   calendarMonthScope,
@@ -29,8 +26,6 @@ import {
 import { projectCalendarShares } from './view-cache/calendar-share.projection';
 import { projectCameras } from './view-cache/camera.projection';
 import { projectConversations, projectConversationThread } from './view-cache/conversation.projection';
-import { projectEventList } from './view-cache';
-import { projectNotificationFeed } from './view-cache/notification.projection';
 import { ModuleSourceGate } from './view-cache/module-source-gate';
 import { PagedView, type IPagedView, type PageDirection } from './view-cache/paged-view';
 import { sameThreadWindow, type ThreadWindow } from './conversation';
@@ -38,6 +33,7 @@ import { projectPeople } from './view-cache/people.projection';
 import { projectProjects } from './view-cache/project.projection';
 import { startOfNextDay } from './view-cache/dates';
 import { startProjection, type ProjectionContext } from './view-cache/projection';
+import { notificationPages, searchPages } from './view-cache-pages';
 import { projectSummary } from './view-cache/summary.projection';
 
 const shared = <T>(source: Observable<T>): Observable<T> =>
@@ -102,15 +98,6 @@ function startSessionProjections(sources: SessionSources, ctx: ProjectionContext
     startProjection({ sources: () => ({ users: sources.users, invitations: sources.invitations }), project: projectPeople }, ctx),
     startProjection(
       {
-        sources: () => ({
-          events: moduleGate.of(PRODUCTIVITY, calendarEventService.observeLatest(VIEW_CACHE_LIST_LIMIT), []),
-        }),
-        project: projectEventList,
-      },
-      ctx,
-    ),
-    startProjection(
-      {
         sources: () => ({ summaries: sources.conversations }),
         project: projectConversations,
       },
@@ -144,38 +131,15 @@ function startSessionProjections(sources: SessionSources, ctx: ProjectionContext
 
 export type PagedViewKey =
   | typeof VIEW_CACHE_KEYS.notificationFeed
-  | typeof VIEW_CACHE_KEYS.conversationThread;
-
-const sameKeyset = (left: KeysetWindow, right: KeysetWindow): boolean =>
-  left.through?.id === right.through?.id && left.through?.value === right.through?.value;
+  | typeof VIEW_CACHE_KEYS.conversationThread
+  | typeof VIEW_CACHE_KEYS.commandSearch;
 
 function startPagedViews(
   sources: SessionSources,
   ctx: ProjectionContext,
 ): Record<PagedViewKey, IPagedView> {
   return {
-    [VIEW_CACHE_KEYS.notificationFeed]: new PagedView<KeysetWindow>(
-      {
-        key: VIEW_CACHE_KEYS.notificationFeed,
-        warm: [NOTIFICATION_FEED_SCOPE],
-        initial: () => ({ through: null }),
-        open: (scope, window, context) =>
-          startProjection(
-            {
-              sources: () => ({
-                page: notificationService.observeFeedPage(context.userId, window),
-                unread: sources.unread,
-              }),
-              project: (values) => projectNotificationFeed(values, scope),
-            },
-            context,
-          ),
-        extend: (_scope, window, context) =>
-          notificationService.nextFeedWindow(context.userId, window),
-        same: sameKeyset,
-      },
-      ctx,
-    ),
+    [VIEW_CACHE_KEYS.notificationFeed]: new PagedView(notificationPages(sources.unread), ctx),
     [VIEW_CACHE_KEYS.conversationThread]: new PagedView<ThreadWindow>(
       {
         key: VIEW_CACHE_KEYS.conversationThread,
@@ -197,6 +161,7 @@ function startPagedViews(
       },
       ctx,
     ),
+    [VIEW_CACHE_KEYS.commandSearch]: new PagedView(searchPages(moduleGate), ctx),
   };
 }
 

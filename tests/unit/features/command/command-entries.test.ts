@@ -1,14 +1,10 @@
 import { describe, expect, test } from 'bun:test';
 import { localeDictionaries } from '@/core/i18n/locales';
+import type { ISearchHitCacheRow } from '@/core/interfaces';
 import { translate } from '@/core/i18n/translate';
 import type { TranslateFn } from '@/core/types';
 import { createDateFormatter } from '@/shared/hooks/use-date-formatter/date';
-import {
-  nextEventAt,
-  searchEntries,
-  whenLabel,
-  type SearchRows,
-} from '@/features/command/model/command-entries';
+import { nextEventAt, searchEntries, whenLabel } from '@/features/command/model/command-entries';
 
 const es = ((key: string, params?: Record<string, string>) =>
   translate(localeDictionaries.es, key as never, params as never)) as TranslateFn;
@@ -24,34 +20,25 @@ const date = createDateFormatter('es', {
   timeZone: null,
 });
 
-const rows = (patch: Partial<SearchRows> = {}): SearchRows => ({
-  events: [],
-  tasks: [],
-  projects: [],
-  people: [],
-  cameras: [],
-  ...patch,
+const hit = (
+  fields: Pick<ISearchHitCacheRow, 'kind' | 'id' | 'title' | 'at'> & Partial<ISearchHitCacheRow>
+): ISearchHitCacheRow => ({
+  allDay: false,
+  parentId: null,
+  recurrenceRule: null,
+  ...fields,
 });
 
 describe('command entries', () => {
-  test('open tasks, active people and every event, project and camera become entries; reminders never do', () => {
+  test('database hits become entries, a task keeps its project and an all-day event says so', () => {
     const entries = searchEntries(
-      rows({
-        events: [
-          { id: '3', title: 'Cena', startsAt: NOW + 2 * DAY, isAllDay: true, recurrenceRule: null },
-        ],
-        tasks: [
-          { id: '4', projectId: '9', title: 'Comprar cajas', status: 'todo', dueAt: null },
-          { id: '5', projectId: '9', title: 'Hecha', status: 'done', dueAt: null },
-          { id: '6', projectId: '9', title: 'Anulada', status: 'canceled', dueAt: null },
-        ],
-        projects: [{ id: '9', name: 'Mudanza' }],
-        people: [
-          { id: '7', name: 'Luis', lastName: 'Ríos', isActive: true },
-          { id: '8', name: 'Ex', lastName: '', isActive: false },
-        ],
-        cameras: [{ id: '10', name: 'Cámara del patio' }],
-      }),
+      [
+        hit({ kind: 'event', id: '3', title: 'Cena', at: NOW + 2 * DAY, allDay: true }),
+        hit({ kind: 'task', id: '4', title: 'Comprar cajas', at: null, parentId: '9' }),
+        hit({ kind: 'project', id: '9', title: 'Mudanza', at: null }),
+        hit({ kind: 'person', id: '7', title: 'Luis Ríos', at: null }),
+        hit({ kind: 'camera', id: '10', title: 'Cámara del patio', at: null }),
+      ],
       NOW
     );
     expect(entries.map(({ kind, id, title }) => `${kind}:${id}:${title}`)).toEqual([
@@ -61,9 +48,26 @@ describe('command entries', () => {
       'person:7:Luis Ríos',
       'camera:10:Cámara del patio',
     ]);
-    expect(entries.find((item) => item.kind === 'camera')?.folded).toBe('camara del patio');
     expect(entries.find((item) => item.kind === 'task')?.parentId).toBe('9');
     expect(entries.find((item) => item.kind === 'event')?.allDay).toBe(true);
+    expect(entries.find((item) => item.kind === 'project')?.parentId).toBeUndefined();
+  });
+
+  test('a recurring event hit is shown at its next occurrence', () => {
+    const anchor = NOW - 10 * DAY;
+    const [weekly] = searchEntries(
+      [
+        hit({
+          kind: 'event',
+          id: 'w',
+          title: 'Guitarra',
+          at: anchor,
+          recurrenceRule: 'FREQ=WEEKLY',
+        }),
+      ],
+      NOW
+    );
+    expect((weekly?.at ?? 0) - anchor).toBe(14 * DAY);
   });
 
   test('a past recurring event is found at its next occurrence, a single one at its start', () => {

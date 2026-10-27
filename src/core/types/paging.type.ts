@@ -32,3 +32,11 @@ export type RemotePage<T, C> = {
 };
 
 export type InfiniteFooter = 'none' | 'loading' | 'error' | 'end';
+
+export type SearchKind = 'event' | 'task' | 'project' | 'person' | 'camera';
+
+export type SearchScope = {
+  kinds: readonly SearchKind[];
+  words: readonly string[];
+  since: number;
+};

@@ -1,157 +1,30 @@
-import { clsx } from 'clsx';
-import type { ReactNode, RefObject } from 'react';
-import { Pressable, ScrollView, TextInput, View, type NativeSyntheticEvent } from 'react-native';
-import { size, useThemeTokens } from '@/shared/theme';
+import { useState, type RefObject } from 'react';
+import { TextInput, View, type LayoutChangeEvent, type NativeSyntheticEvent } from 'react-native';
+import { inset, useThemeTokens } from '@/shared/theme';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { Icon } from '@/shared/ui/icon';
-import { Presence } from '@/shared/ui/presence';
 import { Text } from '@/shared/ui/text';
-import type { CommandItem } from './command-types';
-import { Listbox, optionId } from './listbox';
+import { CommandEmptyState } from './command-empty';
+import { CommandList } from './command-list';
+import { Key } from './command-rows';
+import { CommandScopes } from './command-scopes';
+import { optionId } from './listbox';
 import type { CommandState } from './use-command';
 
 export type CommandPanelProps = {
   state: CommandState;
   hints?: boolean;
   inputRef?: RefObject<TextInput | null>;
+  room?: number;
 };
 
-type KeyProps = { label: string };
-
-type OptionProps = {
-  id: string;
-  label: string;
-  selected: boolean;
-  onPress: () => void;
-  children: ReactNode;
-};
-
-type ItemOptionProps = {
-  item: CommandItem;
-  index: number;
-  state: CommandState;
-  hints?: boolean;
-};
+type QueryRowProps = Pick<CommandPanelProps, 'state' | 'hints' | 'inputRef'>;
 
 type KeyEvent = NativeSyntheticEvent<{ key: string }> & { preventDefault?: () => void };
 
-export function Key({ label }: KeyProps) {
-  return (
-    <View className="border-line rounded-key px-key-x border border-b-2">
-      <Text variant="key" tone="2">
-        {label}
-      </Text>
-    </View>
-  );
-}
+export { Key };
 
-function Option({ id, label, selected, onPress, children }: OptionProps) {
-  return (
-    <Pressable
-      nativeID={id}
-      role="option"
-      aria-label={label}
-      aria-selected={selected}
-      onPress={onPress}
-      className={clsx(
-        'min-h-target-min px-palette-item-x gap-palette-gap rounded-control flex-row items-center',
-        selected ? 'bg-fill' : 'web:hover:bg-fill'
-      )}>
-      {children}
-    </Pressable>
-  );
-}
-
-function GroupTitle({ title }: { title: string }) {
-  return (
-    <View className="px-palette-text-title-x pt-palette-text-title-top pb-palette-text-title-bottom">
-      <Text variant="groupTitle" tone="3">
-        {title.toLocaleUpperCase()}
-      </Text>
-    </View>
-  );
-}
-
-function ItemOption({ item, index, state, hints }: ItemOptionProps) {
-  return (
-    <Option
-      id={optionId(state.listId, index)}
-      label={item.label}
-      selected={state.selected === index}
-      onPress={() => state.run(index)}>
-      <Icon name={item.icon} size="small" />
-      <View className="shrink">
-        <Text variant="feed" numberOfLines={1}>
-          {item.label}
-        </Text>
-      </View>
-      {item.meta ? <Text variant="meta">{`· ${item.meta}`}</Text> : null}
-      <View className="flex-1" />
-      {hints && item.shortcut ? <Key label={item.shortcut} /> : null}
-    </Option>
-  );
-}
-
-function AskGroup({ state, hints }: Pick<CommandPanelProps, 'state' | 'hints'>) {
-  const { t } = useTranslation();
-  if (!state.asks) return null;
-  const label = t('common.overlay.command-ask', { query: state.query.trim() });
-  const title = t('common.overlay.command-ask-group');
-  return (
-    <View role="group" aria-label={title}>
-      <GroupTitle title={title} />
-      <Option
-        id={optionId(state.listId, 0)}
-        label={label}
-        selected={state.selected === 0}
-        onPress={() => state.run(0)}>
-        <Presence state="think" size={size.presenceThink} />
-        <View className="min-w-0 flex-1">
-          <Text variant="feed" numberOfLines={1}>
-            {label}
-          </Text>
-        </View>
-        {hints ? <Key label={t('common.overlay.key-enter')} /> : null}
-      </Option>
-    </View>
-  );
-}
-
-function firstIndexes(state: CommandState): number[] {
-  const offset = state.asks ? 1 : 0;
-  return state.groups.map((_, at) =>
-    state.groups.slice(0, at).reduce((sum, group) => sum + group.items.length, offset)
-  );
-}
-
-function Results({ state, hints }: Pick<CommandPanelProps, 'state' | 'hints'>) {
-  const firsts = firstIndexes(state);
-  return (
-    <Listbox id={state.listId}>
-      <AskGroup state={state} hints={hints} />
-      {state.groups.map((group, at) => (
-        <View key={group.title} role="group" aria-label={group.title}>
-          <GroupTitle title={group.title} />
-          {group.items.map((item, position) => (
-            <ItemOption
-              key={item.id}
-              item={item}
-              index={(firsts[at] ?? 0) + position}
-              state={state}
-              hints={hints}
-            />
-          ))}
-        </View>
-      ))}
-    </Listbox>
-  );
-}
-
-function QueryRow({
-  state,
-  hints,
-  inputRef,
-}: Pick<CommandPanelProps, 'state' | 'hints' | 'inputRef'>) {
+function QueryRow({ state, hints, inputRef }: QueryRowProps) {
   const { t } = useTranslation();
   const { color } = useThemeTokens();
   const onKeyPress = (event: KeyEvent) => {
@@ -202,18 +75,29 @@ function Footer() {
   );
 }
 
-export function CommandPanel({ state, hints, inputRef }: CommandPanelProps) {
+const heightOf = (event: LayoutChangeEvent) => event.nativeEvent.layout.height;
+
+export function CommandPanel({ state, hints, inputRef, room }: CommandPanelProps) {
+  const [head, setHead] = useState(0);
+  const [foot, setFoot] = useState(0);
+  const fill = room === undefined;
+  const maxHeight = fill ? undefined : Math.max(0, room - head - foot - inset.palette.group * 2);
   return (
-    <>
-      <QueryRow state={state} hints={hints} inputRef={inputRef} />
-      {hints ? (
-        <ScrollView className="shrink" keyboardShouldPersistTaps="handled">
-          <Results state={state} hints />
-        </ScrollView>
+    <View className={fill ? 'min-h-0 flex-1 basis-0' : undefined}>
+      <View onLayout={(event) => setHead(heightOf(event))}>
+        <QueryRow state={state} hints={hints} inputRef={inputRef} />
+        {state.scopes ? <CommandScopes scopes={state.scopes} /> : null}
+      </View>
+      {state.empty === null ? (
+        <CommandList state={state} hints={hints} maxHeight={maxHeight} />
       ) : (
-        <Results state={state} />
+        <CommandEmptyState state={state} empty={state.empty} hints={hints} fill={fill} />
       )}
-      {hints ? <Footer /> : null}
-    </>
+      {hints ? (
+        <View onLayout={(event) => setFoot(heightOf(event))}>
+          <Footer />
+        </View>
+      ) : null}
+    </View>
   );
 }

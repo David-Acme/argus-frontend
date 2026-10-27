@@ -6,37 +6,66 @@ import {
   CommandPanel,
   useCommand,
   useCommandHotkey,
+  usePaletteHeight,
   type CommandGroup,
+  type CommandView,
 } from '@/shared/ui/command';
 import { LabCase } from '../components/lab-case';
 import { copy } from './demo-copy';
 
 const noop = () => undefined;
 
-const GROUPS: readonly CommandGroup[] = [
-  {
-    title: copy.agendaGroup,
-    items: [
-      { id: 'light', label: copy.light, meta: copy.todayAt, icon: 'bell', onRun: noop },
-      { id: 'water', label: copy.payWater, meta: copy.tomorrow, icon: 'bell', onRun: noop },
-    ],
-  },
+const ACTIONS: readonly CommandGroup[] = [
   {
     title: copy.actionsGroup,
     items: [
-      { id: 'new', label: copy.newPayReminder, icon: 'plus', shortcut: copy.keyNew, onRun: noop },
+      {
+        id: 'new',
+        label: copy.newPayReminder,
+        icon: 'plus',
+        ink: 'accent',
+        shortcut: copy.keyNew,
+        onRun: noop,
+      },
       { id: 'night', label: copy.nightMode, icon: 'moon', shortcut: copy.keyNight, onRun: noop },
     ],
   },
 ];
 
-const source = () => GROUPS;
+const RESULTS: readonly CommandGroup[] = [
+  {
+    title: copy.agendaGroup,
+    items: [
+      {
+        id: 'light',
+        label: copy.light,
+        meta: copy.todayAt,
+        icon: 'cal',
+        ink: 'agenda',
+        onRun: noop,
+      },
+      {
+        id: 'water',
+        label: copy.payWater,
+        meta: copy.tomorrow,
+        icon: 'cal',
+        ink: 'agenda',
+        onRun: noop,
+      },
+    ],
+  },
+];
+
+const VIEW: CommandView = { actions: ACTIONS, results: RESULTS };
+
+const source = () => VIEW;
 
 function StaticPalette() {
   const state = useCommand({ source, onAsk: noop, onClose: noop, initialQuery: copy.payQuery });
+  const room = usePaletteHeight();
   return (
     <CommandPalette>
-      <CommandPanel state={state} hints />
+      <CommandPanel state={state} hints room={room} />
     </CommandPalette>
   );
 }

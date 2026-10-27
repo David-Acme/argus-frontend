@@ -31,6 +31,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: EDGE,
     paddingBottom: 22,
   },
+  fill: { flex: 1 },
+  grow: { flexGrow: 1 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -101,6 +103,7 @@ function DialogBottom({ discard, actions, theme }: BottomProps) {
 
 export function SheetDialog(props: SheetProps) {
   const { open, onClose, title, long, dirty, initialFocus, children, testID } = props;
+  const fill = long === 'fill';
   const actions = useFlightActions(props.actions);
   const theme = useSheetTheme();
   const shadow = useSheetElevation();
@@ -108,9 +111,11 @@ export function SheetDialog(props: SheetProps) {
   const keyboard = useKeyboardInset();
   const discard = useDiscard(dirty, onClose);
   const scrim = { backgroundColor: theme.scrim, paddingBottom: EDGE + keyboard };
+  const room = height - EDGE * 2 - keyboard;
   const panel = {
     width: Math.min(long ? layout.dialogLong : layout.dialog, width - EDGE * 2),
-    maxHeight: height - EDGE * 2 - keyboard,
+    maxHeight: room,
+    height: fill ? room : undefined,
     backgroundColor: theme.surface,
     boxShadow: shadow,
   };
@@ -150,7 +155,12 @@ export function SheetDialog(props: SheetProps) {
               </DialogPrimitive.Title>
               <CloseButton label={discard.closeLabel} onPress={discard.requestClose} dialog />
             </View>
-            <ScrollView keyboardShouldPersistTaps="handled">{children}</ScrollView>
+            <ScrollView
+              keyboardShouldPersistTaps="handled"
+              style={fill ? styles.fill : undefined}
+              contentContainerStyle={fill ? styles.grow : undefined}>
+              {children}
+            </ScrollView>
             <DialogBottom discard={discard} actions={actions} theme={theme} />
           </DialogPrimitive.Content>
         </DialogPrimitive.Overlay>

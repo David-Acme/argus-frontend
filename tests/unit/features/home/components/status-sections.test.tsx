@@ -12,6 +12,7 @@ const state = {
     camerasTotal: 6,
     camerasOnline: 5,
     projectsActive: 0,
+    projectsTotal: 0,
     tasksOpen: 0,
   },
 };

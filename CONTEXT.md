@@ -3399,8 +3399,10 @@ window, the end detection and the loading/error state; components render.
   last release shrinks a warm scope back to its first page (so MMKV holds one
   page, not everything ever scrolled) or closes a cold one. The coordinator
   exposes `watchPages` / `extendPages` / `releasePages`. Watch requests made
-  before a session starts are replayed when it does. Two views use it today:
-  `notification.feed` (keyset) and `calendar.agenda` (a span of weeks).
+  before a session starts are replayed when it does. Three views use it
+  today: `notification.feed` (keyset), `calendar.agenda` (a span of weeks)
+  and `command.search` (segmented keyset, see "The search reads the database
+  page by page").
 - **Remote feeds.** `RemoteFeed` (`core/services/paging/remote-feed.ts`) is
   the same idea for server-only lists. It stores `{rows, next}` in the view
   cache per scope. `refresh` re-reads the head and keeps the pages already
@@ -6644,21 +6646,11 @@ sidebar's ⌘K field, Inicio's search button and «Nuevo» call.
   (`useOpenedOnce`), so the layout pays no subscription until then. Results are
   computed against the moment the palette opened (`openedAt` in the store), not
   a ticking clock, so a mounted palette does not recompute every minute.
-- **Local first.** Results come from the view cache only, with no query per
-  keystroke: events (`event.list`, new: the 1000
-  latest by start through `calendarEventService.observeLatest`, gated by the
-  productivity module like every other productivity source), tasks
-  (`task.list`, new: the flat list the project projection already builds per
-  project, written once more so one hook can read every task), projects, the
-  people directory and cameras. Each title is folded once (NFD, marks removed,
-  lower case) when the entries are built; a keystroke only compares strings.
-  A recurring event is found at its next occurrence. Reminders are never a
-  result: the app keeps none (2026-10-27).
-- **Ranking** (`model/command-search.ts`): a title that starts with the query,
-  then one with a word that starts with it, then one that contains it; ties go
-  to the nearest upcoming, then the most recent past, then the undated; five
-  per group, groups in the order Agenda, Proyectos, Personas, Cámaras, then
-  Acciones and Ir a. «Pedir a Argus» leads whenever there is text.
+- **Local first, paged.** Results are read from WatermelonDB page by page; see
+  "The search reads the database page by page" (2026-10-27), which replaced the
+  in-memory ranking over the `event.list` snapshot. A recurring event is shown
+  at its next occurrence. Reminders are never a result: the app keeps none
+  (2026-10-27).
 - **Access** (`model/command-access.ts`): every result kind, action and section
   answers the same tables the screens answer (`routeFallback`, `tableAllowed`,
   `peopleAccessOf`). A module that is off removes its results, actions and
@@ -6680,6 +6672,58 @@ sidebar's ⌘K field, Inicio's search button and «Nuevo» call.
   palette (`hints`); the phone's sheet lists the same rows without them.
 - **Component tests of a feature** live in `tests/unit/features/<slice>/components/`
   and run with the DOM runner (`test:ui`); the plain runner skips them.
+
+## The search reads the database page by page (2026-10-27, feat/search-paged)
+
+David: the search felt empty; it should look better, centre its empty state
+in the whole area, stay flat (no shadow, nothing that carries no meaning), and
+read from the database with infinite scroll instead of loading every table into
+the client. The agenda keeps loading by its visible range.
+
+- **Query.** `command.search` is a coordinator paged view
+  (`core/services/view-cache-pages.ts`, `searchPages`). Its scope is the JSON of
+  `{kinds, words, since}` (`shared/libs/text-search.ts`); `since` is the start
+  of the day the palette opened. The list is a chain of keyset segments
+  (`core/services/paging/segments.ts`), each a `DatabaseService.keysetSegment`
+  of 20 rows (`SEARCH_PAGE_SIZE`) ordered by its column plus `id`: recurring
+  events by start, upcoming single events by start, open tasks with a due date
+  by due date, open tasks without one by creation (newest first), past single
+  events by start (newest first), projects (newest first), active people and
+  cameras (oldest first). Reaching the end extends the current segment; an
+  exhausted segment hands over to the next one that has rows (`exists`), and
+  `hasMore` also watches a one-row probe of every segment not yet opened, so
+  the footer never waits on an empty tail.
+- **Accents.** SQLite's `LIKE` folds ASCII case only, and the schema has no
+  folded column (no migration was added). Each word becomes
+  `%…%` with every letter that can carry an accent or a tilde (a, c, e, i, n,
+  o, u, y) and every non-alphanumeric character turned into `_`
+  (`likeWord`), so «jose» reaches «José» on SQLite and on LokiJS. The
+  projection then keeps only the rows whose NFD-folded title holds every word
+  (`matchesWords`), which removes what the wildcards let in («Josa»). A
+  person's words may sit in `name` or `last_name`.
+- **Order.** Results are no longer ranked by match quality: a database page
+  cannot be, and re-sorting loaded pages would move rows under the reader. The
+  segment order above is the order.
+- **Typing.** The query settles after 150 ms (`COMMAND_SEARCH_DEBOUNCE_MS`);
+  until the new scope's first projection lands the previous results stay and
+  the empty message waits (`pending`).
+- **Scopes.** With text, chips (Todo and each group the role may search)
+  narrow the kinds the scope asks for.
+- **Palette.** Actions and «Ir a» come before the results, so the results can
+  grow at the end of one `InfiniteList`. Every row has a leading icon well in
+  its kind's colour (agenda `ev3`, tasks `ok`, projects `ev2`, people `ev1`,
+  cameras and sections neutral, new items `accent`) and a second line naming
+  the kind and its time. The pointer palette lost its shadow and its glass and
+  is a solid surface with a hairline; its list is capped by the palette height
+  minus its measured chrome. On touch the sheet opens full height
+  (`Sheet long="fill"`, whose body fills the sheet) and the list fills it.
+- **Empty.** No match (or nothing to offer with no text) centres an icon well,
+  a title and a hint in the whole list area, with «Pedir a Argus» and the
+  matching actions under it.
+- **Gone.** `event.list` (the 1000 latest events kept only for the search) and
+  its projection; the key is retired so MMKV drops it. The «create task» action
+  now asks `dashboard.summary.projectsTotal` instead of reading the project
+  list.
 
 ## Inicio's agenda sections (2026-10-26, Phase 2 T5, p2/inicio-agenda)
 

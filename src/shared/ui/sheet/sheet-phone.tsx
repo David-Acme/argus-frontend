@@ -20,6 +20,7 @@ import {
   sheetChromeOf,
   sheetDetentsOf,
   sheetScrolls,
+  type SheetDetent,
 } from '@/shared/theme/height-layout';
 import { tokens } from '@/shared/theme/tokens';
 import { PhoneFooter, SheetHeader } from './sheet-parts';
@@ -33,6 +34,7 @@ const FOCUS_GAP = space[4];
 const FIELD_TAIL = inset.field.top + inset.field.border;
 const GRABBER_ALPHA = 0.4;
 const FOOTER_PAD = 10;
+const FULL_DETENT: readonly SheetDetent[] = [1];
 
 const styles = StyleSheet.create({
   root: { flexGrow: 1 },
@@ -42,6 +44,8 @@ const styles = StyleSheet.create({
   footer: { paddingHorizontal: space[4], paddingTop: FOOTER_PAD },
   tallFooter: { borderTopWidth: size.hairline },
   inlineFooter: { paddingTop: space[6] },
+  grow: { flexGrow: 1 },
+  fill: { flex: 1 },
 });
 
 type HeaderSlotProps = {
@@ -100,6 +104,7 @@ export function focusScrollOffset(footerHeight: number): number {
 
 type BodyProps = {
   long: boolean;
+  fill: boolean;
   clearance: number;
   cap: number;
   keyboard: number;
@@ -123,9 +128,9 @@ function useFocusRestore(keyboard: number) {
   return { scroll, content };
 }
 
-function Body({ long, clearance, cap, keyboard, testID, children }: BodyProps) {
+function Body({ long, fill, clearance, cap, keyboard, testID, children }: BodyProps) {
   const { scroll, content } = useFocusRestore(keyboard);
-  const padding = [styles.body, { paddingBottom: clearance }];
+  const padding = [styles.body, { paddingBottom: clearance }, fill ? styles.grow : null];
   const capped = long ? undefined : { maxHeight: cap };
   return (
     <GestureHandlerRootView style={styles.root}>
@@ -136,7 +141,9 @@ function Body({ long, clearance, cap, keyboard, testID, children }: BodyProps) {
         style={capped}
         contentContainerStyle={padding}
         testID={testID}>
-        <View ref={content}>{children}</View>
+        <View ref={content} style={fill ? styles.fill : undefined}>
+          {children}
+        </View>
       </ScrollView>
     </GestureHandlerRootView>
   );
@@ -186,8 +193,18 @@ function useSheetRoom(form: boolean) {
   return { room, chrome, pinned, footerHeight, setFooterHeight, setHeaderHeight };
 }
 
+function detentsOf(
+  long: SheetProps['long'],
+  form: boolean,
+  window: { width: number; height: number }
+): readonly SheetDetent[] {
+  if (long === 'fill') return FULL_DETENT;
+  return sheetDetentsOf({ long: long === true, form }, heightLayoutOf(window));
+}
+
 export function SheetPhone(props: SheetProps) {
   const { open, onClose, title, long = false, dirty, actions, initialFocus, children } = props;
+  const fill = long === 'fill';
   const { sheet, closeLabel, askOrClose } = useSheetPresence(open, dirty);
   const theme = useSheetTheme();
   const { reduceTransparency } = useEffects();
@@ -196,10 +213,7 @@ export function SheetPhone(props: SheetProps) {
   const { room, chrome, pinned, footerHeight, setFooterHeight, setHeaderHeight } = useSheetRoom(
     actions !== undefined
   );
-  const detents = sheetDetentsOf(
-    { long, form: actions !== undefined },
-    heightLayoutOf({ width, height })
-  );
+  const detents = detentsOf(long, actions !== undefined, { width, height });
   const scrolls = sheetScrolls(detents);
   const clearance = pinned ? Math.max(0, footerHeight - insets.bottom) : space[4];
   const blurred = IS_IOS && !reduceTransparency;
@@ -251,6 +265,7 @@ export function SheetPhone(props: SheetProps) {
       backgroundBlur={blurred ? 'system-material' : undefined}>
       <Body
         long={scrolls}
+        fill={fill}
         clearance={clearance}
         cap={sheetBodyCapOf(room)}
         keyboard={room.keyboard}

@@ -1,12 +1,15 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, mock, test } from 'bun:test';
 import { fireEvent, render, screen } from '@testing-library/react';
-import type { CommandGroup } from '@/shared/ui/command/command-types';
+import type { CommandView } from '@/shared/ui/command/command-types';
+import { InfiniteListStub } from '@tests/support/infinite-list-stub';
 import './translation-stub';
 import {
   Listbox as NativeListbox,
   optionId as nativeOptionId,
 } from '@/shared/ui/command/listbox.native';
 import { Listbox, optionId } from '@/shared/ui/command/listbox';
+
+mock.module('@/shared/components/ui/infinite-list', () => ({ InfiniteList: InfiniteListStub }));
 
 const { CommandPanel } = await import('@/shared/ui/command/command-panel');
 const { CommandPalette, paletteWidth } = await import('@/shared/ui/command/command-palette');
@@ -16,33 +19,38 @@ const native = await import('@/shared/ui/command/command.native');
 
 type Log = string[];
 
-function groups(log: Log): readonly CommandGroup[] {
-  return [
-    {
-      title: 'Agenda',
-      items: [
-        {
-          id: 'light',
-          label: 'Pagar la luz',
-          meta: 'hoy 17:00',
-          icon: 'bell',
-          onRun: () => log.push('light'),
-        },
-      ],
-    },
-    {
-      title: 'Acciones',
-      items: [
-        {
-          id: 'night',
-          label: 'Poner modo Noche',
-          icon: 'moon',
-          shortcut: '⇧ N',
-          onRun: () => log.push('night'),
-        },
-      ],
-    },
-  ];
+function groups(log: Log): CommandView {
+  return {
+    actions: [
+      {
+        title: 'Acciones',
+        items: [
+          {
+            id: 'night',
+            label: 'Poner modo Noche',
+            icon: 'moon',
+            shortcut: '⇧ N',
+            onRun: () => log.push('night'),
+          },
+        ],
+      },
+    ],
+    results: [
+      {
+        title: 'Agenda',
+        items: [
+          {
+            id: 'light',
+            label: 'Pagar la luz',
+            meta: 'hoy 17:00',
+            icon: 'cal',
+            ink: 'agenda',
+            onRun: () => log.push('light'),
+          },
+        ],
+      },
+    ],
+  };
 }
 
 type HarnessProps = { log: Log; initialQuery?: string };
@@ -69,7 +77,8 @@ describe('Command', () => {
     render(<Harness log={log} initialQuery="Pagar" />);
     const ask = screen.getByRole('option', { name: '«Pagar…» — pregúntale a Argus' });
     expect(ask.getAttribute('aria-selected')).toBe('true');
-    expect(screen.getByRole('group', { name: 'Agenda' })).toBeDefined();
+    expect(screen.getByText('AGENDA')).toBeDefined();
+    expect(screen.getByText('PEDIR A ARGUS')).toBeDefined();
     fireEvent.keyDown(input(), { key: 'Enter' });
     expect(log).toEqual(['ask:Pagar', 'close']);
   });
@@ -82,29 +91,29 @@ describe('Command', () => {
     const ask = screen.getByRole('option', { name: '«Pagar…» — pregúntale a Argus' });
     expect(input().getAttribute('aria-activedescendant')).toBe(ask.id);
     fireEvent.keyDown(input(), { key: 'ArrowDown' });
-    const light = screen.getByRole('option', { name: 'Pagar la luz' });
-    expect(input().getAttribute('aria-activedescendant')).toBe(light.id);
-    expect(light.id).toContain('-option-');
+    const night = screen.getByRole('option', { name: 'Poner modo Noche' });
+    expect(input().getAttribute('aria-activedescendant')).toBe(night.id);
+    expect(night.id).toContain('-option-');
     expect(list.id).not.toBe('');
   });
 
-  test('↑↓ move the selection, wrapping, and Enter runs the selected result', () => {
+  test('↑↓ move the selection through the actions and then the results, wrapping, and Enter runs it', () => {
     const log: Log = [];
     render(<Harness log={log} initialQuery="Pagar" />);
     fireEvent.keyDown(input(), { key: 'ArrowDown' });
     fireEvent.keyDown(input(), { key: 'ArrowDown' });
-    const night = screen.getByRole('option', { name: 'Poner modo Noche' });
-    expect(night.getAttribute('aria-selected')).toBe('true');
+    const light = screen.getByRole('option', { name: 'Pagar la luz' });
+    expect(light.getAttribute('aria-selected')).toBe('true');
     fireEvent.keyDown(input(), { key: 'ArrowDown' });
     fireEvent.keyDown(input(), { key: 'ArrowUp' });
     fireEvent.keyDown(input(), { key: 'Enter' });
-    expect(log).toEqual(['night', 'close']);
+    expect(log).toEqual(['light', 'close']);
   });
 
   test('without a query there is no ask entry and a click runs a result', () => {
     const log: Log = [];
     render(<Harness log={log} />);
-    expect(screen.queryByRole('group', { name: 'Pedir a Argus' })).toBeNull();
+    expect(screen.queryByText('PEDIR A ARGUS')).toBeNull();
     fireEvent.click(screen.getByRole('option', { name: 'Pagar la luz' }));
     expect(log).toEqual(['light', 'close']);
   });
@@ -165,10 +174,10 @@ describe('Command', () => {
     );
     const query = screen.getByRole('combobox', { name: 'Buscar o pedir a Argus' });
     expect((query as HTMLInputElement).value).toBe('Pagar');
-    expect(screen.queryByRole('group', { name: 'Pedir a Argus' })).toBeNull();
+    expect(screen.queryByText('PEDIR A ARGUS')).toBeNull();
     expect(screen.getByText('⇧ N')).toBeDefined();
     fireEvent.keyDown(query, { key: 'Enter' });
-    expect(log).toEqual(['light', 'close']);
+    expect(log).toEqual(['night', 'close']);
   });
 
   test('on touch the palette is the sheet with the same results', () => {

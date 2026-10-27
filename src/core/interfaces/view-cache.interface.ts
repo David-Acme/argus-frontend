@@ -9,6 +9,7 @@ import type {
   IconName,
   NotificationData,
   RecurrenceException,
+  SearchKind,
   UserRole,
   ZonePoint,
   ZoneType,
@@ -126,11 +127,13 @@ export interface ICalendarEventCacheSource {
   createdVia?: string;
 }
 
-export interface IEventListCacheRow {
+export interface ISearchHitCacheRow {
+  kind: SearchKind;
   id: string;
   title: string;
-  startsAt: number;
-  isAllDay: boolean;
+  at: number | null;
+  allDay: boolean;
+  parentId: string | null;
   recurrenceRule: string | null;
 }
 
