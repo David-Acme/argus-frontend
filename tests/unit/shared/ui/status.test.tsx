@@ -42,6 +42,21 @@ describe('Status', () => {
     expect(canvasWidths(container)).toEqual(['66px']);
   });
 
+  test('the hero keeps its stats on one row that scrolls sideways instead of wrapping', () => {
+    render(
+      <Status
+        tone="calm"
+        sentence="Todo tranquilo."
+        meta="Modo casa"
+        stats={[...STATS, { icon: 'hist', value: '0', label: 'detecciones' }]}
+        presence="idle"
+      />
+    );
+    const row = screen.getByText('detecciones').closest('[class*="overflowX"]');
+    expect(row).not.toBeNull();
+    expect(row?.textContent).toContain('cámaras');
+  });
+
   test('the dense hero draws the Seguridad presence beside its mode', () => {
     const { container } = render(
       <Status

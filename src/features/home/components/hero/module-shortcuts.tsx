@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router';
+import { View } from 'react-native';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useSurfaces } from '@/shared/libs/surfaces';
 import { MediaStrip } from '@/shared/ui/media';
@@ -23,10 +24,12 @@ export function ModuleShortcuts() {
   const open = (entry: NavEntry) =>
     entry.key === ADD.key ? sheet.show(true) : router.navigate(entry.href);
   return (
-    <MediaStrip label={t('screens.navigation.quick-title')} item="shortcut">
-      {[...modules, ADD].map((entry) => (
-        <ModuleTile key={entry.key} entry={entry} onOpen={open} />
-      ))}
-    </MediaStrip>
+    <View className="mt-section-top">
+      <MediaStrip label={t('screens.navigation.quick-title')} item="shortcut">
+        {[...modules, ADD].map((entry) => (
+          <ModuleTile key={entry.key} entry={entry} onOpen={open} />
+        ))}
+      </MediaStrip>
+    </View>
   );
 }
