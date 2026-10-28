@@ -91,24 +91,27 @@ export default function ClipScreen() {
   const date = useDateFormatter();
   const now = useNow(MINUTE_MS);
   const params = useLocalSearchParams<ClipParams>();
+  const { id, camera: cameraId, scope } = params;
   const { clips: access } = useCapabilities();
   const { cameras } = useCameraRows();
   const clip = clipOf(params);
-  const camera = cameras.find((row) => row.id === params.camera) ?? null;
-  const playback = useClipPlayback(params.camera);
+  const known = clip !== null;
+  const camera = cameras.find((row) => row.id === cameraId) ?? null;
+  const playback = useClipPlayback(cameraId);
   const { open, close } = playback;
   const back = () =>
     router.canGoBack()
       ? router.back()
-      : router.replace({ pathname: CLIPS_HREF, params: { camera: params.camera } });
+      : router.replace({ pathname: CLIPS_HREF, params: { camera: cameraId } });
   const remove = useRemoveClip(clip, () => {
     close();
     back();
   });
 
   useEffect(() => {
-    if (clip && access.view) open(clip);
-  }, [access.view, clip, open]);
+    const opened = known && access.view ? clipOf({ id, camera: cameraId, scope }) : null;
+    if (opened) open(opened);
+  }, [access.view, cameraId, id, known, open, scope]);
 
   return (
     <Screen
@@ -126,7 +129,7 @@ export default function ClipScreen() {
       }
       back={{ label: t('common.back'), onPress: back }}>
       <ClipStage playback={playback} closable={false} />
-      <ClipFacts clip={clip} cameraId={params.camera} cameraName={camera?.name ?? null} />
+      <ClipFacts clip={clip} cameraId={cameraId} cameraName={camera?.name ?? null} />
       {clip && access.remove ? (
         <Section variant="plain">
           <Button

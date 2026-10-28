@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, mock, test } from 'bun:test';
 import { fireEvent, render, screen } from '@testing-library/react';
+import { useCallback, useState } from 'react';
 import type { ICameraCacheRow, ICameraClip } from '@/core/interfaces';
 import type { ClipPlayback } from '@/features/cameras/hooks/use-clip-playback';
 import { screenFocus } from '../../../shared/ui/screen-focus';
@@ -47,6 +48,17 @@ const playback: ClipPlayback = {
   replay: () => undefined,
   close: () => undefined,
 };
+
+const feedCopies = { fresh: false };
+
+function useRenderingPlayback(): ClipPlayback {
+  const [, setOpened] = useState(0);
+  const open = useCallback((clip: ICameraClip) => {
+    playback.open(clip);
+    setOpened((count) => count + 1);
+  }, []);
+  return { ...playback, open };
+}
 
 const hrefOf = (href: Href) =>
   typeof href === 'string'
@@ -96,7 +108,7 @@ mock.module('@/features/cameras/hooks/use-camera-recording', () => ({
 }));
 
 mock.module('@/features/cameras/hooks/use-clip-playback', () => ({
-  useClipPlayback: () => playback,
+  useClipPlayback: useRenderingPlayback,
 }));
 
 mock.module('@/features/cameras/components/clip-player', () => ({
@@ -106,7 +118,10 @@ mock.module('@/features/cameras/components/clip-player', () => ({
 mock.module('@/features/cameras/services/camera-clips.service', () => ({
   cameraClipsService: { remove: async () => ({ ok: true }) },
   clipFeed: {
-    snapshot: () => ({ rows: feed.rows, next: null }),
+    snapshot: () => ({
+      rows: feedCopies.fresh ? feed.rows.map((row) => ({ ...row })) : feed.rows,
+      next: null,
+    }),
     mutateAll: () => () => undefined,
   },
 }));
@@ -137,6 +152,7 @@ afterEach(() => {
   feed.footer = 'none';
   access.view = true;
   access.remove = true;
+  feedCopies.fresh = false;
   cameras = [cameraRow(), cameraRow({ id: '4', name: 'Patio' })];
   for (const key of Object.keys(params)) delete params[key as keyof typeof params];
 });
@@ -228,6 +244,15 @@ describe('the Clips screen', () => {
 });
 
 describe('the clip player', () => {
+  test('opens its clip once although the cache hands a new copy on every read', () => {
+    feedCopies.fresh = true;
+    feed.rows = [clipOf('9')];
+    Object.assign(params, { id: '9', camera: '3', scope: 'all' });
+    const { rerender } = render(<ClipScreen />);
+    rerender(<ClipScreen />);
+    expect(opened).toEqual(['9']);
+  });
+
   test('plays the clip it was opened with, offers its camera and its deletion', () => {
     feed.rows = [clipOf('9')];
     Object.assign(params, { id: '9', camera: '3', scope: 'all' });
