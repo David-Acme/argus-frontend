@@ -57,7 +57,7 @@ function WindowRow({ window, names, now, onEnd }: WindowRowProps) {
     : t(window.endReason ? END_REASON[window.endReason] : END_REASON.done);
   return (
     <Row
-      leading={<Avatar icon="sliders" tone={window.active ? 'accent' : 'default'} />}
+      leading={<Avatar icon="wrench" tone={window.active ? 'accent' : 'default'} />}
       title={cameraNames(window, names).join(', ')}
       meta={[
         t('screens.security.maintenance.by', { name: window.declaredByName }),
@@ -136,7 +136,7 @@ export default function MaintenanceScreen() {
         {maintenance.windows.length === 0 ? (
           <Section variant="plain">
             <Notice
-              icon="sliders"
+              icon="wrench"
               title={t('screens.security.maintenance.empty')}
               body={t('screens.security.maintenance.declare-description')}
               action={{
