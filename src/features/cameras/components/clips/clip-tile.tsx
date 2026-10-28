@@ -5,7 +5,7 @@ import { Button } from '@/shared/ui/button';
 import { Media } from '@/shared/ui/media';
 import { Text } from '@/shared/ui/text';
 import { useClipPoster } from '@/features/cameras/hooks/use-clip-poster';
-import { clipCaption } from '@/features/cameras/model/camera-clips';
+import { clipCaption, clipGlyph, isImageClip } from '@/features/cameras/model/camera-clips';
 
 export type ClipTileProps = {
   clip: ICameraClip;
@@ -38,9 +38,12 @@ export function ClipTile({
           <Button
             iconOnly
             glass
-            icon="play"
+            icon={clipGlyph(clip)}
             iconSize="small"
-            label={t('screens.cameras.clips.play', { camera: cameraName })}
+            label={t(
+              isImageClip(clip) ? 'screens.cameras.clips.view-still' : 'screens.cameras.clips.play',
+              { camera: cameraName }
+            )}
             onPress={open}
           />
         }

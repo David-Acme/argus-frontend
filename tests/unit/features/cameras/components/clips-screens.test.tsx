@@ -280,15 +280,29 @@ describe('the clip player', () => {
     expect(opened).toEqual(['9']);
   });
 
-  test('plays the clip it was opened with, offers its camera and its deletion', () => {
+  test('plays the clip it was opened with, offers its camera, and keeps deletion last in «⋯»', async () => {
     feed.rows = [clipOf('9')];
     Object.assign(params, { id: '9', camera: '3', scope: 'all' });
     render(<ClipScreen />);
     expect(opened).toEqual(['9']);
     expect(screen.getByRole('heading', { name: 'Cocina' })).toBeDefined();
-    expect(screen.getByRole('button', { name: 'Eliminar clip' })).toBeDefined();
     fireEvent.click(screen.getByRole('button', { name: /^Ver en vivo/ }));
     expect(pushed).toEqual(['/cameras/3']);
+    fireEvent.keyDown(screen.getByRole('button', { name: 'Más sobre este clip' }), {
+      key: 'Enter',
+    });
+    const rows = (await screen.findAllByRole('menuitem')).map((row) => row.textContent);
+    expect(rows).toEqual(['Clips de Cocina', 'Eliminar clip']);
+  });
+
+  test('a still shows the image glyph, never a play button', () => {
+    const still = { ...clipOf('9'), contentType: 'image/jpeg', durationMs: 0 };
+    render(
+      <ClipTile clip={still} cameraName="Cocina" moment="hoy 14:02" onOpen={() => undefined} />
+    );
+    expect(screen.getByRole('button', { name: 'Ver la imagen de Cocina' })).toBeDefined();
+    expect(screen.queryByRole('button', { name: 'Ver el clip de Cocina' })).toBeNull();
+    expect(screen.queryByText('0:00')).toBeNull();
   });
 
   test('a guard plays but does not delete; a clip no longer known leads back to the list', () => {
@@ -296,7 +310,9 @@ describe('the clip player', () => {
     feed.rows = [clipOf('9')];
     Object.assign(params, { id: '9', camera: '3' });
     const first = render(<ClipScreen />);
-    expect(screen.queryByRole('button', { name: 'Eliminar clip' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Clips de Cocina' }));
+    expect(pushed).toEqual(['replace:/clips?camera=3']);
+    pushed.length = 0;
     first.unmount();
     feed.rows = [];
     render(<ClipScreen />);

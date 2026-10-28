@@ -227,6 +227,10 @@ export const cameras = {
     privacy: 'Esta cámara está en modo privacidad',
     'privacy-hint':
       'Argus no graba mientras la lente esté cubierta; los clips vuelven al desactivarla.',
+    menu: 'Más sobre este clip',
+    'camera-clips': 'Clips de {camera}',
+    still: 'Imagen',
+    'view-still': 'Ver la imagen de {camera}',
     close: 'Cerrar',
     delete: 'Eliminar clip',
     'delete-title': '¿Eliminar este clip?',

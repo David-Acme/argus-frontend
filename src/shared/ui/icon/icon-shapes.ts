@@ -187,6 +187,11 @@ export const ICON_SHAPES = {
     { d: 'M15 8V4a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h4' },
   ],
   transcript: [{ d: 'M5 6h14M5 10h14M5 14h9M5 18h6' }],
+  image: [
+    { d: 'M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2z' },
+    { cx: 9, cy: 9, r: 2 },
+    { d: 'm21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21' },
+  ],
 } as const satisfies Record<string, readonly IconShape[]>;
 
 export type IconGlyph = keyof typeof ICON_SHAPES;

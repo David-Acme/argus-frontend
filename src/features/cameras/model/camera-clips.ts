@@ -157,9 +157,13 @@ export function clipCaption({ clip, camera, moment }: ClipCaptionInput): ClipCap
   };
 }
 
+export function clipGlyph(clip: Pick<ICameraClip, 'contentType'>): 'image' | 'play' {
+  return isImageClip(clip) ? 'image' : 'play';
+}
+
 export function clipFacts(t: TranslateFn, clip: ICameraClip): string {
   return [
-    isImageClip(clip) ? '' : formatClipDuration(clip.durationMs),
+    isImageClip(clip) ? t('screens.cameras.clips.still') : formatClipDuration(clip.durationMs),
     formatClipSize(clip.byteSize),
     t(clipTriggerLabelKey(clip.trigger)),
   ]

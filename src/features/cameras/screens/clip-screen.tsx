@@ -8,13 +8,19 @@ import { useTranslation } from '@/shared/hooks/use-translation';
 import { runServiceAction } from '@/shared/libs/service-action';
 import { Avatar } from '@/shared/ui/avatar';
 import { Button } from '@/shared/ui/button';
+import { hasMenuItems, Menu, type MenuItem } from '@/shared/ui/menu';
 import { Row } from '@/shared/ui/row';
 import { Screen } from '@/shared/ui/screen';
 import { Section } from '@/shared/ui/section';
 import { ClipStage } from '@/features/cameras/components/recordings/clip-stage';
 import { useCameraRows } from '@/features/cameras/hooks/use-camera-rows';
 import { useClipPlayback } from '@/features/cameras/hooks/use-clip-playback';
-import { CLIP_FEED_ALL, clipFacts, clipMoment } from '@/features/cameras/model/camera-clips';
+import {
+  CLIP_FEED_ALL,
+  clipFacts,
+  clipGlyph,
+  clipMoment,
+} from '@/features/cameras/model/camera-clips';
 import { cameraClipsService, clipFeed } from '@/features/cameras/services/camera-clips.service';
 import { CLIPS_HREF } from '@/features/cameras/constants/routes.constant';
 
@@ -47,7 +53,7 @@ function ClipFacts({ clip, cameraId, cameraName }: FactsProps) {
   return (
     <Section>
       <Row
-        leading={<Avatar icon="play" />}
+        leading={<Avatar icon={clipGlyph(clip)} />}
         title={clipFacts(t, clip)}
         meta={date.formatDayMonth(new Date(clip.startedAt * 1000))}
       />
@@ -85,6 +91,41 @@ function useRemoveClip(clip: ICameraClip | null, done: () => void) {
   };
 }
 
+type ClipMenuInput = {
+  clip: ICameraClip | null;
+  camera: { id: string; name: string } | null;
+  removable: boolean;
+  remove: () => Promise<void>;
+};
+
+function useClipMenu({ clip, camera, removable, remove }: ClipMenuInput): MenuItem[] {
+  const { t } = useTranslation();
+  const router = useRouter();
+  if (!clip) return [];
+  const list: MenuItem[] = camera
+    ? [
+        {
+          label: t('screens.cameras.clips.camera-clips', { camera: camera.name }),
+          icon: 'grid',
+          family: 'view',
+          onPress: () => router.replace({ pathname: CLIPS_HREF, params: { camera: camera.id } }),
+        },
+      ]
+    : [];
+  return removable
+    ? [
+        ...list,
+        {
+          label: t('screens.cameras.clips.delete'),
+          icon: 'trash',
+          destructive: true,
+          confirm: 'by-action',
+          onPress: remove,
+        },
+      ]
+    : list;
+}
+
 export default function ClipScreen() {
   const { t } = useTranslation();
   const router = useRouter();
@@ -108,6 +149,8 @@ export default function ClipScreen() {
     back();
   });
 
+  const menu = useClipMenu({ clip, camera, removable: access.remove, remove });
+
   useEffect(() => {
     const opened = known && access.view ? clipOf({ id, camera: cameraId, scope }) : null;
     if (opened) open(opened);
@@ -127,19 +170,14 @@ export default function ClipScreen() {
             })
           : undefined
       }
-      back={{ label: t('common.back'), onPress: back }}>
+      back={{ label: t('common.back'), onPress: back }}
+      actions={
+        hasMenuItems(menu) ? (
+          <Menu label={t('screens.cameras.clips.menu')} items={menu} />
+        ) : undefined
+      }>
       <ClipStage playback={playback} closable={false} />
       <ClipFacts clip={clip} cameraId={cameraId} cameraName={camera?.name ?? null} />
-      {clip && access.remove ? (
-        <Section variant="plain">
-          <Button
-            block
-            variant="danger"
-            label={t('screens.cameras.clips.delete')}
-            onPress={() => void remove()}
-          />
-        </Section>
-      ) : null}
     </Screen>
   );
 }
