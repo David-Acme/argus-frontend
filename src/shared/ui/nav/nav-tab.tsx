@@ -38,6 +38,8 @@ const frameOf = ({ tab }: NavBarLayout) => ({ height: tab });
 
 const slopOf = ({ bar, tab }: NavBarLayout) => (bar - tab) / 2;
 
+const glyphBoxOf = (layout: NavBarLayout) => ({ height: navGlyphBoxOf(layout) });
+
 const ACTIONS = [{ name: 'longpress' as const }];
 
 function TabLabel({ label, labelled, dim }: TabLabelProps) {
@@ -113,7 +115,7 @@ export function ArgusTab({
           <View
             testID="argus-tab-glyph"
             className="items-center justify-center overflow-visible"
-            style={{ height: navGlyphBoxOf(layout) }}>
+            style={glyphBoxOf(layout)}>
             <Presence
               state={listening ? 'listen' : presence}
               size={layout.presence}
