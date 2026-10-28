@@ -10,6 +10,8 @@ const POSTER_LIMIT = 160;
 
 const PARALLEL_LOADS = 2;
 
+const NOT_FOUND = 404;
+
 class ClipPosterStore {
   private readonly posters = new Map<string, string | null>();
   private readonly pending = new Set<string>();
@@ -56,12 +58,12 @@ class ClipPosterStore {
     this.running -= 1;
     if (session === this.session) {
       this.pending.delete(clip.id);
-      this.remember(
-        clip.id,
-        result?.ok && result.info?.base64
-          ? clipImageUri(result.info.mimeType || 'image/jpeg', result.info.base64)
-          : null
-      );
+      if (result?.ok && result.info?.base64)
+        this.remember(
+          clip.id,
+          clipImageUri(result.info.mimeType || 'image/jpeg', result.info.base64)
+        );
+      else if (result?.status === NOT_FOUND) this.remember(clip.id, null);
     }
     this.drain();
   }

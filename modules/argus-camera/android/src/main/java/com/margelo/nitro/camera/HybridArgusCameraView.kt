@@ -35,6 +35,7 @@ class HybridArgusCameraView(context: Context) : HybridArgusCameraViewSpec() {
   private var mutedState = true
   private var fillState = false
   private var audioFailed = false
+  private var readyLogged = false
 
   override val view: View
     get() = playerView
@@ -99,6 +100,20 @@ class HybridArgusCameraView(context: Context) : HybridArgusCameraViewSpec() {
     )
     exo.addAnalyticsListener(
       object : AnalyticsListener {
+        override fun onRenderedFirstFrame(eventTime: AnalyticsListener.EventTime, output: Any, renderTimeMs: Long) {
+          Log.i(TAG, "first frame rendered at position ${eventTime.currentPlaybackPositionMs} ms")
+        }
+
+        override fun onPlaybackStateChanged(eventTime: AnalyticsListener.EventTime, state: Int) {
+          if (state == Player.STATE_READY && !readyLogged) {
+            readyLogged = true
+            Log.i(
+              TAG,
+              "ready at position ${exo.currentPosition} ms, buffered to ${exo.bufferedPosition} ms",
+            )
+          }
+        }
+
         override fun onAudioCodecError(eventTime: AnalyticsListener.EventTime, audioCodecError: Exception) {
           dropAudio(exo, audioCodecError)
         }
@@ -128,6 +143,7 @@ class HybridArgusCameraView(context: Context) : HybridArgusCameraViewSpec() {
 
   private fun startStream(init: ByteArray) {
     releasePlayer()
+    readyLogged = false
     frames.restart(init)
     val renderers = DefaultRenderersFactory(playerView.context)
       .setMediaCodecSelector(PlatformFlacSelector)

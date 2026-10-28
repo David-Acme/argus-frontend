@@ -8480,6 +8480,14 @@ side is the backend's `services/camera/CONTEXT.md` › "Live previews".
   (`PlatformFlacSelector`), with decoder fallback on; and an audio codec or sink error
   disables the audio track for that view, logged once under `ArgusCamera`, while the
   video plays on.
+- **A clip starts at zero** (phone run 4). A stored clip is cut from the live stream, so
+  its fragments carry the stream's decode times (an hour in, say), and nothing in the
+  recorder rebases them. With its audio track off nothing moved ExoPlayer's clock to the
+  first sample and no frame was ever drawn. `splitClipFile` rebases every track's
+  `tfdt` (`clip-timeline.ts`) by the same start in seconds, each in its own timescale, so
+  the tracks stay in step; a fragment of another track takes the previous fragment's time
+  for pacing. The native view logs `first frame rendered at position … ms` and `ready at
+  position … ms, buffered to … ms` under `ArgusCamera`.
 - **Stills only where needed.** `CameraThumbnailPoller` skips a live camera that already
   has a still; it still paints every tile once before its video starts.
 

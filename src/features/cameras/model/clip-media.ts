@@ -1,3 +1,4 @@
+import { rebaseClipTimes } from '@/features/cameras/model/clip-timeline';
 import { listBoxes, parseFragment, parseInit, type Fmp4Init } from '@/features/cameras/model/fmp4';
 
 export type ClipFragment = {
@@ -51,20 +52,24 @@ export function splitClipFile(bytes: Uint8Array): ClipFile | null {
   const init = bytes.slice(0, moov.end);
   const track = parseInit(init);
 
-  const fragments: ClipFragment[] = [];
+  const pieces: Uint8Array[] = [];
   for (let index = 0; index < listed.length; index += 1) {
     const box = listed[index];
     if (!box || box.type !== 'moof') continue;
     const next = listed[index + 1];
-    const end = next && next.type === 'mdat' ? next.end : box.end;
-    const fragment = bytes.slice(box.start, end);
+    pieces.push(bytes.slice(box.start, next && next.type === 'mdat' ? next.end : box.end));
+  }
+  rebaseClipTimes(init, pieces);
+
+  const fragments: ClipFragment[] = [];
+  for (const fragment of pieces) {
     const samples = track ? parseFragment(fragment, track) : [];
     const first = samples[0];
     fragments.push({
       bytes: fragment,
       keyframe:
         samples.length === 0 ? fragments.length === 0 : samples.some((sample) => sample.isKey),
-      atUs: first ? first.timestampUs : 0,
+      atUs: first ? first.timestampUs : (fragments.at(-1)?.atUs ?? 0),
     });
   }
   if (fragments.length === 0) return null;

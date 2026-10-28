@@ -14,7 +14,7 @@ export type Fmp4Sample = {
   isKey: boolean;
 };
 
-type Box = {
+export type Box = {
   type: string;
   start: number;
   end: number;
@@ -285,7 +285,7 @@ export function listBoxes(bytes: Uint8Array): Fmp4Box[] {
   return boxes(view, 0, bytes.byteLength).map((box) => ({ type: box.type, start: box.start, end: box.end }));
 }
 
-function boxes(view: DataView, from: number, to: number): Box[] {
+export function boxes(view: DataView, from: number, to: number): Box[] {
   const result: Box[] = [];
   let offset = from;
   while (offset + 8 <= to) {
