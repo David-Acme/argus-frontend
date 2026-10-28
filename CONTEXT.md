@@ -5670,6 +5670,9 @@ Found by the refinement pass and left on purpose, each for its own commit:
   `BlurTargetView`) is the translucent `glass` token today; `expo-blur`, which
   the Android half needed, was removed unused, so adding that half back means
   adding the package again.
+- `check:unused` counts 418 unused types against its baseline of 417 since
+  a merge after the gate was proposed (13145ea0): find the new unused type
+  and remove it (or use it); the baseline is not raised for it.
 
 ## Re-baselines
 
