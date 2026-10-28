@@ -167,7 +167,7 @@ describe('Grabaciones', () => {
     expect(screen.getByTestId('redirect').textContent).toBe('/clips');
   });
 
-  test('the clip stage keeps the poster until the video arrives, then plays it', () => {
+  test('the clip stage keeps the poster under the video, which paints over it from its first frame', () => {
     const { rerender } = render(<ClipStage playback={playbackOf({ state: 'loading', clip })} />);
     expect(screen.queryByTestId('clip-player')).toBeNull();
     expect(document.querySelector('img')?.getAttribute('src')).toContain('cG9zdGVy');
@@ -180,7 +180,14 @@ describe('Grabaciones', () => {
         })}
       />
     );
-    expect(screen.getByTestId('clip-player')).toBeDefined();
+    const player = screen.getByTestId('clip-player');
+    const poster = [...document.querySelectorAll('img')].find((img) =>
+      img.getAttribute('src')?.includes('cG9zdGVy')
+    );
+    expect(poster).toBeDefined();
+    expect(
+      poster && poster.compareDocumentPosition(player) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
   });
 
   test('a still is an image, never a player or a replay', () => {
