@@ -30,7 +30,7 @@ export function decodeBase64(text: string): Uint8Array {
   let written = 0;
   for (let index = 0; index < clean.length; index += 1) {
     const code = clean.charCodeAt(index);
-    const value = code === 61 ? -2 : code < 128 ? BASE64_LOOKUP[code] ?? -1 : -1;
+    const value = code === 61 ? -2 : code < 128 ? (BASE64_LOOKUP[code] ?? -1) : -1;
     if (value === -2) break;
     if (value < 0) continue;
     accumulator = (accumulator << 6) | value;
@@ -48,7 +48,7 @@ export function splitClipFile(bytes: Uint8Array): ClipFile | null {
   const listed = listBoxes(bytes);
   const moov = listed.find((box) => box.type === 'moov');
   if (!moov) return null;
-  const init = bytes.slice(moov.start, moov.end);
+  const init = bytes.slice(0, moov.end);
   const track = parseInit(init);
 
   const fragments: ClipFragment[] = [];
@@ -62,7 +62,8 @@ export function splitClipFile(bytes: Uint8Array): ClipFile | null {
     const first = samples[0];
     fragments.push({
       bytes: fragment,
-      keyframe: samples.length === 0 ? fragments.length === 0 : samples.some((sample) => sample.isKey),
+      keyframe:
+        samples.length === 0 ? fragments.length === 0 : samples.some((sample) => sample.isKey),
       atUs: first ? first.timestampUs : 0,
     });
   }

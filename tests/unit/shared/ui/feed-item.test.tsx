@@ -65,6 +65,24 @@ describe('FeedItem', () => {
     expect(pressed).toEqual(['row', 'action']);
   });
 
+  test('a long title keeps to two lines and its time and count stay on one', () => {
+    render(
+      <Feed>
+        <FeedItem
+          leading={null}
+          who="Perdí la visión de la cámara Cocina: girada"
+          when="Ayer 5:52 PM · 26 avisos"
+          text="Está girada: ya no vigila la misma zona."
+        />
+      </Feed>
+    );
+    const title = screen.getByText('Perdí la visión de la cámara Cocina: girada');
+    const meta = screen.getByText('Ayer 5:52 PM · 26 avisos');
+    expect(title.className).toContain('WebkitBoxOrient');
+    expect(meta.className).toContain('whiteSpace');
+    expect(title.parentElement?.parentElement).toBe(meta.parentElement);
+  });
+
   test('a read item shows no unread dot', () => {
     render(<FeedItem leading={null} who="Argus" when="14:40" text="Resumen del día." />);
     expect(screen.queryByRole('img')).toBeNull();

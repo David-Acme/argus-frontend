@@ -27,6 +27,10 @@ final class CameraPlayerUIView: UIView {
     displayLayer.videoGravity = .resizeAspect
   }
 
+  func setFill(_ value: Bool) {
+    displayLayer.videoGravity = value ? .resizeAspectFill : .resizeAspect
+  }
+
   func setActive(_ value: Bool) {
     queue.async {
       self.active = value

@@ -33,6 +33,7 @@ export function ClipPlayer({ file, onEnded, className }: ClipPlayerProps) {
         hybridRef={callback(bindPlayer)}
         active={file !== null}
         muted
+        fill={false}
         style={{ width: '100%', height: '100%' }}
       />
     </View>

@@ -5,6 +5,7 @@ import type { PreviewEntry } from '@/features/cameras/services/preview-channel';
 
 type NativeViewProps = {
   hybridRef?: (player: unknown) => void;
+  fill?: boolean;
   style?: { opacity?: number };
 };
 
@@ -19,9 +20,15 @@ const fakePlayer = {
 };
 
 mock.module('argus-camera', () => ({
-  ArgusCameraView: ({ hybridRef, style }: NativeViewProps) => {
+  ArgusCameraView: ({ hybridRef, fill, style }: NativeViewProps) => {
     useEffect(() => hybridRef?.(fakePlayer), [hybridRef]);
-    return <span data-testid="native-player" data-opacity={String(style?.opacity)} />;
+    return (
+      <span
+        data-testid="native-player"
+        data-fill={String(fill)}
+        data-opacity={String(style?.opacity)}
+      />
+    );
   },
 }));
 
@@ -75,6 +82,11 @@ describe('CameraPreview on native', () => {
     act(() => attached[0]?.onState('live'));
     await act(() => new Promise((resolve) => setTimeout(resolve, 300)));
     expect(screen.getByTestId('native-player').getAttribute('data-opacity')).toBe('1');
+  });
+
+  test('the video covers the tile the way its still does, so the handover lines up', () => {
+    render(<NativePreview cameraId="4" order={0} />);
+    expect(screen.getByTestId('native-player').getAttribute('data-fill')).toBe('true');
   });
 
   test('the still stays drawn over the player until the first frame is shown', async () => {

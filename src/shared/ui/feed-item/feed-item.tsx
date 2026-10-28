@@ -26,6 +26,8 @@ type UnreadDotProps = { label: string };
 
 const FeedPosition = createContext({ index: 0 });
 
+const WHO_LINES = 2;
+
 export function Feed({ children, testID }: FeedProps) {
   const { elevation } = useThemeTokens();
   const grows = useGrowsInColumn();
@@ -58,11 +60,13 @@ function UnreadDot({ label }: UnreadDotProps) {
 function FeedWords({ who, when, text }: FeedWordsProps) {
   return (
     <>
-      <View className="gap-feed-who-gap flex-row items-baseline">
+      <View className="gap-x-feed-who-gap flex-row flex-wrap items-baseline">
         <View className="min-w-0 shrink">
-          <Text variant="feedWho">{who}</Text>
+          <Text variant="feedWho" numberOfLines={WHO_LINES}>
+            {who}
+          </Text>
         </View>
-        <Text variant="meta" tone="3">
+        <Text variant="meta" tone="3" numberOfLines={1}>
           {when}
         </Text>
       </View>
