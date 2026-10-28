@@ -218,6 +218,13 @@
   --spacing-thread: 2px;
   --spacing-thread-min: 12px;
   --spacing-media-control: 40px;
+  --spacing-media-control-large: 64px;
+  --spacing-scrub-track: 4px;
+  --spacing-scrub-thumb: 12px;
+  --spacing-scrub-thumb-active: 20px;
+  --spacing-scrub-target: 32px;
+  --spacing-player-spinner: 36px;
+  --spacing-seek-ripple: 96px;
   --spacing-media-strip: 210px;
   --spacing-media-fill: 120px;
   --spacing-skel-line: 16px;

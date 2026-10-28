@@ -39,7 +39,8 @@ export async function releaseWindowOrientation(): Promise<void> {
   heldPortrait = false;
   if (previous == null) return;
   try {
-    if (previous === ScreenOrientation.OrientationLock.DEFAULT) await ScreenOrientation.unlockAsync();
+    if (previous === ScreenOrientation.OrientationLock.DEFAULT)
+      await ScreenOrientation.unlockAsync();
     else await ScreenOrientation.lockAsync(previous);
   } catch {
     return;

@@ -8,7 +8,7 @@ import {
   exitWindowFullscreen,
   onWindowFullscreenExit,
   releaseWindowOrientation,
-} from '../services/window-fullscreen';
+} from '@/shared/libs/window-fullscreen';
 import { CAMERA_FULLSCREEN_FADE_MS, CAMERA_LIVE_BACKGROUND } from '@/features/cameras/constants';
 import { IS_NATIVE } from '@/shared/constants';
 

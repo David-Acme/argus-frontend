@@ -5,7 +5,8 @@ import Animated from 'react-native-reanimated';
 import { RowPosition } from '@/shared/ui/row';
 import { useShimmerStyle } from './shimmer';
 
-export type SkeletonShape = 'well' | 'title' | 'meta' | 'short' | 'brief' | 'pill' | 'button';
+export type SkeletonShape =
+  'well' | 'title' | 'meta' | 'short' | 'brief' | 'pill' | 'button' | 'media';
 
 export type SkeletonProps = { shape: SkeletonShape };
 
@@ -19,6 +20,7 @@ const SHAPE: Record<SkeletonShape, string> = {
   brief: 'h-skel-meta w-1/3 rounded-sm',
   pill: 'h-skel-pill-height w-skel-pill rounded-full',
   button: 'h-button w-full rounded-button',
+  media: 'absolute inset-0',
 };
 
 export function Skeleton({ shape }: SkeletonProps) {

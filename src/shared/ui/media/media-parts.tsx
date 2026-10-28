@@ -13,6 +13,8 @@ export type MediaDormant = 'off' | 'privacy';
 
 export type MediaControl = { icon: IconGlyph; label: string; onPress: () => void };
 
+export type MediaControlButtonProps = MediaControl & { large?: boolean };
+
 export type MediaEye = { label: string };
 
 type LabelRowProps = { name?: string; detail?: string; dormant?: MediaDormant };
@@ -102,21 +104,35 @@ export function DormantMark({ dormant }: DormantMarkProps) {
   );
 }
 
-export function Controls({ controls }: ControlsProps) {
+export function MediaControlButton({
+  icon,
+  label,
+  onPress,
+  large = false,
+}: MediaControlButtonProps) {
   const blur = useBlur();
+  return (
+    <PressableSurface
+      a11y={{ label, role: 'button' }}
+      onPress={onPress}
+      pressed={{ scale: 'icon' }}
+      hitSlop={large ? 0 : CONTROL_SLOP}
+      className={clsx(
+        'items-center justify-center rounded-full',
+        large ? 'size-media-control-large' : 'size-media-control',
+        blur
+      )}
+      style={CONTROL}>
+      <Icon name={icon} size={large ? 'large' : 'small'} tone="on-media" />
+    </PressableSurface>
+  );
+}
+
+export function Controls({ controls }: ControlsProps) {
   return (
     <View className="right-overlay-edge bottom-overlay-edge gap-overlay-gap absolute flex-row">
       {controls.map((control) => (
-        <PressableSurface
-          key={control.label}
-          a11y={{ label: control.label, role: 'button' }}
-          onPress={control.onPress}
-          pressed={{ scale: 'icon' }}
-          hitSlop={CONTROL_SLOP}
-          className={clsx('size-media-control items-center justify-center rounded-full', blur)}
-          style={CONTROL}>
-          <Icon name={control.icon} size="small" tone="on-media" />
-        </PressableSurface>
+        <MediaControlButton key={control.label} {...control} />
       ))}
     </View>
   );
