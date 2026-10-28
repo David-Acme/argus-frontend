@@ -1,5 +1,5 @@
 files 1
-dependencies 2
+dependencies 1
 devDependencies 2
 unlisted 4
 exports 371

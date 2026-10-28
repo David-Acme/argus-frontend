@@ -5658,6 +5658,19 @@ reads it, so new colour classes read as unknown until it is regenerated for
 this checkout (break the link, then `npx uniwind generate-artifacts --css
 ./src/global.css --dts ./uniwind-types.d.ts`).
 
+## Refinement backlog
+
+Found by the refinement pass and left on purpose, each for its own commit:
+
+- `MorphIcon` (`src/shared/components/ui/morph-icon/morph-icon.native.tsx`,
+  `morph-icon.web.tsx`, `morph-icon-driver.ts` and its test,
+  `MORPH_ICONS` and its type) has no consumer since its barrel was removed
+  (2026-10-27); delete it, or wire it where the redesign wanted it.
+- The glass material of the redesign spec (iOS 26 native glass, Android 12+
+  `BlurTargetView`) is the translucent `glass` token today; `expo-blur`, which
+  the Android half needed, was removed unused, so adding that half back means
+  adding the package again.
+
 ## Re-baselines
 
 A baseline is never raised silently. `scripts/check-baselines.ts` (the last
