@@ -1,5 +1,6 @@
 import type { ICameraCapabilities, ICameraClip, IZoneCacheRow } from '@/core/interfaces';
 import type { TranslationKey } from '@/core/types';
+import { startOfLocalDay } from '@/shared/libs/day';
 
 export const SETTINGS_SECTIONS = [
   'privacy',
@@ -51,14 +52,8 @@ export function settingsSummaryOf(sections: readonly SettingsSection[]): Transla
   return 'screens.cameras.rows.settings-plain';
 }
 
-export function startOfDay(now: number): number {
-  const day = new Date(now);
-  day.setHours(0, 0, 0, 0);
-  return day.getTime();
-}
-
 export function clipsToday(clips: readonly Pick<ICameraClip, 'startedAt'>[], now: number): number {
-  const since = startOfDay(now) / 1000;
+  const since = startOfLocalDay(now) / 1000;
   return clips.filter((clip) => clip.startedAt >= since).length;
 }
 

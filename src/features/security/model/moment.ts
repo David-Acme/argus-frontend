@@ -1,4 +1,5 @@
 import type { TranslateFn } from '@/core/types';
+import { DAY_MS, startOfLocalDay } from '@/shared/libs/day';
 
 export type MomentFormat = {
   t: TranslateFn;
@@ -10,12 +11,8 @@ const MINUTE_MS = 60_000;
 
 const HOUR_MINUTES = 60;
 
-function dayStart(at: number): number {
-  return new Date(at).setHours(0, 0, 0, 0);
-}
-
 export function calendarDaysBetween(at: number, now: number): number {
-  return Math.max(0, Math.round((dayStart(now) - dayStart(at)) / (MINUTE_MS * HOUR_MINUTES * 24)));
+  return Math.max(0, Math.round((startOfLocalDay(now) - startOfLocalDay(at)) / DAY_MS));
 }
 
 export function tileWhen(at: number, now: number, format: MomentFormat): string {

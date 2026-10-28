@@ -14,6 +14,7 @@ import {
   withoutSessions,
 } from '@/features/sessions/model/sessions';
 import { sessionsService } from '@/features/sessions/services/sessions.service';
+import { nowSeconds } from '@/shared/libs/day';
 
 type UseConnectedDevicesOptions = {
   enabled?: boolean;
@@ -34,8 +35,6 @@ export type CloseUserSessionsInput = {
 const CLOCK_TICK_MS = 30_000;
 
 const loadOverview = () => sessionsService.listEveryUser();
-
-const nowSeconds = () => Math.floor(Date.now() / 1000);
 
 const sessionIntents = (sessions: readonly AuthSession[]) =>
   sessions.map((session) => ({

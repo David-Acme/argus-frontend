@@ -1,5 +1,6 @@
 import type { CameraPatrol, CameraPatrolPatch, CameraPatrolWindow, TranslationKey } from '@/core/types';
 import type { CameraPreset } from '@/features/cameras/model/camera-presets';
+import { nowSeconds } from '@/shared/libs/day';
 
 export const PATROL_MIN_STOPS = 2;
 export const PATROL_MAX_STOPS = 16;
@@ -88,7 +89,7 @@ export function withPatrolPatch(patrol: CameraPatrol | null, patch: CameraPatrol
     dwellSeconds: PATROL_DEFAULT_DWELL_SECONDS,
     enabled: true,
     window: null,
-    createdAt: Math.floor(Date.now() / 1000),
+    createdAt: nowSeconds(),
     updatedAt: null,
   };
   return {
