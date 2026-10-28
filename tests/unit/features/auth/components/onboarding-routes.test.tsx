@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, mock, test } from 'bun:test';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import * as constants from '@/shared/constants';
 import type { PrivacyChoices } from '@/core/types';
 import type { FaceCapture } from '@/features/auth/hooks/use-face-capture';
@@ -237,6 +237,7 @@ describe('the onboarding routes', () => {
     await waitFor(() => expect(screen.getByRole('button', { name: 'Reintentar' })).toBeDefined());
     expect(state.replaced).toEqual([]);
     state.decideOk = true;
+    await act(async () => undefined);
     fireEvent.click(screen.getByRole('button', { name: 'Reintentar' }));
     await waitFor(() => expect(state.replaced).toHaveLength(1));
   });
