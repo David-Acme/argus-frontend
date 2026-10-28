@@ -45,7 +45,10 @@ const playback: ClipPlayback = {
   file: null,
   image: null,
   open: (clip) => opened.push(clip.id),
+  ended: false,
+  round: 0,
   replay: () => undefined,
+  finish: () => undefined,
   close: () => undefined,
 };
 

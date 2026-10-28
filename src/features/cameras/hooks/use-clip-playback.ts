@@ -17,8 +17,11 @@ export type ClipPlayback = {
   clip: ICameraClip | null;
   file: ClipFile | null;
   image: string | null;
+  ended: boolean;
+  round: number;
   open: (clip: ICameraClip) => void;
   replay: () => void;
+  finish: () => void;
   close: () => void;
 };
 
@@ -31,6 +34,8 @@ export function useClipPlayback(cameraId: string): ClipPlayback {
   const [clip, setClip] = useState<ICameraClip | null>(null);
   const [file, setFile] = useState<ClipFile | null>(null);
   const [image, setImage] = useState<string | null>(null);
+  const [ended, setEnded] = useState(false);
+  const [round, setRound] = useState(0);
   const run = useRef(0);
 
   const open = useCallback(
@@ -40,6 +45,8 @@ export function useClipPlayback(cameraId: string): ClipPlayback {
       setClip(next);
       setFile(null);
       setImage(null);
+      setEnded(false);
+      setRound((count) => count + 1);
       setState('loading');
       void (async () => {
         const preview = await cameraClipsService.preview(cameraId, next.id);
@@ -73,18 +80,23 @@ export function useClipPlayback(cameraId: string): ClipPlayback {
   );
 
   const replay = useCallback(() => {
+    setEnded(false);
+    setRound((count) => count + 1);
     setFile((current) => (current ? { ...current } : current));
   }, []);
+
+  const finish = () => setEnded(true);
 
   const close = useCallback(() => {
     run.current += 1;
     setFile(null);
     setImage(null);
     setClip(null);
+    setEnded(false);
     setState('idle');
   }, []);
 
-  return { state, clip, file, image, open, replay, close };
+  return { state, clip, file, image, ended, round, open, replay, finish, close };
 }
 
 export type ClipSink = {
