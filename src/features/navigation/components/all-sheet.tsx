@@ -17,7 +17,9 @@ import { useCommandSearch } from '@/features/command';
 import { ModuleTile } from '@/features/navigation/components/module-tile';
 import { useNavPins } from '@/features/navigation/hooks/use-nav-pins';
 import {
+  allSheetLong,
   moduleEntry,
+  moreModulesThanGrid,
   navGroups,
   SHEET_GRID,
   type NavEntry,
@@ -127,12 +129,14 @@ function ModuleGrid({ modules, actionsOf, onOpen, onExpand }: ModulesProps) {
             ))}
           </View>
         ))}
-        <Button
-          block
-          variant="ghost"
-          label={t('screens.navigation.see-modules', { count: String(modules.length) })}
-          onPress={onExpand}
-        />
+        {moreModulesThanGrid(modules.length) ? (
+          <Button
+            block
+            variant="ghost"
+            label={t('screens.navigation.see-modules', { count: String(modules.length) })}
+            onPress={onExpand}
+          />
+        ) : null}
       </View>
     </Section>
   );
@@ -261,7 +265,7 @@ export function AllSheet({ onArgus }: AllSheetProps) {
       onClose={shut}
       title={t('screens.navigation.all')}
       variant="list"
-      long={searching ? 'fill' : full}>
+      long={allSheetLong({ searching, full })}>
       <View className={searching ? 'flex-1 gap-4' : 'gap-4'}>
         <Field placeholder={t('screens.navigation.search')} value={query} onChangeText={setQuery} />
         {searching ? (

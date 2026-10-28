@@ -34,6 +34,14 @@ export const RAIL_PINS = 3;
 
 export const SHEET_GRID = 8;
 
+export type AllSheetShape = { searching: boolean; full: boolean };
+
+export function allSheetLong({ searching, full }: AllSheetShape): true | 'fill' {
+  return searching || full ? 'fill' : true;
+}
+
+export const moreModulesThanGrid = (count: number): boolean => count > SHEET_GRID;
+
 const MODULE_PREFIX = 'module:';
 
 const CORE_TOP = ['home', 'argus', 'news'] as const;

@@ -177,6 +177,7 @@ describe('the «Todo» sheet', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Abrir Seguridad' }));
     expect(heading('Módulos')).not.toBeNull();
     expect(heading('General')).not.toBeNull();
+    expect(screen.queryByRole('button', { name: /^Ver los \d+ módulos$/ })).toBeNull();
     expect(sheet.log).toEqual(['close']);
     expect(routes).toEqual(['/security']);
   });
