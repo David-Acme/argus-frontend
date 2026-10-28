@@ -108,7 +108,7 @@ describe('clip media', () => {
     expect(decodeBase64('').length).toBe(0);
   });
 
-  test('a stored clip splits into its init and its fragments', () => {
+  test('a stored clip splits into its init, ftyp included, and its fragments', () => {
     const split = splitClipFile(clipBytes());
     expect(split).not.toBeNull();
     if (!split) return;
@@ -116,7 +116,13 @@ describe('clip media', () => {
     expect(split.fragments).toHaveLength(2);
     expect(split.fragments[0]?.keyframe).toBe(true);
     expect(split.fragments[1]?.keyframe).toBe(false);
-    expect(new TextDecoder().decode(split.init.subarray(4, 8))).toBe('moov');
+    const types: string[] = [];
+    for (let at = 0; at < split.init.length;) {
+      const size = new DataView(split.init.buffer, split.init.byteOffset + at, 4).getUint32(0);
+      types.push(new TextDecoder().decode(split.init.subarray(at + 4, at + 8)));
+      at += size;
+    }
+    expect(types).toEqual(['ftyp', 'moov']);
     expect(
       new TextDecoder().decode(split.fragments[0]?.bytes.subarray(4, 8) ?? new Uint8Array())
     ).toBe('moof');
