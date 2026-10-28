@@ -10,6 +10,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
+import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import com.facebook.proguard.annotations.DoNotStrip
 import com.margelo.nitro.core.ArrayBuffer
@@ -25,6 +26,7 @@ class HybridArgusCameraView(context: Context) : HybridArgusCameraViewSpec() {
   private var player: ExoPlayer? = null
   private var activeState = true
   private var mutedState = true
+  private var fillState = false
 
   override val view: View
     get() = playerView
@@ -42,6 +44,16 @@ class HybridArgusCameraView(context: Context) : HybridArgusCameraViewSpec() {
       mutedState = value
       runOnMain { player?.volume = volumeOf(value) }
     }
+
+  override var fill: Boolean
+    get() = fillState
+    set(value) {
+      fillState = value
+      runOnMain { playerView.resizeMode = resizeModeOf(value) }
+    }
+
+  private fun resizeModeOf(fill: Boolean): Int =
+    if (fill) AspectRatioFrameLayout.RESIZE_MODE_ZOOM else AspectRatioFrameLayout.RESIZE_MODE_FIT
 
   private fun volumeOf(muted: Boolean): Float = if (muted) 0f else 1f
 

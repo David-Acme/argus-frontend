@@ -8451,7 +8451,10 @@ side is the backend's `services/camera/CONTEXT.md` › "Live previews".
   `PlayerView` from `res/layout/argus_camera_player.xml` with `surface_type`
   `texture_view` and a transparent shutter, so the view composes like any other and is
   transparent until its first frame: the still (or a clip's poster) under it stays in
-  sight until the picture replaces it. The full live view mostly plays over WebRTC
+  sight until the picture replaces it. A tile passes `fill`, so the video covers its
+  frame (`RESIZE_MODE_ZOOM`, `resizeAspectFill` on iOS) the way the still under it does,
+  and the handover does not jump; the clip player and the full view keep the whole
+  picture. The full live view mostly plays over WebRTC
   (`CameraRtcVideo`); when it falls back to the native pipe it draws the same way.
 - **Stills only where needed.** `CameraThumbnailPoller` skips a live camera that already
   has a still; it still paints every tile once before its video starts.

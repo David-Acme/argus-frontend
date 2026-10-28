@@ -28,6 +28,7 @@ function PreviewPlayer({ cameraId, order, still }: CameraPreviewProps) {
         hybridRef={callback(setPlayer)}
         active
         muted
+        fill
         style={shown ? SHOWN : HIDDEN}
       />
       {still && !shown ? <MediaFrame source={{ uri: still }} /> : null}

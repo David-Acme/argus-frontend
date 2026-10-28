@@ -10,6 +10,10 @@ public final class HybridArgusCameraView: HybridArgusCameraViewSpec {
 
   public var muted: Bool = true
 
+  public var fill: Bool = false {
+    didSet { view.setFill(fill) }
+  }
+
   public func resetStream() throws {
     view.reset()
   }

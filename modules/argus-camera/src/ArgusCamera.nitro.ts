@@ -7,6 +7,7 @@ import {
 export interface ArgusCameraViewProps extends HybridViewProps {
   active: boolean;
   muted: boolean;
+  fill: boolean;
 }
 
 export interface ArgusCameraViewMethods extends HybridViewMethods {

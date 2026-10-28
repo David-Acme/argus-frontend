@@ -183,6 +183,7 @@ export function CameraLiveStream({
             hybridRef={callback(bindPlayer)}
             active={active}
             muted={nativePlayerMuted({ level: audioLevel, transport: current?.transport ?? null })}
+            fill={false}
             style={{ width: '100%', height: '100%', opacity: showRtc ? 0 : 1 }}
           />
           <CameraRtcVideo stream={current?.rtcStream ?? null} visible={showRtc} />
