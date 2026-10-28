@@ -35,7 +35,13 @@ class HybridArgusCameraView(context: Context) : HybridArgusCameraViewSpec() {
   private var mutedState = true
   private var fillState = false
   private var audioFailed = false
-  private var readyLogged = false
+  private val positionLog = object : Runnable {
+    override fun run() {
+      val exo = player ?: return
+      Log.i(TAG, "playing ${exo.isPlaying}, playWhenReady ${exo.playWhenReady} at ${positionOf(exo)}")
+      mainHandler.postDelayed(this, POSITION_LOG_MS)
+    }
+  }
 
   override val view: View
     get() = playerView
@@ -105,13 +111,11 @@ class HybridArgusCameraView(context: Context) : HybridArgusCameraViewSpec() {
         }
 
         override fun onPlaybackStateChanged(eventTime: AnalyticsListener.EventTime, state: Int) {
-          if (state == Player.STATE_READY && !readyLogged) {
-            readyLogged = true
-            Log.i(
-              TAG,
-              "ready at position ${exo.currentPosition} ms, buffered to ${exo.bufferedPosition} ms",
-            )
-          }
+          Log.i(TAG, "state ${stateName(state)} at ${positionOf(exo)}")
+        }
+
+        override fun onPlayWhenReadyChanged(eventTime: AnalyticsListener.EventTime, playWhenReady: Boolean, reason: Int) {
+          Log.i(TAG, "playWhenReady $playWhenReady (reason $reason) at ${positionOf(exo)}")
         }
 
         override fun onAudioCodecError(eventTime: AnalyticsListener.EventTime, audioCodecError: Exception) {
@@ -143,7 +147,6 @@ class HybridArgusCameraView(context: Context) : HybridArgusCameraViewSpec() {
 
   private fun startStream(init: ByteArray) {
     releasePlayer()
-    readyLogged = false
     frames.restart(init)
     val renderers = DefaultRenderersFactory(playerView.context)
       .setMediaCodecSelector(PlatformFlacSelector)
@@ -166,9 +169,24 @@ class HybridArgusCameraView(context: Context) : HybridArgusCameraViewSpec() {
     exo.setMediaItem(MediaItem.fromUri(CameraDataSource.LIVE_URI))
     exo.prepare()
     exo.playWhenReady = activeState
+    mainHandler.removeCallbacks(positionLog)
+    mainHandler.postDelayed(positionLog, POSITION_LOG_MS)
   }
 
+  private fun positionOf(exo: ExoPlayer): String =
+    "position ${exo.currentPosition} ms, buffered to ${exo.bufferedPosition} ms"
+
+  private fun stateName(state: Int): String =
+    when (state) {
+      Player.STATE_IDLE -> "idle"
+      Player.STATE_BUFFERING -> "buffering"
+      Player.STATE_READY -> "ready"
+      Player.STATE_ENDED -> "ended"
+      else -> state.toString()
+    }
+
   private fun releasePlayer() {
+    mainHandler.removeCallbacks(positionLog)
     player?.let {
       it.stop()
       it.release()
@@ -180,6 +198,7 @@ class HybridArgusCameraView(context: Context) : HybridArgusCameraViewSpec() {
 
   private companion object {
     const val TAG = "ArgusCamera"
+    const val POSITION_LOG_MS = 2000L
   }
 
   private fun runOnMain(block: () -> Unit) {

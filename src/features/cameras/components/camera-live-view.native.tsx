@@ -23,6 +23,7 @@ import { cn } from '@/shared/libs/utils';
 import { cameraLiveService } from '@/features/cameras/services/camera-live.service';
 import { CAMERA_LIVE_BACKGROUND } from '@/features/cameras/constants';
 import { nativePlayerMuted } from '@/features/cameras/model/camera-live-audio';
+import { rebasingSink } from '@/features/cameras/model/clip-timeline';
 import { CameraLiveStatus } from '@/features/cameras/components/camera-live-status';
 import { CameraPrivacyPlaceholder } from '@/features/cameras/components/camera-privacy-placeholder';
 import { CameraRtcVideo } from '@/features/cameras/components/camera-rtc-video';
@@ -117,11 +118,11 @@ export function CameraLiveStream({
           ...next,
         };
       });
-    const sink: ICameraMediaSink = {
+    const sink: ICameraMediaSink = rebasingSink({
       resetStream: () => player.resetStream(),
       pushFragment: (type, keyframe, data) => player.pushFragment(type, keyframe, data),
       bufferedBytes: () => player.bufferedBytes(),
-    };
+    });
 
     const opened = cameraLiveService.open({
       cameraId: numericId,

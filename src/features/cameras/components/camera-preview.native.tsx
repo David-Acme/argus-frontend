@@ -6,6 +6,7 @@ import { callback } from 'react-native-nitro-modules';
 import { MediaFrame } from '@/shared/ui/media';
 import { useCameraPreview } from '@/features/cameras/hooks/use-camera-preview';
 import { usePreviewStream } from '@/features/cameras/hooks/use-preview-stream';
+import { rebasingSink } from '@/features/cameras/model/clip-timeline';
 
 export type CameraPreviewProps = { cameraId: string; order: number; still?: string };
 
@@ -20,7 +21,8 @@ function PreviewPlayer({ cameraId, order, still }: CameraPreviewProps) {
     order,
     fastStart: false,
     ready: player !== null,
-    open: () => (player ? { sink: player, dispose: () => player.resetStream() } : null),
+    open: () =>
+      player ? { sink: rebasingSink(player), dispose: () => player.resetStream() } : null,
   });
   return (
     <>

@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { DELTA, SYNC, fragmentOf, initSegment, videoTrak } from '@tests/support/fmp4-fixtures';
-import { rebaseClipTimes, trackClocks } from '@/features/cameras/model/clip-timeline';
+import { rebaseClipTimes, rebasingSink, trackClocks } from '@/features/cameras/model/clip-timeline';
 import { clipDurationMs, splitClipFile } from '@/features/cameras/model/clip-media';
 
 const VIDEO = 90000;
@@ -63,5 +63,47 @@ describe('a stored clip on its own timeline', () => {
     const second = fragmentOf({ track: 1, flags: DELTA, payload: [2], decodeTime: VIDEO });
     rebaseClipTimes(init, [first, second]);
     expect([decodeTimeOf(first), decodeTimeOf(second)]).toEqual([0, VIDEO]);
+  });
+});
+
+describe('a live stream reaching the native player', () => {
+  function recorder() {
+    const times: number[] = [];
+    const sink = rebasingSink({
+      resetStream: () => undefined,
+      pushFragment: (type, _keyframe, data) => {
+        if (type === 2) times.push(decodeTimeOf(new Uint8Array(data)));
+      },
+      bufferedBytes: () => 0,
+    });
+    return { sink, times };
+  }
+
+  const push = (sink: ReturnType<typeof rebasingSink>, second: number) => {
+    const bytes = fragmentOf({ track: 1, flags: SYNC, payload: [1], decodeTime: second * VIDEO });
+    sink.pushFragment(2, true, bytes.buffer as ArrayBuffer);
+  };
+
+  const init = () => initSegment([videoTrak(1, VIDEO)]).buffer as ArrayBuffer;
+
+  test('an hour into the stream, the first fragment plays at zero and the next follow it', () => {
+    const { sink, times } = recorder();
+    sink.pushFragment(1, true, init());
+    push(sink, HOUR);
+    push(sink, HOUR + 1);
+    push(sink, HOUR + 2);
+    expect(times).toEqual([0, VIDEO, 2 * VIDEO]);
+  });
+
+  test('a new init, after a reconnect, starts a new timeline', () => {
+    const { sink, times } = recorder();
+    sink.pushFragment(1, true, init());
+    push(sink, HOUR);
+    sink.pushFragment(1, true, init());
+    push(sink, 2 * HOUR);
+    sink.resetStream();
+    sink.pushFragment(1, true, init());
+    push(sink, 3 * HOUR);
+    expect(times).toEqual([0, 0, 0]);
   });
 });

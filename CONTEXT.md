@@ -8489,8 +8489,13 @@ side is the backend's `services/camera/CONTEXT.md` › "Live previews".
   first sample and no frame was ever drawn. `splitClipFile` rebases every track's
   `tfdt` (`clip-timeline.ts`) by the same start in seconds, each in its own timescale, so
   the tracks stay in step; a fragment of another track takes the previous fragment's time
-  for pacing. The native view logs `first frame rendered at position … ms` and `ready at
-  position … ms, buffered to … ms` under `ArgusCamera`.
+  for pacing. The live stream is rebased the same way on its way to the native player
+  (`rebasingSink`, around the tiles' and the full view's native sink): the hub forwards
+  the camera's decode times untouched, and a muted tile, whose audio track is off, drew
+  its first frame and then waited hours for the next (phone run 4, 2026-10-28). Each new
+  init starts a new timeline. The native view logs under `ArgusCamera`: each
+  `playWhenReady` change, each playback state, the first rendered frame, and every 2 s
+  `playing …, playWhenReady … at position … ms, buffered to … ms`.
 - **Stills only where needed.** `CameraThumbnailPoller` skips a live camera that already
   has a still; it still paints every tile once before its video starts.
 
