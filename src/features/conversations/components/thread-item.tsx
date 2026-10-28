@@ -29,8 +29,6 @@ export type ThreadChat = {
 export type ThreadArgus = {
   results: AnchoredResults;
   renderResult: (result: ArgusResult) => ReactNode;
-  askId: string | null;
-  renderAsk: () => ReactNode;
 };
 
 export type ThreadItemViewProps = {
@@ -60,7 +58,6 @@ export function ThreadItemView({ item, bodies, days, chat, argus }: ThreadItemVi
       status={statusOf(message, chat)}
       mark={chat.marks.get(message.id)}
       groupStart={item.groupStart}
-      ask={argus && argus.askId === message.id ? argus.renderAsk() : null}
       onRetry={chat.onRetry}
       onDismiss={chat.onDismiss}
     />

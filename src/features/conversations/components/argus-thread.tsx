@@ -1,10 +1,8 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { View } from 'react-native';
 import { ASSISTANT_CALL_HREF, CAPABILITY } from '@/shared/constants';
 import { useCapabilities } from '@/shared/hooks/use-capabilities';
 import { useTranslation } from '@/shared/hooks/use-translation';
-import { Button } from '@/shared/ui/button';
 import type { MenuItem } from '@/shared/ui/menu';
 import {
   ArgusResultCard,
@@ -32,21 +30,7 @@ import { streamingResultId } from '@/features/conversations/model/thread-results
 
 export type ArgusThreadProps = { thread: ConversationThread; desktop: boolean };
 
-type AskProps = { onAnswer: (text: string) => void };
-
 type ComposerAreaProps = { state: ArgusThreadState };
-
-function Ask({ onAnswer }: AskProps) {
-  const { t } = useTranslation();
-  const yes = t('screens.conversations.answer.yes');
-  const no = t('screens.conversations.answer.no');
-  return (
-    <View className="flex-row gap-2 pt-1">
-      <Button compact variant="secondary" label={yes} onPress={() => onAnswer(yes)} />
-      <Button compact variant="secondary" label={no} onPress={() => onAnswer(no)} />
-    </View>
-  );
-}
 
 function ThreadComposerArea({ state }: ComposerAreaProps) {
   return (
@@ -144,8 +128,6 @@ export function ArgusThread({ thread, desktop }: ArgusThreadProps) {
           argus={{
             results: state.anchored,
             renderResult,
-            askId: state.askId,
-            renderAsk: () => <Ask onAnswer={(text) => void state.send(text)} />,
           }}
         />
       )}

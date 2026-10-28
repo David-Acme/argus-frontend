@@ -92,10 +92,6 @@ export const conversations = {
     'loading-older': 'Loading earlier messages',
     go: 'Go to the latest',
   },
-  answer: {
-    yes: 'Yes',
-    no: 'No',
-  },
   context: {
     label: 'What happens in this conversation',
     done: 'What Argus did',

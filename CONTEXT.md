@@ -7961,8 +7961,9 @@ suggestion chips over the field and the microphone as tap-to-talk.
   package), Reenviar (failed), Ver transcripción (notes), «Eliminar para mí»
   last behind the menu's Confirm. The backend has no per-message delete, so
   «Eliminar para mí» removes the row from this device only and says so.
-  A closed question from Argus (`asksYesNo`) carries Sí/No inside its bubble;
-  no suggestion chips anywhere, the empty thread included (phone run 2 #12).
+  A closed question from Argus is answered in words: no Sí/No chips under it
+  and no suggestion chips anywhere, the empty thread included (phone run 2
+  #12; phone run 4 #4 removed the Sí/No that had been kept).
 - **Ticks** (`model/receipts.ts`): member rows read `receipt` (sent ✓,
   delivered ✓✓, read blue ✓✓ in `receipt-read`, a colour role measured at 3:1
   on `fill` and `bubble-own`; blue on `ink` stays under 3:1 in both themes,
@@ -8148,10 +8149,9 @@ ideas (`PROJECT_IDEAS`), Tú's «Prueba a decirle» and Seguridad's «Prueba
 esto» (`starters` keeps only `promise`). Their i18n keys went with them. An
 empty state is its one card with its message and, where it has one, its
 single primary action («Pídeselo a Argus», «Nuevo evento», «Nuevo
-proyecto», «Nueva tarea»), and nothing under it. Kept: a closed question
-from Argus still carries Sí/No inside its bubble (`asksYesNo`, now in
-`model/conversation-thread.ts`, keys `screens.conversations.answer.*`), and
-the camera wizard's name choices, which fill a field rather than suggest
+proyecto», «Nueva tarea»), and nothing under it. The Sí/No once kept under
+a closed question from Argus went too (phone run 4 #4). Kept: the camera
+wizard's name choices, which fill a field rather than suggest
 what to say. `Chip size="suggestion"` stays as the option-chip size the
 ui-lab's filters show.
 
