@@ -207,6 +207,7 @@ export const size = {
   grabberHeight: 5,
   dot: 8,
   menuWidth: 220,
+  menuMaxWidth: 320,
   wheelRow: 36,
   wheelWidth: 64,
   pickerDay: 40,
