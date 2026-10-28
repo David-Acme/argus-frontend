@@ -395,16 +395,8 @@
       "count": 2
     }
   },
-  "src/features/cameras/components/clip-player.native.tsx": {
-    "argus/no-inline-size": {
-      "count": 2
-    }
-  },
   "src/features/cameras/components/tamper-evidence-view.tsx": {
     "argus/ds-owns-primitives": {
-      "count": 1
-    },
-    "complexity": {
       "count": 1
     }
   },
@@ -473,11 +465,6 @@
       "count": 1
     },
     "max-lines": {
-      "count": 1
-    }
-  },
-  "src/features/cameras/services/window-fullscreen.native.ts": {
-    "argus/responsive-home": {
       "count": 1
     }
   },

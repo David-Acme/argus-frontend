@@ -12,18 +12,10 @@ export type ClipTileProps = {
   cameraName: string;
   moment: string;
   showCamera?: boolean;
-  duration?: boolean;
   onOpen: (clip: ICameraClip) => void;
 };
 
-export function ClipTile({
-  clip,
-  cameraName,
-  moment,
-  showCamera = true,
-  duration = true,
-  onOpen,
-}: ClipTileProps) {
+export function ClipTile({ clip, cameraName, moment, showCamera = true, onOpen }: ClipTileProps) {
   const { t } = useTranslation();
   const poster = useClipPoster(clip);
   const caption = clipCaption({ clip, camera: showCamera ? cameraName : null, moment });
@@ -33,6 +25,7 @@ export function ClipTile({
       <Media
         label={caption.spoken}
         frame={poster ? { uri: poster } : undefined}
+        detail={caption.duration ?? undefined}
         onPress={open}
         center={
           <Button
@@ -48,18 +41,9 @@ export function ClipTile({
           />
         }
       />
-      <View className="flex-row items-center gap-2">
-        <View className="min-w-0 shrink grow">
-          <Text variant="rowMeta" tone="2" numberOfLines={1}>
-            {caption.line}
-          </Text>
-        </View>
-        {duration && caption.duration ? (
-          <Text variant="rowMeta" tone="3">
-            {caption.duration}
-          </Text>
-        ) : null}
-      </View>
+      <Text variant="rowMeta" tone="2" numberOfLines={1}>
+        {caption.line}
+      </Text>
     </View>
   );
 }

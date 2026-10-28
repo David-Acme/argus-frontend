@@ -33,25 +33,24 @@ function playbackOf(overrides: Partial<ClipPlayback> = {}): ClipPlayback {
   return {
     state: 'idle',
     clip: null,
-    file: null,
+    media: null,
     image: null,
     open: (opened) => calls.push(`open:${opened.id}`),
-    ended: false,
-    round: 0,
-    replay: () => calls.push('replay'),
-    finish: () => calls.push('finish'),
     close: () => calls.push('close'),
     ...overrides,
   };
 }
 
 type PlayerProps = {
-  muted?: boolean;
-  onEnded?: () => void;
-  onAudioFailed?: (stopped: boolean) => void;
+  source?: { key: string } | null;
+  failed?: boolean;
+  poster?: string;
+  title?: string;
+  subtitle?: string;
+  onRetry?: () => void;
 };
 
-const shownPlayer: { props: PlayerProps } = { props: {} };
+const shownPlayer: { props: PlayerProps | null } = { props: null };
 
 mock.module('expo-router', () => ({
   Redirect: ({ href }: { href: string | { pathname: string } }) => (
@@ -89,12 +88,10 @@ mock.module('@/features/cameras/hooks/use-clip-poster', () => ({
   useClipPoster: () => 'data:image/jpeg;base64,cG9zdGVy',
 }));
 
-mock.module('@/features/cameras/components/clip-player', () => ({
-  ClipPlayer: (props: PlayerProps) => {
+mock.module('@/shared/ui/media/player/media-player', () => ({
+  MediaPlayer: (props: PlayerProps) => {
     shownPlayer.props = props;
-    return (
-      <span data-testid="clip-player" data-muted={String(props.muted)} onClick={props.onEnded} />
-    );
+    return <span data-testid="media-player" />;
   },
 }));
 
@@ -175,6 +172,7 @@ afterEach(() => {
   camera = cameraRow();
   recording = null;
   playback = playbackOf();
+  shownPlayer.props = null;
 });
 
 describe('Grabaciones', () => {
@@ -183,35 +181,33 @@ describe('Grabaciones', () => {
     expect(screen.getByTestId('redirect').textContent).toBe('/clips');
   });
 
-  test('the clip stage keeps the poster under the video, which paints over it from its first frame', () => {
-    const { rerender } = render(<ClipStage playback={playbackOf({ state: 'loading', clip })} />);
-    expect(screen.queryByTestId('clip-player')).toBeNull();
-    expect(document.querySelector('img')?.getAttribute('src')).toContain('cG9zdGVy');
-    rerender(
+  test('a video clip goes to the player with its source, poster, camera and moment', () => {
+    const media = { key: 'clip:3:9', data: new ArrayBuffer(4) };
+    render(
       <ClipStage
-        playback={playbackOf({
-          state: 'ready',
-          clip,
-          file: { init: new Uint8Array(), track: null, fragments: [] },
-        })}
+        playback={playbackOf({ state: 'ready', clip, media })}
+        title="Cocina"
+        subtitle="hoy 3:32 PM"
+        onRetry={() => calls.push('retry')}
       />
     );
-    const player = screen.getByTestId('clip-player');
-    const poster = [...document.querySelectorAll('img')].find((img) =>
-      img.getAttribute('src')?.includes('cG9zdGVy')
-    );
-    expect(poster).toBeDefined();
-    expect(
-      poster && poster.compareDocumentPosition(player) & Node.DOCUMENT_POSITION_FOLLOWING
-    ).toBeTruthy();
+    expect(shownPlayer.props).toMatchObject({
+      source: media,
+      failed: false,
+      poster: 'data:image/jpeg;base64,cG9zdGVy',
+      title: 'Cocina',
+      subtitle: 'hoy 3:32 PM',
+    });
+    shownPlayer.props?.onRetry?.();
+    expect(calls).toEqual(['retry']);
   });
 
   test('a still is an image, never a player or a replay', () => {
     const still = { ...clip, trigger: 'tamper' as const, contentType: 'image/jpeg', durationMs: 0 };
     const { rerender } = render(
-      <ClipStage playback={playbackOf({ state: 'loading', clip: still })} closable={false} />
+      <ClipStage playback={playbackOf({ state: 'loading', clip: still })} />
     );
-    expect(screen.queryByTestId('clip-player')).toBeNull();
+    expect(screen.queryByTestId('media-player')).toBeNull();
     rerender(
       <ClipStage
         playback={playbackOf({
@@ -219,85 +215,26 @@ describe('Grabaciones', () => {
           clip: still,
           image: 'data:image/jpeg;base64,c3RpbGw=',
         })}
-        closable={false}
       />
     );
     expect(screen.getByText('Imagen guardada por Argus')).toBeDefined();
     const sources = [...document.querySelectorAll('img')].map((img) => img.getAttribute('src'));
     expect(sources).toContain('data:image/jpeg;base64,c3RpbGw=');
-    expect(screen.queryByTestId('clip-player')).toBeNull();
+    expect(screen.queryByTestId('media-player')).toBeNull();
     expect(screen.queryByRole('button', { name: 'Ver de nuevo' })).toBeNull();
   });
 
-  test('the clip stage says a failure in words and closes', () => {
-    const { rerender } = render(<ClipStage playback={playbackOf({ state: 'ready', clip })} />);
-    rerender(<ClipStage playback={playbackOf({ state: 'failed', clip })} />);
-    expect(screen.getByText('No se pudo cargar el clip')).toBeDefined();
-    fireEvent.click(screen.getByRole('button', { name: 'Cerrar' }));
-    expect(calls).toEqual(['close']);
+  test('a clip that failed to load tells the player, which offers to retry', () => {
+    render(<ClipStage playback={playbackOf({ state: 'failed', clip })} />);
+    expect(shownPlayer.props?.failed).toBe(true);
   });
 
-  test('while a clip plays its stage shows how far it is, and «Ver de nuevo» only once it ends', () => {
-    const file = {
-      init: new Uint8Array(),
-      track: null,
-      fragments: [
-        { bytes: new Uint8Array(), keyframe: true, atUs: 0 },
-        { bytes: new Uint8Array(), keyframe: false, atUs: 19_000_000 },
-      ],
-    };
-    const { rerender } = render(
-      <ClipStage playback={playbackOf({ state: 'ready', clip, file })} closable={false} />
-    );
-    expect(screen.getByRole('progressbar', { name: 'Reproduciendo, 0:00 de 0:19' })).toBeDefined();
-    expect(screen.queryByRole('button', { name: 'Ver de nuevo' })).toBeNull();
-    fireEvent.click(screen.getByTestId('clip-player'));
-    expect(calls).toEqual(['finish']);
-    calls.length = 0;
-    rerender(
-      <ClipStage
-        playback={playbackOf({ state: 'ready', clip, file, ended: true })}
-        closable={false}
-      />
-    );
-    expect(screen.queryByRole('progressbar')).toBeNull();
-    expect(screen.queryByRole('button', { name: 'Cerrar' })).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: 'Ver de nuevo' }));
-    expect(calls).toEqual(['replay']);
-  });
-});
-
-describe('clip sound', () => {
-  const file = {
-    init: new Uint8Array(),
-    track: null,
-    fragments: [{ bytes: new Uint8Array(), keyframe: true, atUs: 0 }],
-  };
-  const muted = () => screen.getByTestId('clip-player').getAttribute('data-muted');
-
-  test('a clip plays with its sound, and one button mutes and unmutes it', () => {
-    render(<ClipStage playback={playbackOf({ state: 'ready', clip, file })} closable={false} />);
-    expect(muted()).toBe('false');
-    fireEvent.click(screen.getByRole('button', { name: 'Silenciar el clip' }));
-    expect(muted()).toBe('true');
-    fireEvent.click(screen.getByRole('button', { name: 'Activar el sonido' }));
-    expect(muted()).toBe('false');
-  });
-
-  test('when the audio fails the clip says «Sin audio», plays muted, and starts over if it had stopped', () => {
-    render(<ClipStage playback={playbackOf({ state: 'ready', clip, file })} closable={false} />);
-    act(() => shownPlayer.props.onAudioFailed?.(false));
-    expect(screen.getByText('Sin audio')).toBeDefined();
-    expect(screen.queryByRole('button', { name: 'Silenciar el clip' })).toBeNull();
-    expect(muted()).toBe('true');
-    expect(calls).toEqual([]);
-    act(() => shownPlayer.props.onAudioFailed?.(true));
-    expect(calls).toEqual(['replay']);
-  });
-
-  test('the closable stage stays muted', () => {
-    render(<ClipStage playback={playbackOf({ state: 'ready', clip, file })} />);
-    expect(muted()).toBe('true');
+  test('a clip the device cannot show says so in words', () => {
+    render(<ClipStage playback={playbackOf({ state: 'unsupported', clip })} />);
+    expect(
+      screen.getByText('Este dispositivo no puede mostrar este formato de video')
+    ).toBeDefined();
+    expect(screen.queryByTestId('media-player')).toBeNull();
   });
 });
 

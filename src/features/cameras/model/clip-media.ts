@@ -4,7 +4,9 @@ import { listBoxes, parseFragment, parseInit, type Fmp4Init } from '@/features/c
 export type ClipFragment = {
   bytes: Uint8Array;
   keyframe: boolean;
+  video: boolean;
   atUs: number;
+  endUs: number;
 };
 
 export type ClipFile = {
@@ -65,33 +67,19 @@ export function splitClipFile(bytes: Uint8Array): ClipFile | null {
   for (const fragment of pieces) {
     const samples = track ? parseFragment(fragment, track) : [];
     const first = samples[0];
+    const atUs = first ? first.timestampUs : (fragments.at(-1)?.atUs ?? 0);
     fragments.push({
       bytes: fragment,
       keyframe:
         samples.length === 0 ? fragments.length === 0 : samples.some((sample) => sample.isKey),
-      atUs: first ? first.timestampUs : (fragments.at(-1)?.atUs ?? 0),
+      video: samples.length > 0,
+      atUs,
+      endUs: samples.reduce(
+        (end, sample) => Math.max(end, sample.timestampUs + sample.durationUs),
+        atUs
+      ),
     });
   }
   if (fragments.length === 0) return null;
   return { init, track, fragments };
-}
-
-export type ClipPaceStep = {
-  index: number;
-  atMs: number;
-};
-
-export function clipPaceSteps(fragments: readonly ClipFragment[], leadMs = 400): ClipPaceStep[] {
-  const base = fragments[0]?.atUs ?? 0;
-  return fragments.map((fragment, index) => ({
-    index,
-    atMs: Math.max(0, Math.round((fragment.atUs - base) / 1000) - leadMs),
-  }));
-}
-
-export function clipDurationMs(fragments: readonly ClipFragment[]): number {
-  const first = fragments[0];
-  const last = fragments[fragments.length - 1];
-  if (!first || !last) return 0;
-  return Math.max(0, Math.round((last.atUs - first.atUs) / 1000));
 }

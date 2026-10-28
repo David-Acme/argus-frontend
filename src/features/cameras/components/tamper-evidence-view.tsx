@@ -4,10 +4,10 @@ import { Button } from '@/shared/components/ui/button';
 import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
 import { useTranslation } from '@/shared/hooks/use-translation';
-import { ClipPlayer } from './clip-player';
+import { MediaPlayer } from '@/shared/ui/media';
 import { useTamperEvidence } from '@/features/cameras/hooks/use-tamper-evidence';
 import { clipImageUri } from '@/features/cameras/model/camera-clips';
-import { decodeBase64, splitClipFile } from '@/features/cameras/model/clip-media';
+import { clipPlayerSource } from '@/features/cameras/model/clip-index';
 import {
   evidenceVideo,
   lastGoodFrame,
@@ -22,6 +22,8 @@ type TamperEvidenceViewProps = {
   looks?: boolean;
   quiet?: boolean;
 };
+
+type EvidenceVideoProps = { video: TamperEvidenceItem };
 
 type EvidenceImageProps = {
   item: TamperEvidenceItem;
@@ -52,23 +54,52 @@ function EvidenceImage({ item, label, wide }: EvidenceImageProps) {
   );
 }
 
-export function TamperEvidenceView({ target, enabled, looks = false, quiet = false }: TamperEvidenceViewProps) {
+function EvidenceVideo({ video }: EvidenceVideoProps) {
+  const { t } = useTranslation();
+  const [playing, setPlaying] = useState(false);
+  const source = useMemo(
+    () => (playing ? clipPlayerSource(`tamper:${video.clipId}`, video.base64) : null),
+    [playing, video]
+  );
+  if (!playing)
+    return (
+      <Button variant="outline" size="sm" className="self-start" onPress={() => setPlaying(true)}>
+        <Icon name="play" className="text-foreground size-4" />
+        <Text>{t('screens.security.tamper.play-clip')}</Text>
+      </Button>
+    );
+  return source ? (
+    <MediaPlayer source={source} onClose={() => setPlaying(false)} />
+  ) : (
+    <Text variant="caption">{t('screens.cameras.clips.unsupported')}</Text>
+  );
+}
+
+export function TamperEvidenceView({
+  target,
+  enabled,
+  looks = false,
+  quiet = false,
+}: TamperEvidenceViewProps) {
   const { t } = useTranslation();
   const { evidence, status, retry } = useTamperEvidence(target, enabled);
-  const [playing, setPlaying] = useState(false);
   const frame = lastGoodFrame(evidence);
   const crops = lookCrops(evidence);
   const video = evidenceVideo(evidence);
-  const file = useMemo(() => (playing && video ? splitClipFile(decodeBase64(video.base64)) : null), [playing, video]);
 
   if (!enabled) return null;
   if (!evidence && quiet) return null;
   if (!evidence) {
     return (
       <View className="flex-row flex-wrap items-center gap-2">
-        <Icon name={status === 'failed' ? 'image-down' : 'loader-circle'} className="text-muted-foreground size-4" />
+        <Icon
+          name={status === 'failed' ? 'image-down' : 'loader-circle'}
+          className="text-muted-foreground size-4"
+        />
         <Text variant="caption" className="min-w-0 flex-1">
-          {status === 'failed' ? t('screens.security.tamper.evidence-missing') : t('screens.security.tamper.evidence-loading')}
+          {status === 'failed'
+            ? t('screens.security.tamper.evidence-missing')
+            : t('screens.security.tamper.evidence-loading')}
         </Text>
         {status === 'failed' ? (
           <Button variant="ghost" size="sm" onPress={retry}>
@@ -92,25 +123,17 @@ export function TamperEvidenceView({ target, enabled, looks = false, quiet = fal
           <Text variant="micro">{t('screens.security.tamper.look-crops')}</Text>
           <View className="flex-row flex-wrap gap-2">
             {crops.map((item) => (
-              <EvidenceImage key={item.clipId} item={item} label={t('screens.security.tamper.look-crops')} wide={false} />
+              <EvidenceImage
+                key={item.clipId}
+                item={item}
+                label={t('screens.security.tamper.look-crops')}
+                wide={false}
+              />
             ))}
           </View>
         </View>
       ) : null}
-      {video ? (
-        playing ? (
-          file ? (
-            <ClipPlayer file={file} onEnded={() => setPlaying(false)} />
-          ) : (
-            <Text variant="caption">{t('screens.cameras.clips.unsupported')}</Text>
-          )
-        ) : (
-          <Button variant="outline" size="sm" className="self-start" onPress={() => setPlaying(true)}>
-            <Icon name="play" className="text-foreground size-4" />
-            <Text>{t('screens.security.tamper.play-clip')}</Text>
-          </Button>
-        )
-      ) : null}
+      {video ? <EvidenceVideo video={video} /> : null}
     </View>
   );
 }

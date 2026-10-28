@@ -58,7 +58,6 @@ export function RecentClipsCard() {
                   day: date.formatDayMonth,
                 })}
                 showCamera={cameras.length > 1}
-                duration={false}
                 onOpen={open}
               />
             ) : null}

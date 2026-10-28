@@ -42,13 +42,9 @@ let cameras: ICameraCacheRow[] = [cameraRow(), cameraRow({ id: '4', name: 'Patio
 const playback: ClipPlayback = {
   state: 'idle',
   clip: null,
-  file: null,
+  media: null,
   image: null,
   open: (clip) => opened.push(clip.id),
-  ended: false,
-  round: 0,
-  replay: () => undefined,
-  finish: () => undefined,
   close: () => undefined,
 };
 
@@ -114,8 +110,8 @@ mock.module('@/features/cameras/hooks/use-clip-playback', () => ({
   useClipPlayback: useRenderingPlayback,
 }));
 
-mock.module('@/features/cameras/components/clip-player', () => ({
-  ClipPlayer: () => <span data-testid="clip-player" />,
+mock.module('@/shared/ui/media/player/media-player', () => ({
+  MediaPlayer: () => <span data-testid="media-player" />,
 }));
 
 mock.module('@/features/cameras/services/camera-clips.service', () => ({
@@ -161,7 +157,7 @@ afterEach(() => {
 });
 
 describe('a clip tile', () => {
-  test('names its camera, says when and how long under the frame, and plays on a tap', () => {
+  test('carries its length on the poster, its camera and time under it, and plays on a tap', () => {
     const tapped: string[] = [];
     render(
       <ClipTile
@@ -289,6 +285,8 @@ describe('the clip player', () => {
     render(<ClipScreen />);
     expect(opened).toEqual(['9']);
     expect(screen.getByRole('heading', { name: 'Cocina' })).toBeDefined();
+    expect(screen.getByText('0:21 · 1.9 MB · Evento')).toBeDefined();
+    expect(screen.getByText('Cocina · 26 oct · 14:02')).toBeDefined();
     fireEvent.click(screen.getByRole('button', { name: /^Ver en vivo/ }));
     expect(pushed).toEqual(['/cameras/3']);
     fireEvent.keyDown(screen.getByRole('button', { name: 'Más sobre este clip' }), {

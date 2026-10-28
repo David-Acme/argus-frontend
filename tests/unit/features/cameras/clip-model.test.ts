@@ -1,11 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import type { ICameraClips } from '@/core/interfaces';
-import {
-  clipDurationMs,
-  clipPaceSteps,
-  decodeBase64,
-  splitClipFile,
-} from '@/features/cameras/model/clip-media';
+import { formatDuration } from '@/shared/libs/duration';
+import { decodeBase64, splitClipFile } from '@/features/cameras/model/clip-media';
 import {
   CLIP_FEED_ALL,
   clipColumns,
@@ -24,7 +20,6 @@ import {
   clipRowsOf,
   clipTriggerLabelKey,
   compareClips,
-  formatClipDuration,
   formatClipSize,
   isImageClip,
   visibleClips,
@@ -76,16 +71,6 @@ describe('clip media', () => {
 
   test('a stream without an init segment is refused', () => {
     expect(splitClipFile(new Uint8Array(fragment(1, SYNC, [1, 2, 3])))).toBeNull();
-  });
-
-  test('pacing spreads the fragments over the clip duration', () => {
-    const split = splitClipFile(clipBytes());
-    if (!split) throw new Error('split');
-    expect(clipDurationMs(split.fragments)).toBe(0);
-    const steps = clipPaceSteps(split.fragments, 0);
-    expect(steps.map((step) => step.index)).toEqual([0, 1]);
-    expect(steps[0]?.atMs).toBe(0);
-    expect(steps[1]?.atMs).toBe(0);
   });
 });
 
@@ -154,8 +139,8 @@ describe('clip rows', () => {
     const rows = clipRowsOf(payload);
     const clip = rows[0];
     if (!clip) throw new Error('row');
-    expect(formatClipDuration(clip.durationMs)).toBe('0:21');
-    expect(formatClipDuration(-5)).toBe('0:00');
+    expect(formatDuration(clip.durationMs)).toBe('0:21');
+    expect(formatDuration(-5)).toBe('0:00');
     expect(formatClipSize(clip.byteSize)).toBe('4.3 MB');
     expect(formatClipSize(900_000)).toBe('879 KB');
     expect(formatClipSize(0)).toBe('');
