@@ -193,6 +193,31 @@ describe('the preview socket', () => {
     expect(socket.closed).toBe(false);
   });
 
+  test('a tile mounted again subscribes anew, and late frames of the one it left never reach it', async () => {
+    const mux = new CameraPreviewMux(deps);
+    const first = tile(1, 0);
+    const detach = mux.attach(first.entry);
+    await settle();
+    const socket = sockets[0];
+    if (!socket) throw new Error('no socket');
+    socket.onOpen?.();
+    socket.reply('camera:ready', { subId: 7 });
+    socket.binary(1, 7, []);
+    socket.binary(2, 7, MEDIA);
+    detach();
+    const again = tile(1, 0);
+    detachers.push(mux.attach(again.entry));
+    socket.binary(2, 7, MEDIA);
+    expect(again.states).not.toContain('live');
+    expect(again.sink.pushed).toEqual([]);
+    expect(socket.subscribes()).toEqual([1, 1]);
+    socket.reply('camera:ready', { subId: 8 });
+    socket.binary(1, 8, []);
+    socket.binary(2, 8, MEDIA);
+    expect(again.sink.pushed).toEqual([1, 2]);
+    expect(again.states.at(-1)).toBe('live');
+  });
+
   test('a closed subscription resets its tile instead of blanking the others', async () => {
     const mux = new CameraPreviewMux(deps);
     const first = tile(1, 0);

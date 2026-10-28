@@ -74,6 +74,10 @@ mock.module('@/features/cameras/components/camera-live-view', () => ({
   CameraLiveView: () => null,
 }));
 
+mock.module('@/features/cameras/hooks/use-clip-poster', () => ({
+  useClipPoster: () => 'data:image/jpeg;base64,cG9zdGVy',
+}));
+
 mock.module('@/features/cameras/components/clip-player', () => ({
   ClipPlayer: () => <span data-testid="clip-player" />,
 }));
@@ -163,9 +167,47 @@ describe('Grabaciones', () => {
     expect(screen.getByTestId('redirect').textContent).toBe('/clips');
   });
 
-  test('the clip stage plays a video, says a failure in words and closes', () => {
-    const { rerender } = render(<ClipStage playback={playbackOf({ state: 'ready', clip })} />);
+  test('the clip stage keeps the poster until the video arrives, then plays it', () => {
+    const { rerender } = render(<ClipStage playback={playbackOf({ state: 'loading', clip })} />);
+    expect(screen.queryByTestId('clip-player')).toBeNull();
+    expect(document.querySelector('img')?.getAttribute('src')).toContain('cG9zdGVy');
+    rerender(
+      <ClipStage
+        playback={playbackOf({
+          state: 'ready',
+          clip,
+          file: { init: new Uint8Array(), track: null, fragments: [] },
+        })}
+      />
+    );
     expect(screen.getByTestId('clip-player')).toBeDefined();
+  });
+
+  test('a still is an image, never a player or a replay', () => {
+    const still = { ...clip, trigger: 'tamper' as const, contentType: 'image/jpeg', durationMs: 0 };
+    const { rerender } = render(
+      <ClipStage playback={playbackOf({ state: 'loading', clip: still })} closable={false} />
+    );
+    expect(screen.queryByTestId('clip-player')).toBeNull();
+    rerender(
+      <ClipStage
+        playback={playbackOf({
+          state: 'ready',
+          clip: still,
+          image: 'data:image/jpeg;base64,c3RpbGw=',
+        })}
+        closable={false}
+      />
+    );
+    expect(screen.getByText('Imagen guardada por Argus')).toBeDefined();
+    const sources = [...document.querySelectorAll('img')].map((img) => img.getAttribute('src'));
+    expect(sources).toContain('data:image/jpeg;base64,c3RpbGw=');
+    expect(screen.queryByTestId('clip-player')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Ver de nuevo' })).toBeNull();
+  });
+
+  test('the clip stage says a failure in words and closes', () => {
+    const { rerender } = render(<ClipStage playback={playbackOf({ state: 'ready', clip })} />);
     rerender(<ClipStage playback={playbackOf({ state: 'failed', clip })} />);
     expect(screen.getByText('No se pudo cargar el clip')).toBeDefined();
     fireEvent.click(screen.getByRole('button', { name: 'Cerrar' }));

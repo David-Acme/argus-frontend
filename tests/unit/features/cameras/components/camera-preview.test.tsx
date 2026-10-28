@@ -77,6 +77,18 @@ describe('CameraPreview on native', () => {
     expect(screen.getByTestId('native-player').getAttribute('data-opacity')).toBe('1');
   });
 
+  test('the still stays drawn over the player until the first frame is shown', async () => {
+    render(<NativePreview cameraId="4" order={0} still="data:image/jpeg;base64,c3RpbGw=" />);
+    const still = () =>
+      [...document.querySelectorAll('img')].some((img) =>
+        img.getAttribute('src')?.includes('c3RpbGw=')
+      );
+    expect(still()).toBe(true);
+    act(() => attached[0]?.onState('live'));
+    await act(() => new Promise((resolve) => setTimeout(resolve, 300)));
+    expect(still()).toBe(false);
+  });
+
   test('a tile past the cap mounts no player and leaves the still alone', () => {
     granted = false;
     render(<NativePreview cameraId="4" order={7} />);

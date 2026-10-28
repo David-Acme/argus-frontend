@@ -234,15 +234,16 @@ describe('GlobalCommand', () => {
     expect(screen.getByRole('status').textContent).toContain('Nada coincide con «JOSE»');
   });
 
-  test('reaching the end of the results asks the database for the next page', async () => {
+  test('a short page scans on by itself, and reaching the end asks for the next page', async () => {
     moreAfter = true;
     render(<GlobalCommand />);
     press('/');
     type('patio');
     await settle();
+    expect(extended.length).toBe(1);
     expect(screen.getByTestId('infinite-list').getAttribute('data-footer')).toBe('loading');
     fireEvent.click(screen.getByRole('button', { name: 'end-reached' }));
-    expect(extended.length).toBe(1);
+    expect(extended.length).toBe(2);
   });
 
   test('a busy Argus keeps the text as a draft in the thread instead of losing it', () => {

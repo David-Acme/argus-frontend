@@ -17,7 +17,9 @@ import { useCommandSearch } from '@/features/command';
 import { ModuleTile } from '@/features/navigation/components/module-tile';
 import { useNavPins } from '@/features/navigation/hooks/use-nav-pins';
 import {
+  allSheetLong,
   moduleEntry,
+  moreModulesThanGrid,
   navGroups,
   SHEET_GRID,
   type NavEntry,
@@ -53,9 +55,9 @@ function SearchResults({ query, destinations, onOpen, onRun }: SearchResultsProp
   const search = useCommandSearch({ query, scope: 'all', openedAt, enabled: true });
   const words = searchWords(query);
   const places = destinations.filter((entry) => matchesWords(t(entry.label), words));
-  const empty = places.length === 0 && search.results.length === 0 && !search.pending;
+  const found = places.length > 0 || search.results.length > 0;
   return (
-    <View className="gap-4">
+    <View className="flex-1 gap-4">
       {places.length > 0 ? (
         <Section title={t('screens.navigation.search-dest')}>
           {places.map((entry) => (
@@ -82,7 +84,7 @@ function SearchResults({ query, destinations, onOpen, onRun }: SearchResultsProp
           ))}
         </Section>
       ))}
-      {search.paging.footer === 'loading' ? (
+      {search.results.length > 0 && search.paging.footer === 'loading' ? (
         <Button
           block
           variant="ghost"
@@ -91,8 +93,10 @@ function SearchResults({ query, destinations, onOpen, onRun }: SearchResultsProp
           onPress={search.paging.onEndReached}
         />
       ) : null}
-      {empty ? (
-        <Notice centred icon="search" title={t('screens.navigation.search-none', { query })} />
+      {!found && !search.pending ? (
+        <View className="flex-1 justify-center">
+          <Notice centred icon="search" title={t('screens.navigation.search-none', { query })} />
+        </View>
       ) : null}
     </View>
   );
@@ -125,12 +129,14 @@ function ModuleGrid({ modules, actionsOf, onOpen, onExpand }: ModulesProps) {
             ))}
           </View>
         ))}
-        <Button
-          block
-          variant="ghost"
-          label={t('screens.navigation.see-modules', { count: String(modules.length) })}
-          onPress={onExpand}
-        />
+        {moreModulesThanGrid(modules.length) ? (
+          <Button
+            block
+            variant="ghost"
+            label={t('screens.navigation.see-modules', { count: String(modules.length) })}
+            onPress={onExpand}
+          />
+        ) : null}
       </View>
     </Section>
   );
@@ -259,8 +265,8 @@ export function AllSheet({ onArgus }: AllSheetProps) {
       onClose={shut}
       title={t('screens.navigation.all')}
       variant="list"
-      long={full || searching}>
-      <View className="gap-4">
+      long={allSheetLong({ searching, full })}>
+      <View className={searching ? 'flex-1 gap-4' : 'gap-4'}>
         <Field placeholder={t('screens.navigation.search')} value={query} onChangeText={setQuery} />
         {searching ? (
           <SearchResults

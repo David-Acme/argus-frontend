@@ -1,4 +1,5 @@
-import type { ISearchHitCacheRow } from '@/core/interfaces';
+import { useEffect } from 'react';
+import type { ISearchHitCacheRow, ISearchHitsCacheValue } from '@/core/interfaces';
 import type { SearchKind } from '@/core/types';
 import { SEARCH_PAGE_SIZE, VIEW_CACHE_KEYS } from '@/shared/constants';
 import { usePagedList, type InfiniteListState } from '@/shared/hooks/use-infinite-list';
@@ -43,15 +44,24 @@ export function useCommandResults({
   const kinds = scopeKinds(scope, allowed);
   const active = enabled && words.length > 0 && kinds.length > 0;
   const key = active ? encodeSearchScope({ kinds, words, since }) : IDLE_SCOPE;
-  const paged = usePagedList<ISearchHitCacheRow>(VIEW_CACHE_KEYS.commandSearch, key, {
-    enabled: active,
-    endAfter: SEARCH_PAGE_SIZE,
-  });
+  const paged = usePagedList<ISearchHitCacheRow, ISearchHitsCacheValue>(
+    VIEW_CACHE_KEYS.commandSearch,
+    key,
+    { enabled: active, endAfter: SEARCH_PAGE_SIZE }
+  );
   const ready = paged.snapshot !== null;
+  const scanned = paged.snapshot?.scanned ?? 0;
+  const scanning = active && ready && paged.hasMore && paged.rows.length < SEARCH_PAGE_SIZE;
+  const { loadMore } = paged;
+
+  useEffect(() => {
+    if (scanning) void loadMore();
+  }, [loadMore, scanned, scanning]);
 
   return {
     matches: active ? groupEntries(searchEntries(paged.rows, openedAt)) : [],
     paging: paged.paging,
-    pending: searchWords(query).length > 0 && (query !== settled || (active && !ready)),
+    pending:
+      searchWords(query).length > 0 && (query !== settled || (active && (!ready || scanning))),
   };
 }

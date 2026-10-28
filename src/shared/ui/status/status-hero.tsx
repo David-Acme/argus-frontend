@@ -1,5 +1,5 @@
 import { clsx } from 'clsx';
-import { View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { useAnnounce } from '@/shared/hooks/use-announce';
 import {
   layout,
@@ -23,7 +23,7 @@ import { StatusFade } from './status-fade';
 import { heroStepOf } from './status-scale';
 import type { HeroStatusProps, StatusStat, StatusTone } from './status-types';
 
-type StatsProps = { stats: readonly StatusStat[]; wrap: boolean };
+type StatsProps = { stats: readonly StatusStat[]; scroll: boolean };
 
 type StatChipProps = { stat: StatusStat };
 
@@ -56,15 +56,20 @@ function HeroPresence({ state, size: side, event }: HeroPresenceProps) {
   return <Presence state={state} size={side} paused={paused} event={event} />;
 }
 
-function Stats({ stats, wrap }: StatsProps) {
+function Stats({ stats, scroll }: StatsProps) {
+  const { windowClass } = useWindowLayout();
   if (stats.length === 0) return null;
+  const chips = stats.map((stat) => <StatChip key={`${stat.value} ${stat.label}`} stat={stat} />);
+  if (!scroll) return <View className="flex-row flex-nowrap gap-2">{chips}</View>;
+  const bleed = windowClass === 'compact';
   return (
-    <View
-      className={clsx('flex-row gap-2', wrap ? 'mt-status-stats-top flex-wrap' : 'flex-nowrap')}>
-      {stats.map((stat) => (
-        <StatChip key={`${stat.value} ${stat.label}`} stat={stat} />
-      ))}
-    </View>
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      className={clsx('mt-status-stats-top', bleed && '-mx-4')}
+      contentContainerClassName={clsx('flex-row gap-2', bleed && 'px-4')}>
+      {chips}
+    </ScrollView>
   );
 }
 
@@ -86,7 +91,7 @@ function HeroRow(props: HeroStatusProps & { wide: boolean }) {
           <Text variant="meta">{meta}</Text>
         </StatusFade>
       </View>
-      <Stats stats={stats} wrap />
+      <Stats stats={stats} scroll />
     </View>
   );
 }
@@ -114,7 +119,7 @@ function HeroBand(props: HeroStatusProps) {
           </Text>
           <Text variant="meta">{meta}</Text>
         </StatusFade>
-        <Stats stats={stats} wrap={false} />
+        <Stats stats={stats} scroll={false} />
         {action}
       </View>
     </View>

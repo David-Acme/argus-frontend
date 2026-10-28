@@ -71,6 +71,14 @@ export function previewSubscribeFrame(cameraId: number, fastStart: boolean): str
   });
 }
 
+export function previewAckFrame(subId: number, bytes: number): string {
+  return JSON.stringify({ type: 'camera:ack', payload: { subId, bytes } });
+}
+
+export function previewUnsubscribeFrame(subId: number): string {
+  return JSON.stringify({ type: 'camera:unsubscribe', payload: { subId } });
+}
+
 export function firstInOrder<T extends { order: number }>(items: readonly T[]): T | null {
   let first: T | null = null;
   for (const item of items) if (!first || item.order < first.order) first = item;

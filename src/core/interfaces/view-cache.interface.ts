@@ -8,6 +8,7 @@ import type {
   EventSeverity,
   IconName,
   NotificationData,
+  PagedRows,
   RecurrenceException,
   SearchKind,
   UserRole,
@@ -148,6 +149,10 @@ export interface ISearchHitCacheRow {
   allDay: boolean;
   parentId: string | null;
   recurrenceRule: string | null;
+}
+
+export interface ISearchHitsCacheValue extends PagedRows<ISearchHitCacheRow> {
+  scanned: number;
 }
 
 export interface ICalendarEventShareCacheRow {

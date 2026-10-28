@@ -295,6 +295,13 @@ describe('the Más rows', () => {
     ]);
   });
 
+  test('no two rows share a glyph', () => {
+    const icons = moreRows(moreKeys({ maintenance: true, people: true }), facts).map(
+      (row) => row.icon
+    );
+    expect(new Set(icons).size).toBe(icons.length);
+  });
+
   test('every row carries what it holds now', () => {
     expect(moreRows(moreKeys({ maintenance: true, people: true }), facts)).toEqual([
       {
@@ -305,13 +312,13 @@ describe('the Más rows', () => {
       },
       {
         key: 'places',
-        icon: 'sliders',
+        icon: 'pin',
         title: 'Lugares y modos',
         meta: 'Casa, Restaurante Centro',
       },
       {
         key: 'maintenance',
-        icon: 'sliders',
+        icon: 'wrench',
         title: 'Mantenimiento',
         meta: 'Patio trasero, hasta 15:15',
       },

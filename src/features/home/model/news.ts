@@ -1,6 +1,7 @@
 import type { INotificationPreviewCacheRow } from '@/core/interfaces';
 import type { AvatarTone } from '@/shared/ui/avatar';
 import { callBackHrefOf } from '@/shared/libs/call-back';
+import { DAY_MS, startOfLocalDay } from '@/shared/libs/day';
 import type { IconGlyph } from '@/shared/ui/icon';
 import {
   isThreadRead,
@@ -34,8 +35,8 @@ const KIND_ICONS: Readonly<Record<string, IconGlyph>> = {
   guard_episode: 'alert',
   guard_tamper: 'eyeoff',
   guard_tamper_ask: 'eyeoff',
-  maintenance_view_check: 'sliders',
-  camera_maintenance_notice: 'sliders',
+  maintenance_view_check: 'wrench',
+  camera_maintenance_notice: 'wrench',
   guard_arrival: 'door',
   camera_fallback: 'cam',
   camera_fallback_digest: 'hist',
@@ -54,8 +55,6 @@ const KIND_ICONS: Readonly<Record<string, IconGlyph>> = {
 const ARGUS_KINDS: ReadonlySet<string> = new Set(['assistant_task', 'guard_digest']);
 
 const REVIEW_KINDS: ReadonlySet<string> = new Set(['guard_episode', 'guard_tamper']);
-
-const DAY_MS = 86_400_000;
 
 const WEEK_DAYS = 7;
 
@@ -114,13 +113,10 @@ export const newsPressable = (
   target: string | null
 ): boolean => target !== null || !isThreadRead(thread);
 
-const startOfDay = (value: Date): number =>
-  new Date(value.getFullYear(), value.getMonth(), value.getDate()).getTime();
-
 export function newsStampOf(at: number, now: number): NewsStamp | null {
   if (!at) return null;
   const date = new Date(at);
-  const days = Math.round((startOfDay(new Date(now)) - startOfDay(date)) / DAY_MS);
+  const days = Math.round((startOfLocalDay(now) - startOfLocalDay(at)) / DAY_MS);
   if (days <= 0) return { kind: 'today', at: date };
   if (days === 1) return { kind: 'yesterday', at: date };
   if (days < WEEK_DAYS) return { kind: 'week', at: date };

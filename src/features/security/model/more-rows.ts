@@ -24,8 +24,8 @@ export type MoreRow = { key: MoreKey; icon: IconGlyph; title: string; meta: stri
 
 const GLYPH: Readonly<Record<MoreKey, IconGlyph>> = {
   visits: 'door',
-  places: 'sliders',
-  maintenance: 'sliders',
+  places: 'pin',
+  maintenance: 'wrench',
   people: 'users',
 };
 

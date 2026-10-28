@@ -381,14 +381,14 @@ describe('the Argus thread', () => {
     expect(reply.compareDocumentPosition(card) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
-  test('a closed question from Argus carries Sí and No inside its bubble', async () => {
+  test('a closed question from Argus is answered in words: no Sí or No chips under it', async () => {
     const rows = [
       message('1', { direction: 'out', body: 'Regar' }),
       message('2', { body: '¿Te lo recuerdo?' }),
     ];
     await show(<ArgusThread thread={thread(rows)} desktop={false} />);
-    fireEvent.click(screen.getAllByRole('button', { name: 'Sí' })[0] as HTMLElement);
-    expect(calls).toContain('send Sí');
+    expect(screen.queryByRole('button', { name: 'Sí' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'No' })).toBeNull();
   });
 
   test('a typed message shows the clock, then ✓✓ on the typing frame, and a failed one a quiet resend', async () => {

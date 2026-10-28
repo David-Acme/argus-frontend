@@ -12,7 +12,9 @@ import {
 import { mediaCloseAction, type MediaFrame } from '@/features/cameras/model/media-access';
 import {
   firstInOrder,
+  previewAckFrame,
   previewSubscribeFrame,
+  previewUnsubscribeFrame,
   readMediaHeader,
 } from '@/features/cameras/model/camera-preview';
 import {
@@ -47,6 +49,7 @@ export class CameraPreviewMux {
   private readonly channels = new Map<string, PreviewChannel>();
   private readonly bySub = new Map<number, PreviewChannel>();
   private readonly held = new Map<string, Timer | null>();
+  private readonly released = new Set<number>();
 
   constructor(private readonly deps: CameraMediaDeps) {}
 
@@ -77,10 +80,13 @@ export class CameraPreviewMux {
   private end(channel: PreviewChannel): void {
     if (channel.subId == null) return;
     this.bySub.delete(channel.subId);
-    this.socket?.sendText(
-      JSON.stringify({ type: 'camera:unsubscribe', payload: { subId: channel.subId } })
-    );
+    this.release(channel.subId);
     channel.reset();
+  }
+
+  private release(subId: number): void {
+    this.released.add(subId);
+    this.socket?.sendText(previewUnsubscribeFrame(subId));
   }
 
   private clearTimer(name: 'askTimer' | 'lingerTimer' | 'reconnectTimer'): void {
@@ -155,6 +161,7 @@ export class CameraPreviewMux {
     this.tick = null;
     this.asking = null;
     this.bySub.clear();
+    this.released.clear();
     this.access?.detach();
     const socket = this.socket;
     this.socket = null;
@@ -258,27 +265,24 @@ export class CameraPreviewMux {
   private onReady(subId: number | undefined): void {
     const channel = this.answered();
     if (subId != null) {
+      this.released.delete(subId);
       if (channel) {
         channel.begin(subId, Date.now());
         this.bySub.set(subId, channel);
-      } else if (!this.bySub.has(subId)) {
-        this.socket?.sendText(JSON.stringify({ type: 'camera:unsubscribe', payload: { subId } }));
-      }
+      } else if (!this.bySub.has(subId)) this.release(subId);
     }
     this.pump();
   }
 
   private onRefused(refusal: SubscribeRefusal): void {
     const channel = this.answered();
-    if (channel) {
-      channel.reset();
-      this.holdBack(channel, refusal);
-    }
+    channel?.reset();
+    if (channel) this.holdBack(channel, refusal);
     this.pump();
   }
 
   private onClosed(subId: number | undefined): void {
-    const channel = subId == null ? undefined : this.bySub.get(subId);
+    const channel = this.bySub.get(subId ?? -1);
     if (!channel || subId == null) return;
     this.bySub.delete(subId);
     channel.reset();
@@ -289,7 +293,7 @@ export class CameraPreviewMux {
 
   private onBinary(data: ArrayBuffer): void {
     const header = readMediaHeader(data);
-    if (!header) return;
+    if (!header || this.released.has(header.subId)) return;
     let channel = this.bySub.get(header.subId);
     if (!channel && this.asking && this.channels.has(this.asking.key)) {
       channel = this.asking;
@@ -308,9 +312,7 @@ export class CameraPreviewMux {
     for (const channel of this.channels.values()) {
       const bytes = channel.takeAck();
       if (bytes > 0 && channel.subId != null)
-        socket.sendText(
-          JSON.stringify({ type: 'camera:ack', payload: { subId: channel.subId, bytes } })
-        );
+        socket.sendText(previewAckFrame(channel.subId, bytes));
       if (!channel.stalled(now, CAMERA_STREAM_STALL_MS)) continue;
       this.end(channel);
       channel.publish('connecting');

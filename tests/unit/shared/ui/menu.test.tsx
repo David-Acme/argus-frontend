@@ -309,6 +309,22 @@ describe('Menu parts', () => {
     expect(screen.queryByRole('menu')).toBeNull();
   });
 
+  test('an anchored row shows its whole label, never an ellipsis; a sheet row keeps one line', () => {
+    const long = [
+      { label: 'Ver las conversaciones', icon: 'chat', onPress: () => undefined },
+      {
+        label: 'Borrar la conversación',
+        icon: 'trash',
+        destructive: true,
+        confirm: 'by-action',
+        onPress: () => undefined,
+      },
+    ] as const satisfies MenuItems;
+    render(<MenuPreview items={long} />);
+    for (const label of ['Ver las conversaciones', 'Borrar la conversación'])
+      expect(screen.getByText(label).className).not.toContain('textOverflow');
+  });
+
   test('the anchored button lists every action with its icon well', async () => {
     const listed = items([]);
     render(<AnchoredButton label="Más" icon="more" items={listed} onRun={() => undefined} />);

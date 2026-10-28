@@ -12,6 +12,7 @@ import {
   clipContentOf,
   clipDetail,
   clipFacts,
+  clipGlyph,
   clipFeedCamera,
   clipFeedPath,
   clipFeedScope,
@@ -209,6 +210,12 @@ describe('clip rows', () => {
     expect(clipTriggerLabelKey('continuous')).toBe('screens.cameras.clips.trigger.continuous');
     expect(clipFacts(t, clip)).toBe('0:21 · 4.3 MB · screens.cameras.clips.trigger.motion');
     expect(clipDetail(clip, 'hoy 14:02')).toBe('hoy 14:02 · 0:21');
+    const still = { ...clip, trigger: 'tamper' as const, contentType: 'image/jpeg', durationMs: 0 };
+    expect(clipFacts(t, still)).toBe(
+      'screens.cameras.clips.still · 4.3 MB · screens.cameras.clips.trigger.tamper'
+    );
+    expect(clipGlyph(still)).toBe('image');
+    expect(clipGlyph(clip)).toBe('play');
   });
 });
 

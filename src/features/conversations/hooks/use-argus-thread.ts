@@ -19,7 +19,6 @@ import type { ConversationThread } from '@/features/conversations/hooks/use-conv
 import { useTyping } from '@/features/conversations/hooks/use-typing';
 import { chatOverlay } from '@/features/conversations/model/assistant-chat-overlay';
 import type { ChatMark, ChatOverlay } from '@/features/conversations/model/assistant-chat-overlay';
-import { asksYesNo } from '@/features/conversations/model/conversation-thread';
 import type { RecordedNote } from '@/features/conversations/model/voice-note';
 import {
   anchorResults,
@@ -32,7 +31,6 @@ export type ArgusThreadState = {
   overlay: ChatOverlay;
   marks: ReadonlyMap<string, ChatMark>;
   typed: ReadonlySet<string>;
-  askId: string | null;
   typing: boolean;
   results: readonly ArgusResult[];
   anchored: AnchoredResults;
@@ -65,7 +63,6 @@ export function useArgusThread(thread: ConversationThread): ArgusThreadState {
     leg: IS_NATIVE ? 'phone' : 'laptop',
     skewMs: CHAT_CLOCK_SKEW_MS,
   });
-  const last = overlay.rows.at(-1);
   const failure = talk.stage === 'failed' ? holdTalkFailureOf(talk.error) : null;
   const { dismiss } = talk;
   const closeFailure = useEffectEvent(() => dismiss());
@@ -101,7 +98,6 @@ export function useArgusThread(thread: ConversationThread): ArgusThreadState {
     overlay,
     marks: new Map([...overlay.marks, ...outbox.marks]),
     typed: typingState.typed,
-    askId: last?.direction === 'in' && asksYesNo(last.body) ? last.id : null,
     typing: typingState.typing.has(ARGUS_COUNTERPART_ID) || talk.stage === 'sending',
     results,
     anchored: anchorResults(overlay.rows, threadResultsOf(resultRowsOf(overlay.rows), results)),

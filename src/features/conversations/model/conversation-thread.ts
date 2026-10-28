@@ -1,13 +1,12 @@
 import type { IConversationMessageCacheRow } from '@/core/interfaces';
 import type { ConversationDeliveryState } from '@/core/types';
+import { DAY_MS } from '@/shared/libs/day';
 
 type MessageFacts = Pick<IConversationMessageCacheRow, 'direction' | 'kind' | 'state'>;
 
 export type DayKind = 'today' | 'yesterday' | 'weekday' | 'date';
 
 export const WEEKDAY_SPAN_DAYS = 6;
-
-const DAY_MS = 24 * 60 * 60 * 1000;
 
 const DELIVERY_STATES: ReadonlySet<string> = new Set<ConversationDeliveryState>([
   'sent',
@@ -64,16 +63,4 @@ export const REPLY_QUOTE_MAX = 60;
 export function quoted(body: string, max: number = REPLY_QUOTE_MAX): string {
   const flat = body.replace(/\s+/g, ' ').trim();
   return flat.length > max ? `${flat.slice(0, max - 1).trimEnd()}…` : flat;
-}
-
-const OPEN_QUESTION =
-  /^(qu[eé]|cu[aá]l(es)?|cu[aá]ndo|d[oó]nde|qui[eé]n(es)?|c[oó]mo|cu[aá]nt[oa]s?|por qu[eé]|para qu[eé]|what|which|when|where|who|whom|whose|how|why)(?=[\s,?]|$)/i;
-
-export function asksYesNo(reply: string | null): boolean {
-  const said = reply?.trim() ?? '';
-  if (!said.endsWith('?')) return false;
-  const question = said.includes('¿')
-    ? said.slice(said.lastIndexOf('¿') + 1)
-    : (said.split(/(?<=[.!])\s+/).at(-1) ?? said);
-  return !OPEN_QUESTION.test(question.trim());
 }

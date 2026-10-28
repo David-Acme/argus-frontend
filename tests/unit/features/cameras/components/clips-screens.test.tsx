@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, mock, test } from 'bun:test';
 import { fireEvent, render, screen } from '@testing-library/react';
+import { useCallback, useState } from 'react';
 import type { ICameraCacheRow, ICameraClip } from '@/core/interfaces';
 import type { ClipPlayback } from '@/features/cameras/hooks/use-clip-playback';
 import { screenFocus } from '../../../shared/ui/screen-focus';
@@ -47,6 +48,17 @@ const playback: ClipPlayback = {
   replay: () => undefined,
   close: () => undefined,
 };
+
+const feedCopies = { fresh: false };
+
+function useRenderingPlayback(): ClipPlayback {
+  const [, setOpened] = useState(0);
+  const open = useCallback((clip: ICameraClip) => {
+    playback.open(clip);
+    setOpened((count) => count + 1);
+  }, []);
+  return { ...playback, open };
+}
 
 const hrefOf = (href: Href) =>
   typeof href === 'string'
@@ -96,7 +108,7 @@ mock.module('@/features/cameras/hooks/use-camera-recording', () => ({
 }));
 
 mock.module('@/features/cameras/hooks/use-clip-playback', () => ({
-  useClipPlayback: () => playback,
+  useClipPlayback: useRenderingPlayback,
 }));
 
 mock.module('@/features/cameras/components/clip-player', () => ({
@@ -106,7 +118,10 @@ mock.module('@/features/cameras/components/clip-player', () => ({
 mock.module('@/features/cameras/services/camera-clips.service', () => ({
   cameraClipsService: { remove: async () => ({ ok: true }) },
   clipFeed: {
-    snapshot: () => ({ rows: feed.rows, next: null }),
+    snapshot: () => ({
+      rows: feedCopies.fresh ? feed.rows.map((row) => ({ ...row })) : feed.rows,
+      next: null,
+    }),
     mutateAll: () => () => undefined,
   },
 }));
@@ -137,24 +152,41 @@ afterEach(() => {
   feed.footer = 'none';
   access.view = true;
   access.remove = true;
+  feedCopies.fresh = false;
   cameras = [cameraRow(), cameraRow({ id: '4', name: 'Patio' })];
   for (const key of Object.keys(params)) delete params[key as keyof typeof params];
 });
 
 describe('a clip tile', () => {
-  test('names its camera, says when and how long, and plays on a tap', () => {
+  test('names its camera, says when and how long under the frame, and plays on a tap', () => {
     const tapped: string[] = [];
     render(
       <ClipTile
         clip={clipOf('9')}
         cameraName="Cocina"
-        detail="hoy 14:02 · 0:21"
+        moment="hoy 14:02"
         onOpen={(clip) => tapped.push(clip.id)}
       />
     );
+    expect(screen.getByText('Cocina · hoy 14:02')).toBeDefined();
+    expect(screen.getByText('0:21')).toBeDefined();
     fireEvent.click(screen.getByRole('button', { name: 'Cocina, hoy 14:02 · 0:21' }));
     fireEvent.click(screen.getByRole('button', { name: 'Ver el clip de Cocina' }));
     expect(tapped).toEqual(['9', '9']);
+  });
+
+  test('without its camera name, a tile says only when', () => {
+    render(
+      <ClipTile
+        clip={clipOf('9')}
+        cameraName="Cocina"
+        moment="hoy 14:02"
+        showCamera={false}
+        onOpen={() => undefined}
+      />
+    );
+    expect(screen.getByText('hoy 14:02')).toBeDefined();
+    expect(screen.queryByText(/Cocina ·/)).toBeNull();
   });
 });
 
@@ -194,6 +226,17 @@ describe('the Clips screen', () => {
     expect(pushed).toEqual(['camera:4', '/clips/[id]?camera=4']);
   });
 
+  test('filtered to one camera, the tiles drop its name; with every camera they keep it', () => {
+    feed.rows = [clipOf('9'), clipOf('8', '4')];
+    const all = render(<ClipsScreen />);
+    expect(screen.getAllByText(/^Cocina · /).length).toBe(1);
+    all.unmount();
+    params.camera = '3';
+    feed.rows = [clipOf('9')];
+    render(<ClipsScreen />);
+    expect(screen.queryByText(/^Cocina · /)).toBeNull();
+  });
+
   test('an empty list is a centred notice that leads to the cameras', () => {
     render(<ClipsScreen />);
     expect(screen.getByText('Aún no hay clips')).toBeDefined();
@@ -228,15 +271,38 @@ describe('the Clips screen', () => {
 });
 
 describe('the clip player', () => {
-  test('plays the clip it was opened with, offers its camera and its deletion', () => {
+  test('opens its clip once although the cache hands a new copy on every read', () => {
+    feedCopies.fresh = true;
+    feed.rows = [clipOf('9')];
+    Object.assign(params, { id: '9', camera: '3', scope: 'all' });
+    const { rerender } = render(<ClipScreen />);
+    rerender(<ClipScreen />);
+    expect(opened).toEqual(['9']);
+  });
+
+  test('plays the clip it was opened with, offers its camera, and keeps deletion last in «⋯»', async () => {
     feed.rows = [clipOf('9')];
     Object.assign(params, { id: '9', camera: '3', scope: 'all' });
     render(<ClipScreen />);
     expect(opened).toEqual(['9']);
     expect(screen.getByRole('heading', { name: 'Cocina' })).toBeDefined();
-    expect(screen.getByRole('button', { name: 'Eliminar clip' })).toBeDefined();
     fireEvent.click(screen.getByRole('button', { name: /^Ver en vivo/ }));
     expect(pushed).toEqual(['/cameras/3']);
+    fireEvent.keyDown(screen.getByRole('button', { name: 'Más sobre este clip' }), {
+      key: 'Enter',
+    });
+    const rows = (await screen.findAllByRole('menuitem')).map((row) => row.textContent);
+    expect(rows).toEqual(['Clips de Cocina', 'Eliminar clip']);
+  });
+
+  test('a still shows the image glyph, never a play button', () => {
+    const still = { ...clipOf('9'), contentType: 'image/jpeg', durationMs: 0 };
+    render(
+      <ClipTile clip={still} cameraName="Cocina" moment="hoy 14:02" onOpen={() => undefined} />
+    );
+    expect(screen.getByRole('button', { name: 'Ver la imagen de Cocina' })).toBeDefined();
+    expect(screen.queryByRole('button', { name: 'Ver el clip de Cocina' })).toBeNull();
+    expect(screen.queryByText('0:00')).toBeNull();
   });
 
   test('a guard plays but does not delete; a clip no longer known leads back to the list', () => {
@@ -244,7 +310,9 @@ describe('the clip player', () => {
     feed.rows = [clipOf('9')];
     Object.assign(params, { id: '9', camera: '3' });
     const first = render(<ClipScreen />);
-    expect(screen.queryByRole('button', { name: 'Eliminar clip' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Clips de Cocina' }));
+    expect(pushed).toEqual(['replace:/clips?camera=3']);
+    pushed.length = 0;
     first.unmount();
     feed.rows = [];
     render(<ClipScreen />);

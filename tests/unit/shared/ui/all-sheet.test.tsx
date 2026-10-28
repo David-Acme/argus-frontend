@@ -19,6 +19,8 @@ const access: { view: AccessView; extra: readonly ModuleSurfaces[] } = {
 
 const sheet = { open: true, full: false, log: [] as string[] };
 
+const found = { results: true, footer: 'none' as 'none' | 'loading', pending: false };
+
 mock.module('expo-router', () => ({
   Redirect: () => null,
   useLocalSearchParams: () => ({}),
@@ -82,21 +84,22 @@ mock.module('@/features/home', () => {
 
 mock.module('@/features/command', () => ({
   useCommandSearch: ({ query }: { query: string }) => ({
-    results: query
-      ? [
-          {
-            title: 'Cámaras',
-            items: [{ id: 'camera:3', label: 'Cocina', icon: 'cam', onRun: () => undefined }],
-          },
-        ]
-      : [],
+    results:
+      query && found.results
+        ? [
+            {
+              title: 'Cámaras',
+              items: [{ id: 'camera:3', label: 'Cocina', icon: 'cam', onRun: () => undefined }],
+            },
+          ]
+        : [],
     paging: {
-      footer: 'none',
+      footer: found.footer,
       loading: false,
       onEndReached: () => undefined,
       retry: () => undefined,
     },
-    pending: false,
+    pending: found.pending,
   }),
 }));
 mock.module('@/features/cameras', () => ({
@@ -162,6 +165,9 @@ afterEach(() => {
   saved.quick = [];
   access.view = viewFor('owner');
   access.extra = [];
+  found.results = true;
+  found.footer = 'none';
+  found.pending = false;
 });
 
 describe('the «Todo» sheet', () => {
@@ -171,6 +177,7 @@ describe('the «Todo» sheet', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Abrir Seguridad' }));
     expect(heading('Módulos')).not.toBeNull();
     expect(heading('General')).not.toBeNull();
+    expect(screen.queryByRole('button', { name: /^Ver los \d+ módulos$/ })).toBeNull();
     expect(sheet.log).toEqual(['close']);
     expect(routes).toEqual(['/security']);
   });
@@ -183,6 +190,25 @@ describe('the «Todo» sheet', () => {
     expect(heading('Módulos')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: /^Clips/ }));
     expect(routes).toEqual(['/clips']);
+  });
+
+  test('a search that finds nothing offers no «Cargar más resultados», only the empty notice', () => {
+    found.results = false;
+    found.footer = 'loading';
+    mountSheet();
+    fireEvent.change(screen.getByPlaceholderText('Buscar en Argus'), { target: { value: 'zzz' } });
+    expect(screen.queryByRole('button', { name: 'Cargar más resultados' })).toBeNull();
+    expect(screen.getByText('Sin resultados para «zzz»')).toBeDefined();
+  });
+
+  test('while the search is still looking it shows neither the empty notice nor «Cargar más»', () => {
+    found.results = false;
+    found.footer = 'loading';
+    found.pending = true;
+    mountSheet();
+    fireEvent.change(screen.getByPlaceholderText('Buscar en Argus'), { target: { value: 'zzz' } });
+    expect(screen.queryByText('Sin resultados para «zzz»')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Cargar más resultados' })).toBeNull();
   });
 
   test('full height: every module as a row that unfolds into its sections', () => {

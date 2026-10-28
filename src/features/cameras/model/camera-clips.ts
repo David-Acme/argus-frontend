@@ -1,5 +1,6 @@
 import type { ICameraClip, ICameraClipContent, ICameraClips } from '@/core/interfaces';
 import type { CameraClipTrigger, RemotePage, TranslateFn, TranslationKey } from '@/core/types';
+import { DAY_MS, startOfLocalDay } from '@/shared/libs/day';
 
 export const CLIP_FEED_PAGE = 24;
 
@@ -128,14 +129,10 @@ export type ClipMomentInput = {
   day: (value: Date) => string;
 };
 
-const DAY_MS = 86_400_000;
-
-const dayStart = (at: number): number => new Date(at).setHours(0, 0, 0, 0);
-
 export function clipMoment({ at, now, t, time, day }: ClipMomentInput): string {
   const date = new Date(at);
   const clock = time(date);
-  const days = Math.round((dayStart(now) - dayStart(at)) / DAY_MS);
+  const days = Math.round((startOfLocalDay(now) - startOfLocalDay(at)) / DAY_MS);
   if (days <= 0) return t('screens.cameras.clips.today-at', { time: clock });
   if (days === 1) return t('screens.cameras.clips.yesterday-at', { time: clock });
   return t('screens.cameras.clips.day-at', { day: day(date), time: clock });
@@ -145,9 +142,25 @@ export function clipDetail(clip: ICameraClip, moment: string): string {
   return isImageClip(clip) ? moment : `${moment} · ${formatClipDuration(clip.durationMs)}`;
 }
 
+export type ClipCaptionInput = { clip: ICameraClip; camera: string | null; moment: string };
+
+export type ClipCaption = { line: string; duration: string | null; spoken: string };
+
+export function clipCaption({ clip, camera, moment }: ClipCaptionInput): ClipCaption {
+  return {
+    line: camera ? `${camera} · ${moment}` : moment,
+    duration: isImageClip(clip) ? null : formatClipDuration(clip.durationMs),
+    spoken: [camera, clipDetail(clip, moment)].filter(Boolean).join(', '),
+  };
+}
+
+export function clipGlyph(clip: Pick<ICameraClip, 'contentType'>): 'image' | 'play' {
+  return isImageClip(clip) ? 'image' : 'play';
+}
+
 export function clipFacts(t: TranslateFn, clip: ICameraClip): string {
   return [
-    isImageClip(clip) ? '' : formatClipDuration(clip.durationMs),
+    isImageClip(clip) ? t('screens.cameras.clips.still') : formatClipDuration(clip.durationMs),
     formatClipSize(clip.byteSize),
     t(clipTriggerLabelKey(clip.trigger)),
   ]

@@ -70,6 +70,10 @@ export type NavBarLayout = {
   presence: number;
 };
 
+export function navGlyphBoxOf({ icon }: Pick<NavBarLayout, 'icon'>): number {
+  return icon === 'small' ? size.iconSmall : size.icon;
+}
+
 export type NavOffsets = { footprint: number; clearance: number; cap: number; toast: number };
 
 const REGULAR_FOOTPRINT = size.tabBar + inset.nav.barBottom;
@@ -132,6 +136,12 @@ export function sheetCeilingOf({ height, top }: Pick<SheetRoom, 'height' | 'top'
 
 export function sheetBodyCapOf(room: SheetRoom): number {
   return Math.max(0, sheetCeilingOf(room) - room.header - room.keyboard);
+}
+
+export type SheetBodyInset = { clearance: number; keyboard: number; fill: boolean };
+
+export function sheetBodyInsetOf({ clearance, keyboard, fill }: SheetBodyInset): number {
+  return fill ? clearance + keyboard : clearance;
 }
 
 export type SheetChromeRoom = SheetRoom & { footer: number };

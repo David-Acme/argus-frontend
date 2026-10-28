@@ -1,6 +1,6 @@
 import { clsx } from 'clsx';
 import { Pressable, View } from 'react-native';
-import type { NavBarLayout } from '@/shared/theme';
+import { navGlyphBoxOf, type NavBarLayout } from '@/shared/theme';
 import { Icon } from '@/shared/ui/icon';
 import { Presence, useCentrePresence, type PresenceState } from '@/shared/ui/presence';
 import { PressableSurface } from '@/shared/ui/pressable';
@@ -37,6 +37,8 @@ const FRAME = 'w-full items-center justify-center gap-nav-tab-gap rounded-full';
 const frameOf = ({ tab }: NavBarLayout) => ({ height: tab });
 
 const slopOf = ({ bar, tab }: NavBarLayout) => (bar - tab) / 2;
+
+const glyphBoxOf = (layout: NavBarLayout) => ({ height: navGlyphBoxOf(layout) });
 
 const ACTIONS = [{ name: 'longpress' as const }];
 
@@ -110,7 +112,16 @@ export function ArgusTab({
         onPress={handlers.onPress}
         className={clsx('web:focus-ring', FRAME, selected && 'bg-tab-on')}>
         {presence ? (
-          <Presence state={listening ? 'listen' : presence} size={layout.presence} paused={still} />
+          <View
+            testID="argus-tab-glyph"
+            className="items-center justify-center overflow-visible"
+            style={glyphBoxOf(layout)}>
+            <Presence
+              state={listening ? 'listen' : presence}
+              size={layout.presence}
+              paused={still}
+            />
+          </View>
         ) : (
           <Icon name={item.icon} size={layout.icon} />
         )}

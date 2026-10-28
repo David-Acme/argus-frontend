@@ -1,5 +1,4 @@
 import { clsx } from 'clsx';
-import type { ReactNode } from 'react';
 import { View } from 'react-native';
 import type { IConversationMessageCacheRow } from '@/core/interfaces';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
@@ -34,7 +33,6 @@ export type MessageBubbleProps = {
   status: BubbleStatus | null;
   mark?: ChatMark;
   groupStart?: boolean;
-  ask?: ReactNode;
   onRetry?: (clientId: string) => void;
   onDismiss?: (clientId: string) => void;
 };
@@ -96,7 +94,6 @@ export function MessageBubble({
   status,
   mark,
   groupStart = true,
-  ask = null,
   onRetry,
   onDismiss,
 }: MessageBubbleProps) {
@@ -160,7 +157,6 @@ export function MessageBubble({
               ) : (
                 <BubbleText body={message.body} time={time} note={note} status={status} />
               )}
-              {ask}
             </View>
           </BubbleFrame>
         </View>

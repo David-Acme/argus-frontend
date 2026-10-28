@@ -37,6 +37,11 @@ export const MENU_ROW: Record<MenuRowLook, string> = {
   anchored: `min-h-target-min px-palette-item-x gap-palette-gap ${POINTED}`,
 };
 
+const LABEL: Record<MenuRowLook, string> = {
+  sheet: 'min-w-0 flex-1',
+  anchored: 'min-w-0 shrink',
+};
+
 export const MENU_DIVIDER: Record<MenuRowLook, string> = {
   sheet: 'border-line mx-row-x border-t',
   anchored: 'border-line my-palette-group mx-palette-item-x border-t',
@@ -51,11 +56,11 @@ export function MenuRowContent({ item, look }: MenuRowContentProps) {
       <View className={clsx('items-center justify-center', WELL[look], ink.well)}>
         <Icon name={item.icon} size="small" tone={ink.icon} />
       </View>
-      <View className="min-w-0 flex-1">
+      <View className={LABEL[look]}>
         <Text
           variant={look === 'sheet' ? 'rowTitle' : 'feed'}
           tone={item.destructive ? 'alert' : 'default'}
-          numberOfLines={1}>
+          numberOfLines={look === 'sheet' ? 1 : undefined}>
           {item.label}
         </Text>
       </View>
@@ -67,7 +72,8 @@ export function useMenuPanel() {
   const { elevation } = useThemeTokens();
   return {
     style: { boxShadow: `${elevation.float}, ${elevation.ring}` },
-    className: 'rounded-media min-w-menu-width p-palette-group bg-surface overflow-hidden',
+    className:
+      'rounded-media min-w-menu-width max-w-menu-max-width p-palette-group bg-surface overflow-hidden',
   };
 }
 

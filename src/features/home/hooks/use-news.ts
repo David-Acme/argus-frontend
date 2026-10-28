@@ -1,6 +1,5 @@
 import type { INotificationPreviewCacheRow } from '@/core/interfaces';
 import { notificationService } from '@/core/services/notification.service';
-import { notificationThreadKey } from '@/core/services/notification';
 import { CAPABILITY, NOTIFICATION_FEED_SCOPE, VIEW_CACHE_KEYS } from '@/shared/constants';
 import { useCapabilities } from '@/shared/hooks/use-capabilities';
 import { usePagedList } from '@/shared/hooks/use-infinite-list';
@@ -13,16 +12,19 @@ import {
 import { notificationVisible } from '@/features/home/model/notification-modules';
 import {
   groupNotifications,
+  threadServerKey,
   type NotificationThread,
 } from '@/features/home/model/notification-threads';
 
-export function readThread(thread: Pick<NotificationThread, 'latest' | 'unreadIds'>): void {
+export function readThread(
+  thread: Pick<NotificationThread, 'latest' | 'entries' | 'unreadIds'>
+): void {
   if (thread.unreadIds.length === 0) return;
   void runOptimistic({
     intents: notificationReadIntents(thread.unreadIds),
     call: () =>
       notificationService.markRead({
-        threadKey: notificationThreadKey(thread.latest.data),
+        threadKey: threadServerKey(thread),
         ids: thread.unreadIds,
       }),
   });

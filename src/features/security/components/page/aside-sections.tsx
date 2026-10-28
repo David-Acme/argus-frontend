@@ -97,7 +97,7 @@ export function MaintenanceSection({ now }: MaintenanceProps) {
       {active.map((window) => (
         <Row
           key={window.id}
-          leading={<Avatar icon="sliders" />}
+          leading={<Avatar icon="wrench" />}
           title={cameraNames(window, names).join(', ')}
           meta={t('screens.security.maintenance.active-until', {
             time: format.time(new Date(window.endsAt * 1000)),
