@@ -8505,6 +8505,26 @@ side is the backend's `services/camera/CONTEXT.md` › "Live previews".
   or when the audio holds the clock still for two 2 s checks with data buffered ahead.
   It turns the audio track off, logs one warning, and the clip says «Sin audio»; if the
   player had stopped, the clip starts again without sound.
+- **One player for recorded video** (owner, 2026-10-28: «como el de YouTube»).
+  `MediaPlayer` (`shared/ui/media/player/`) plays clips and tamper evidence and is meant
+  for later recordings. Seeking needs a seek map: Media3's `FragmentedMp4Extractor`
+  reports one only from a `sidx`, and a recorded clip has none. `seekableClip`
+  (`features/cameras/model/clip-index.ts`) writes one after `ftyp+moov` (one reference
+  per video keyframe group, its bytes and duration, starting with a SAP), keeps the
+  rebased timeline, and the whole clip goes to the native view as bytes
+  (`loadMedia`): ExoPlayer plays it progressively over `ByteArrayDataSource` and seeks
+  natively; iOS writes it to a temporary file for `AVPlayer`; the web plays the same
+  bytes from a blob URL. The live tiles and the live view stay on the streaming path.
+  A loaded clip is a `MediaSession` keyed by the clip; fullscreen on a phone is a
+  portal whose view adopts that session (`adoptMedia`, `PlayerView.switchTargetView`),
+  so the picture moves without a reload or a flash, and the inline view adopts it back
+  on the way out. ExoPlayer is touched only on its thread: the view samples position,
+  duration and buffered range every 200 ms, and the player reads those. The view keeps
+  the screen on while playing. FLAC audio prefers the platform decoders by name
+  (`c2.android.`, `OMX.google.`) over vendor ones, and the order is logged once per
+  decoder query. Before the first frame the player shows the poster, or the media
+  skeleton with the app's shimmer; a spinner appears only after 300 ms of buffering.
+  Durations are written by one helper, `formatDuration` (`shared/libs/duration.ts`).
 - **Stills only where needed.** `CameraThumbnailPoller` skips a live camera that already
   has a still; it still paints every tile once before its video starts.
 

@@ -1,6 +1,7 @@
 import type { ICameraClip, ICameraClipContent, ICameraClips } from '@/core/interfaces';
 import type { CameraClipTrigger, RemotePage, TranslateFn, TranslationKey } from '@/core/types';
 import { DAY_MS, startOfLocalDay } from '@/shared/libs/day';
+import { formatDuration } from '@/shared/libs/duration';
 
 export const CLIP_FEED_PAGE = 24;
 
@@ -107,13 +108,6 @@ export function clipTriggerLabelKey(trigger: CameraClipTrigger): TranslationKey 
   return TRIGGER_LABEL[trigger] ?? 'screens.cameras.clips.trigger.event';
 }
 
-export function formatClipDuration(durationMs: number): string {
-  const total = Math.max(0, Math.round(durationMs / 1000));
-  const minutes = Math.floor(total / 60);
-  const seconds = total % 60;
-  return `${minutes}:${String(seconds).padStart(2, '0')}`;
-}
-
 export function formatClipSize(byteSize: number): string {
   if (byteSize <= 0) return '';
   const megabytes = byteSize / (1024 * 1024);
@@ -139,7 +133,7 @@ export function clipMoment({ at, now, t, time, day }: ClipMomentInput): string {
 }
 
 export function clipDetail(clip: ICameraClip, moment: string): string {
-  return isImageClip(clip) ? moment : `${moment} · ${formatClipDuration(clip.durationMs)}`;
+  return isImageClip(clip) ? moment : `${moment} · ${formatDuration(clip.durationMs)}`;
 }
 
 export type ClipCaptionInput = { clip: ICameraClip; camera: string | null; moment: string };
@@ -149,7 +143,7 @@ export type ClipCaption = { line: string; duration: string | null; spoken: strin
 export function clipCaption({ clip, camera, moment }: ClipCaptionInput): ClipCaption {
   return {
     line: camera ? `${camera} · ${moment}` : moment,
-    duration: isImageClip(clip) ? null : formatClipDuration(clip.durationMs),
+    duration: isImageClip(clip) ? null : formatDuration(clip.durationMs),
     spoken: [camera, clipDetail(clip, moment)].filter(Boolean).join(', '),
   };
 }
@@ -160,7 +154,7 @@ export function clipGlyph(clip: Pick<ICameraClip, 'contentType'>): 'image' | 'pl
 
 export function clipFacts(t: TranslateFn, clip: ICameraClip): string {
   return [
-    isImageClip(clip) ? t('screens.cameras.clips.still') : formatClipDuration(clip.durationMs),
+    isImageClip(clip) ? t('screens.cameras.clips.still') : formatDuration(clip.durationMs),
     formatClipSize(clip.byteSize),
     t(clipTriggerLabelKey(clip.trigger)),
   ]

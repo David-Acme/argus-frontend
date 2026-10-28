@@ -447,7 +447,7 @@ A new variant needs a design review and a `ui-lab` baseline (rule F19).
 | 10 | `FeedItem` | icon/avatar, who, when, text, optional actions, unread | notification thread row (301 lines), activity rows, episode cards in their list form |
 | 11 | `Chip` | `tag` (status, with tone and dot) / `filter` (selectable); wraps in a `Cluster` | `status-badge`, `filter-chips`, 4 feature chips and 2 badges |
 | 12 | `Avatar` | person (initial or portrait), icon well; 36/56; the 26 event mark (calendar icon on `ev1`, radius 8) that leads an event row | per-feature icon circles, presence dots |
-| 13 | `Media` | camera `tile` / `stage` (live player slot, overlays, privacy and off states) | camera card (334), live panel/stage chrome, home camera tiles |
+| 13 | `Media` | camera `tile` / `stage` (live player slot, overlays, privacy and off states); `MediaPlayer`, the recorded-video player (clips, tamper evidence, later recordings): tap shows or hides its controls, double tap seeks ±10 s with a ripple that adds up, a scrubber with buffered range, growing thumb and time tooltip, elapsed / total (tap for remaining), mute, speed in its «⋯», fullscreen in landscape (Back or a swipe down leaves it), replay at the end, poster or skeleton before the first frame and a spinner only after 300 ms of buffering (2026-10-28) | camera card (334), live panel/stage chrome, home camera tiles |
 | 14 | `Check` | completion circle: open, overdue, in progress, done; haptic on toggle | reminder circles, task status pickers in rows |
 
 ### 4.3 Input

@@ -63,3 +63,48 @@ export function fragmentOf({
 export function fragment(track: number, flags: number, payload: number[]): Uint8Array {
   return fragmentOf({ track, flags, payload });
 }
+
+export const FLAC_RATE = 8000;
+
+export function streamInfo(): number[] {
+  const blockSize = 512;
+  const packed = (BigInt(FLAC_RATE) << 44n) | (0n << 41n) | (15n << 36n);
+  const tail = Array.from({ length: 8 }, (_, index) =>
+    Number((packed >> BigInt(56 - index * 8)) & 0xffn)
+  );
+  return [
+    blockSize >> 8,
+    blockSize & 0xff,
+    blockSize >> 8,
+    blockSize & 0xff,
+    ...zeros(6),
+    ...tail,
+    ...zeros(16),
+  ];
+}
+
+export function dfLaBox(): number[] {
+  return box('dfLa', [...be32(0), 0x80, 0, 0, 34, ...streamInfo()]);
+}
+
+export function flacTrak(trackId: number): number[] {
+  const tkhd = box('tkhd', [...be32(0), ...be32(0), ...be32(0), ...be32(trackId), ...be32(0)]);
+  const mdhd = box('mdhd', [...be32(0), ...be32(0), ...be32(0), ...be32(FLAC_RATE), ...be32(0)]);
+  const hdlr = box('hdlr', [...be32(0), ...be32(0), ...ascii('soun'), ...be32(0)]);
+  const entry = box('fLaC', [
+    ...zeros(6),
+    0,
+    1,
+    ...zeros(8),
+    0,
+    1,
+    0,
+    16,
+    ...zeros(4),
+    ...be32(FLAC_RATE << 16),
+    ...dfLaBox(),
+  ]);
+  const stsd = box('stsd', [...be32(0), ...be32(1), ...entry]);
+  const minf = box('minf', box('stbl', stsd));
+  return box('trak', [...tkhd, ...box('mdia', [...mdhd, ...hdlr, ...minf])]);
+}

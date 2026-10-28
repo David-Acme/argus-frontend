@@ -3,6 +3,7 @@ import { act, cleanup, render, screen } from '@testing-library/react';
 import { useEffect, type ReactNode } from 'react';
 import type { PreviewEntry } from '@/features/cameras/services/preview-channel';
 import { SYNC, fragmentOf, initSegment, videoTrak } from '@tests/support/fmp4-fixtures';
+import '../../../shared/ui/translation-stub';
 
 type NativeViewProps = {
   hybridRef?: (player: unknown) => void;

@@ -1,7 +1,7 @@
 import { Button } from '@/shared/ui/button';
 import { View } from 'react-native';
 import { size } from '@/shared/theme';
-import { Media, MediaStrip } from '@/shared/ui/media';
+import { Media, MediaPlayer, MediaStrip } from '@/shared/ui/media';
 import { LabCase } from '../components/lab-case';
 import { copy } from './demo-copy';
 import { Scene } from './scene';
@@ -67,6 +67,19 @@ function MediaLayoutDemo() {
   );
 }
 
+function MediaPlayerDemo() {
+  return (
+    <>
+      <LabCase id="player-loading" block>
+        <MediaPlayer source={null} title={copy.kitchen} />
+      </LabCase>
+      <LabCase id="player-failed" block>
+        <MediaPlayer source={null} failed title={copy.kitchen} onRetry={noop} />
+      </LabCase>
+    </>
+  );
+}
+
 export function MediaDemo() {
   return (
     <>
@@ -124,6 +137,7 @@ export function MediaDemo() {
           <Scene name="patio" />
         </Media>
       </LabCase>
+      <MediaPlayerDemo />
       <MediaLayoutDemo />
     </>
   );

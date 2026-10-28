@@ -55,7 +55,13 @@ function ClipFacts({ clip, cameraId, cameraName }: FactsProps) {
       <Row
         leading={<Avatar icon={clipGlyph(clip)} />}
         title={clipFacts(t, clip)}
-        meta={date.formatDayMonth(new Date(clip.startedAt * 1000))}
+        meta={[
+          cameraName,
+          date.formatDayMonth(new Date(clip.startedAt * 1000)),
+          date.formatTime(new Date(clip.startedAt * 1000)),
+        ]
+          .filter(Boolean)
+          .join(' · ')}
       />
       {cameraName ? (
         <Row
@@ -156,27 +162,32 @@ export default function ClipScreen() {
     if (opened) open(opened);
   }, [access.view, cameraId, id, known, open, scope]);
 
+  const moment = clip
+    ? clipMoment({
+        at: clip.startedAt * 1000,
+        now,
+        t,
+        time: date.formatTime,
+        day: date.formatDayMonth,
+      })
+    : undefined;
+
   return (
     <Screen
       title={camera?.name ?? t('screens.cameras.clips.title')}
-      meta={
-        clip
-          ? clipMoment({
-              at: clip.startedAt * 1000,
-              now,
-              t,
-              time: date.formatTime,
-              day: date.formatDayMonth,
-            })
-          : undefined
-      }
+      meta={moment}
       back={{ label: t('common.back'), onPress: back }}
       actions={
         hasMenuItems(menu) ? (
           <Menu label={t('screens.cameras.clips.menu')} items={menu} />
         ) : undefined
       }>
-      <ClipStage playback={playback} closable={false} />
+      <ClipStage
+        playback={playback}
+        title={camera?.name}
+        subtitle={moment}
+        onRetry={clip ? () => open(clip) : undefined}
+      />
       <ClipFacts clip={clip} cameraId={cameraId} cameraName={camera?.name ?? null} />
     </Screen>
   );

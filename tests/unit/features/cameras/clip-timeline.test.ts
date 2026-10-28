@@ -1,7 +1,8 @@
 import { describe, expect, test } from 'bun:test';
 import { DELTA, SYNC, fragmentOf, initSegment, videoTrak } from '@tests/support/fmp4-fixtures';
 import { rebaseClipTimes, rebasingSink, trackClocks } from '@/features/cameras/model/clip-timeline';
-import { clipDurationMs, splitClipFile } from '@/features/cameras/model/clip-media';
+import { clipLengthMs } from '@/features/cameras/model/clip-index';
+import { splitClipFile } from '@/features/cameras/model/clip-media';
 
 const VIDEO = 90000;
 const AUDIO = 8000;
@@ -52,7 +53,7 @@ describe('a stored clip on its own timeline', () => {
     expect(decodeTimeOf(file.fragments[1]?.bytes ?? new Uint8Array())).toBe(0.5 * AUDIO);
     expect(decodeTimeOf(file.fragments[38]?.bytes ?? new Uint8Array())).toBe(19 * VIDEO);
     expect(file.fragments[0]?.atUs).toBe(0);
-    expect(clipDurationMs(file.fragments)).toBe(19_000);
+    expect(clipLengthMs(file)).toBe(19_033);
     const times = file.fragments.map((fragment) => fragment.atUs);
     expect(times.every((at, index) => index === 0 || at >= (times[index - 1] ?? 0))).toBe(true);
   });

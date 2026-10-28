@@ -77,6 +77,15 @@ mock.module(
   () => import('@/shared/ui/presence/use-tier-probe.web')
 );
 mock.module('@/shared/ui/sheet/sheet', () => import('@/shared/ui/sheet/sheet.web'));
+mock.module('@/shared/libs/window-fullscreen', () => import('@/shared/libs/window-fullscreen.web'));
+mock.module(
+  '@/shared/ui/media/player/player-fullscreen',
+  () => import('@/shared/ui/media/player/player-fullscreen.web')
+);
+mock.module(
+  '@/shared/ui/media/player/video-surface',
+  () => import('@/shared/ui/media/player/video-surface.web')
+);
 mock.module('@/core/services/storage', () => import('@/core/services/storage/storage.web'));
 mock.module(
   '@/features/conversations/components/live-wave',

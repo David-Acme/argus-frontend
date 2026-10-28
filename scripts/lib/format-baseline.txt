@@ -147,7 +147,6 @@ src/features/cameras/components/camera-form-schema.ts
 src/features/cameras/components/camera-live-status.tsx
 src/features/cameras/components/camera-privacy-placeholder.tsx
 src/features/cameras/components/camera-snapshot-view.tsx
-src/features/cameras/components/tamper-evidence-view.tsx
 src/features/cameras/components/web-camera-player.ts
 src/features/cameras/hooks/use-camera-aim.ts
 src/features/cameras/hooks/use-camera-device-settings.ts
@@ -182,7 +181,6 @@ src/features/cameras/services/camera-rtc/camera-rtc.native.ts
 src/features/cameras/services/camera-rtc/camera-rtc.web.ts
 src/features/cameras/services/media-access-renewal.ts
 src/features/cameras/services/tamper-evidence.service.ts
-src/features/cameras/services/window-fullscreen.native.ts
 src/features/conversations/components/conversation-row.tsx
 src/features/conversations/hooks/use-thread-list.ts
 src/features/in-app-alert/components/in-app-alert-banner.tsx

@@ -14,17 +14,30 @@ final class CameraPlayerUIView: UIView {
   private var pendingBytes = 0
   private var dropUntilKeyframe = true
   private var active = true
+  let mediaLayer = AVPlayerLayer()
 
   override init(frame: CGRect) {
     super.init(frame: frame)
     backgroundColor = .black
     displayLayer.videoGravity = .resizeAspect
+    addMediaLayer()
   }
 
   required init?(coder: NSCoder) {
     super.init(coder: coder)
     backgroundColor = .black
     displayLayer.videoGravity = .resizeAspect
+    addMediaLayer()
+  }
+
+  private func addMediaLayer() {
+    mediaLayer.videoGravity = .resizeAspect
+    layer.addSublayer(mediaLayer)
+  }
+
+  override func layoutSubviews() {
+    super.layoutSubviews()
+    mediaLayer.frame = bounds
   }
 
   func setFill(_ value: Bool) {

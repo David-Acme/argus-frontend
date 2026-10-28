@@ -5,7 +5,7 @@ import { ICON_SHAPES } from '@/shared/ui/icon/icon-shapes';
 
 describe('Icon', () => {
   test('the registry holds the prototype set of 43 glyphs and the ones the calls, the live camera, Tú, Ajustes, the agenda, the first run, the action menus and the chat added', () => {
-    expect(Object.keys(ICON_SHAPES)).toHaveLength(73);
+    expect(Object.keys(ICON_SHAPES)).toHaveLength(74);
   });
 
   test('draws every shape of the glyph at 20 or 24 with the 1.75 stroke', () => {

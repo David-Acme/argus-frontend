@@ -1,8 +1,8 @@
 import { describe, expect, test } from 'bun:test';
 import { render, screen, within } from '@testing-library/react';
-import { Media } from '@/shared/ui/media';
 import '../../../shared/ui/translation-stub';
 
+const { Media } = await import('@/shared/ui/media');
 const { CameraLiveStatus } = await import('@/features/cameras/components/camera-live-status');
 
 describe('CameraLiveStatus', () => {
