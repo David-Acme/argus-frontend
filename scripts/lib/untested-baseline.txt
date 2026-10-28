@@ -14,7 +14,6 @@ src/features/cameras/components/camera-rtc-video.native.tsx
 src/features/cameras/components/camera-rtc-video.web.tsx
 src/features/cameras/components/camera-snapshot-view.tsx
 src/features/cameras/components/camera-zones-overlay.tsx
-src/features/cameras/components/clip-player.native.tsx
 src/features/cameras/components/clip-player.web.tsx
 src/features/cameras/components/tamper-evidence-view.tsx
 src/features/cameras/components/zone-editor.tsx
