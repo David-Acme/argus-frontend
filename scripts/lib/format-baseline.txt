@@ -168,7 +168,6 @@ src/features/cameras/model/camera-patrol.ts
 src/features/cameras/model/camera-presets.ts
 src/features/cameras/model/camera-probe.ts
 src/features/cameras/model/camera-ptz.ts
-src/features/cameras/model/clip-media.ts
 src/features/cameras/model/fmp4.ts
 src/features/cameras/model/fragment-assembler.ts
 src/features/cameras/model/media-access.ts
