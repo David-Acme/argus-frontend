@@ -156,7 +156,6 @@ src/features/cameras/hooks/use-camera-patrol.ts
 src/features/cameras/hooks/use-camera-ptz.ts
 src/features/cameras/hooks/use-camera-quality.ts
 src/features/cameras/hooks/use-camera-rows.ts
-src/features/cameras/hooks/use-clip-playback.ts
 src/features/cameras/hooks/use-tamper-evidence.ts
 src/features/cameras/model/camera-aim.ts
 src/features/cameras/model/camera-device.ts

@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ICameraClip, ICameraClipContent } from '@/core/interfaces';
-import { clipDurationMs, clipPaceSteps, decodeBase64, splitClipFile, type ClipFile } from '@/features/cameras/model/clip-media';
+import {
+  clipDurationMs,
+  clipPaceSteps,
+  decodeBase64,
+  splitClipFile,
+  type ClipFile,
+} from '@/features/cameras/model/clip-media';
 import { cameraClipsService } from '@/features/cameras/services/camera-clips.service';
 import { clipImageUri, isImageClip } from '@/features/cameras/model/camera-clips';
 
@@ -63,7 +69,7 @@ export function useClipPlayback(cameraId: string): ClipPlayback {
         setState('ready');
       })();
     },
-    [cameraId],
+    [cameraId]
   );
 
   const replay = useCallback(() => {
@@ -88,13 +94,12 @@ export type ClipSink = {
 export const CLIP_INIT_TYPE = 1;
 export const CLIP_FRAME_TYPE = 2;
 
-const PROGRESS_TICK_MS = 120;
-
-export function useClipQueue(file: ClipFile | null, sink: ClipSink | null, onEnded: () => void): void {
-  const [, setProgress] = useState(0);
+export function useClipQueue(
+  file: ClipFile | null,
+  sink: ClipSink | null,
+  onEnded: () => void
+): void {
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
-  const ticker = useRef<ReturnType<typeof setInterval> | null>(null);
-  const startedAt = useRef(0);
   const steps = useMemo(() => (file ? clipPaceSteps(file.fragments) : []), [file]);
   const totalMs = useMemo(() => (file ? Math.max(1, clipDurationMs(file.fragments)) : 1), [file]);
   const ended = useRef(onEnded);
@@ -106,29 +111,21 @@ export function useClipQueue(file: ClipFile | null, sink: ClipSink | null, onEnd
   const clear = useCallback(() => {
     for (const timer of timers.current) clearTimeout(timer);
     timers.current = [];
-    if (ticker.current !== null) {
-      clearInterval(ticker.current);
-      ticker.current = null;
-    }
   }, []);
 
   const play = useCallback(() => {
     if (!file || !sink) return;
     clear();
-    startedAt.current = Date.now();
     sink.push(CLIP_INIT_TYPE, true, toArrayBuffer(file.init));
     for (const step of steps) {
       const fragment = file.fragments[step.index];
       if (!fragment) continue;
       const bytes = toArrayBuffer(fragment.bytes);
       timers.current.push(
-        setTimeout(() => sink.push(CLIP_FRAME_TYPE, fragment.keyframe, bytes), step.atMs),
+        setTimeout(() => sink.push(CLIP_FRAME_TYPE, fragment.keyframe, bytes), step.atMs)
       );
     }
     timers.current.push(setTimeout(() => ended.current(), totalMs));
-    ticker.current = setInterval(() => {
-      setProgress(Math.min(1, (Date.now() - startedAt.current) / totalMs));
-    }, PROGRESS_TICK_MS);
   }, [clear, file, sink, steps, totalMs]);
 
   useEffect(() => {
@@ -136,7 +133,6 @@ export function useClipQueue(file: ClipFile | null, sink: ClipSink | null, onEnd
     play();
     return clear;
   }, [clear, file, play, sink]);
-
 }
 
 export function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {

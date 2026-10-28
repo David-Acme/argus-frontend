@@ -17,7 +17,7 @@ const PLAYER_FRAME = { aspectRatio: 16 / 9 };
 export function ClipPlayer({ file, onEnded, className }: ClipPlayerProps) {
   const [player, setPlayer] = useState<ArgusCameraViewMethods | null>(null);
   const bindPlayer = useCallback((ref: ArgusCameraViewMethods) => {
-    setPlayer(ref);
+    setPlayer((bound) => bound ?? ref);
   }, []);
   const ended = useCallback(() => onEnded?.(), [onEnded]);
   const sink = useMemo<ClipSink | null>(
