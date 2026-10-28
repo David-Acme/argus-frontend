@@ -10,6 +10,8 @@ public final class HybridArgusCameraView: HybridArgusCameraViewSpec {
 
   public var muted: Bool = true
 
+  public var onAudioFailed: ((_ stopped: Bool) -> Void)?
+
   public var fill: Bool = false {
     didSet { view.setFill(fill) }
   }

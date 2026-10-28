@@ -6,6 +6,7 @@ import { useTranslation } from '@/shared/hooks/use-translation';
 import { illustration, layout } from '@/shared/theme';
 import { Button } from '@/shared/ui/button';
 import { Stack } from '@/shared/ui/layout';
+import { Text } from '@/shared/ui/text';
 import { Media } from '@/shared/ui/media';
 import { Meter } from '@/shared/ui/meter';
 import { Notice } from '@/shared/ui/notice';
@@ -19,9 +20,23 @@ export type ClipStageProps = { playback: ClipPlayback; closable?: boolean };
 
 type StillProps = { clip: ICameraClip; image: string | null };
 
-type VideoProps = { clip: ICameraClip; playback: ClipPlayback; closable: boolean };
+type ClipSound = { muted: boolean; lost: boolean };
+
+type VideoProps = {
+  clip: ICameraClip;
+  playback: ClipPlayback;
+  closable: boolean;
+  sound: ClipSound;
+  onAudioFailed: (stopped: boolean) => void;
+};
 
 type ProgressProps = { durationMs: number };
+
+type ControlsProps = {
+  playback: ClipPlayback;
+  sound: ClipSound;
+  onToggleSound: () => void;
+};
 
 const PROGRESS_TICK_MS = 250;
 
@@ -52,7 +67,7 @@ function ClipProgress({ durationMs }: ProgressProps) {
   );
 }
 
-function ClipVideo({ clip, playback, closable }: VideoProps) {
+function ClipVideo({ clip, playback, closable, sound, onAudioFailed }: VideoProps) {
   const poster = useClipPoster({ id: clip.id, cameraId: clip.cameraId });
   return (
     <View className="rounded-media overflow-hidden" style={FRAME}>
@@ -65,16 +80,61 @@ function ClipVideo({ clip, playback, closable }: VideoProps) {
         <ClipPlayer
           className="h-full w-full"
           file={playback.file}
+          muted={closable || sound.muted || sound.lost}
           onEnded={closable ? playback.close : playback.finish}
+          onAudioFailed={onAudioFailed}
         />
       ) : null}
     </View>
   );
 }
 
+function ClipControls({ playback, sound, onToggleSound }: ControlsProps) {
+  const { t } = useTranslation();
+  if (!playback.file) return null;
+  if (playback.ended)
+    return (
+      <Button
+        compact
+        variant="ghost"
+        icon="play"
+        label={t('screens.cameras.clips.replay')}
+        onPress={playback.replay}
+      />
+    );
+  return (
+    <View className="flex-row items-center gap-3">
+      <View className="min-w-0 flex-1">
+        <ClipProgress key={playback.round} durationMs={clipDurationMs(playback.file.fragments)} />
+      </View>
+      {sound.lost ? (
+        <Text variant="meta" tone="3">
+          {t('screens.cameras.clips.no-audio')}
+        </Text>
+      ) : (
+        <Button
+          iconOnly
+          compact
+          variant="ghost"
+          icon={sound.muted ? 'mute' : 'speaker'}
+          label={t(
+            sound.muted ? 'screens.cameras.clips.sound-on' : 'screens.cameras.clips.sound-off'
+          )}
+          onPress={onToggleSound}
+        />
+      )}
+    </View>
+  );
+}
+
 export function ClipStage({ playback, closable = true }: ClipStageProps) {
   const { t } = useTranslation();
+  const [sound, setSound] = useState<ClipSound>({ muted: false, lost: false });
   const { clip } = playback;
+  const audioFailed = (stopped: boolean) => {
+    setSound((current) => (current.lost ? current : { ...current, lost: true }));
+    if (stopped) playback.replay();
+  };
   if (playback.state === 'idle' || !clip) return null;
   const failed = playback.state === 'failed' || playback.state === 'unsupported';
   const still = isImageClip(clip);
@@ -84,7 +144,13 @@ export function ClipStage({ playback, closable = true }: ClipStageProps) {
         {still ? (
           <ClipStill clip={clip} image={playback.image} />
         ) : failed ? null : (
-          <ClipVideo clip={clip} playback={playback} closable={closable} />
+          <ClipVideo
+            clip={clip}
+            playback={playback}
+            closable={closable}
+            sound={sound}
+            onAudioFailed={audioFailed}
+          />
         )}
         {failed ? (
           <Notice
@@ -105,17 +171,13 @@ export function ClipStage({ playback, closable = true }: ClipStageProps) {
             label={t('screens.cameras.clips.close')}
             onPress={playback.close}
           />
-        ) : playback.file && playback.ended ? (
-          <Button
-            compact
-            variant="ghost"
-            icon="play"
-            label={t('screens.cameras.clips.replay')}
-            onPress={playback.replay}
+        ) : (
+          <ClipControls
+            playback={playback}
+            sound={sound}
+            onToggleSound={() => setSound((current) => ({ ...current, muted: !current.muted }))}
           />
-        ) : playback.file ? (
-          <ClipProgress key={playback.round} durationMs={clipDurationMs(playback.file.fragments)} />
-        ) : null}
+        )}
       </Stack>
     </View>
   );

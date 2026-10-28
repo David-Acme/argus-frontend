@@ -1,3 +1,4 @@
+import type { ICameraMediaSink } from '@/core/interfaces';
 import { boxes, type Box } from '@/features/cameras/model/fmp4';
 
 type DecodeTime = { offset: number; wide: boolean; trackId: number; value: number };
@@ -50,22 +51,60 @@ function writeDecodeTime(fragment: Uint8Array, time: DecodeTime, value: number):
   else view.setUint32(time.offset, value);
 }
 
+type Clocks = ReadonlyMap<number, number>;
+
+type ShiftInput = { fragment: Uint8Array; times: readonly DecodeTime[]; clocks: Clocks };
+
+function earliestSeconds(times: readonly DecodeTime[], clocks: Clocks): number | null {
+  let earliest = Number.POSITIVE_INFINITY;
+  for (const time of times) {
+    const clock = clocks.get(time.trackId);
+    if (clock) earliest = Math.min(earliest, time.value / clock);
+  }
+  return Number.isFinite(earliest) && earliest > 0 ? earliest : null;
+}
+
+function shiftTimes({ fragment, times, clocks }: ShiftInput, startSeconds: number): void {
+  for (const time of times) {
+    const clock = clocks.get(time.trackId);
+    if (!clock) continue;
+    writeDecodeTime(fragment, time, Math.max(0, time.value - Math.round(startSeconds * clock)));
+  }
+}
+
 export function rebaseClipTimes(init: Uint8Array, fragments: readonly Uint8Array[]): void {
   const clocks = trackClocks(init);
   const times = fragments.map(decodeTimesOf);
-  let startSeconds = Number.POSITIVE_INFINITY;
-  for (const time of times.flat()) {
-    const clock = clocks.get(time.trackId);
-    if (clock) startSeconds = Math.min(startSeconds, time.value / clock);
-  }
-  if (!Number.isFinite(startSeconds) || startSeconds <= 0) return;
+  const startSeconds = earliestSeconds(times.flat(), clocks);
+  if (startSeconds === null) return;
   times.forEach((list, index) => {
     const fragment = fragments[index];
-    if (!fragment) return;
-    for (const time of list) {
-      const clock = clocks.get(time.trackId);
-      if (!clock) continue;
-      writeDecodeTime(fragment, time, Math.max(0, time.value - Math.round(startSeconds * clock)));
-    }
+    if (fragment) shiftTimes({ fragment, times: list, clocks }, startSeconds);
   });
+}
+
+const INIT_FRAGMENT = 1;
+
+export function rebasingSink(sink: ICameraMediaSink): ICameraMediaSink {
+  let clocks: Clocks = new Map();
+  let startSeconds: number | null = null;
+  return {
+    resetStream: () => {
+      startSeconds = null;
+      sink.resetStream();
+    },
+    pushFragment: (type, keyframe, data) => {
+      if (type === INIT_FRAGMENT) {
+        clocks = trackClocks(new Uint8Array(data));
+        startSeconds = null;
+      } else {
+        const fragment = new Uint8Array(data);
+        const times = decodeTimesOf(fragment);
+        startSeconds ??= earliestSeconds(times, clocks);
+        if (startSeconds !== null) shiftTimes({ fragment, times, clocks }, startSeconds);
+      }
+      sink.pushFragment(type, keyframe, data);
+    },
+    bufferedBytes: () => sink.bufferedBytes(),
+  };
 }

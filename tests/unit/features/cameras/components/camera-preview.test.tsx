@@ -2,6 +2,7 @@ import { afterEach, describe, expect, mock, test } from 'bun:test';
 import { act, cleanup, render, screen } from '@testing-library/react';
 import { useEffect, type ReactNode } from 'react';
 import type { PreviewEntry } from '@/features/cameras/services/preview-channel';
+import { SYNC, fragmentOf, initSegment, videoTrak } from '@tests/support/fmp4-fixtures';
 
 type NativeViewProps = {
   hybridRef?: (player: unknown) => void;
@@ -13,9 +14,13 @@ const attached: PreviewEntry[] = [];
 let detached = 0;
 let granted = true;
 
+const received: Uint8Array[] = [];
+
 const fakePlayer = {
   resetStream: () => undefined,
-  pushFragment: () => undefined,
+  pushFragment: (type: number, _keyframe: boolean, data: ArrayBuffer) => {
+    if (type === 2) received.push(new Uint8Array(data));
+  },
   bufferedBytes: () => 0,
 };
 
@@ -63,6 +68,7 @@ function Tile({ children }: { children: ReactNode }) {
 afterEach(() => {
   cleanup();
   attached.length = 0;
+  received.length = 0;
   detached = 0;
   granted = true;
 });
@@ -99,6 +105,17 @@ describe('CameraPreview on native', () => {
     act(() => attached[0]?.onState('live'));
     await act(() => new Promise((resolve) => setTimeout(resolve, 300)));
     expect(still()).toBe(false);
+  });
+
+  test("the stream's hour-old timestamps reach the native player starting from zero", () => {
+    render(<NativePreview cameraId="4" order={0} />);
+    const sink = attached[0]?.sink;
+    sink?.pushFragment(1, true, initSegment([videoTrak(1, 90000)]).buffer as ArrayBuffer);
+    const fragment = fragmentOf({ track: 1, flags: SYNC, payload: [1], decodeTime: 3600 * 90000 });
+    sink?.pushFragment(2, true, fragment.buffer as ArrayBuffer);
+    const bytes = received[0] ?? new Uint8Array();
+    const at = new TextDecoder('latin1').decode(bytes).indexOf('tfdt');
+    expect(new DataView(bytes.buffer, bytes.byteOffset).getBigUint64(at + 8)).toBe(0n);
   });
 
   test('a tile past the cap mounts no player and leaves the still alone', () => {
