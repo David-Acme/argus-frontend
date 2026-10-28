@@ -1,13 +1,12 @@
 import type { IConversationMessageCacheRow } from '@/core/interfaces';
 import type { ConversationDeliveryState } from '@/core/types';
+import { DAY_MS } from '@/shared/libs/day';
 
 type MessageFacts = Pick<IConversationMessageCacheRow, 'direction' | 'kind' | 'state'>;
 
 export type DayKind = 'today' | 'yesterday' | 'weekday' | 'date';
 
 export const WEEKDAY_SPAN_DAYS = 6;
-
-const DAY_MS = 24 * 60 * 60 * 1000;
 
 const DELIVERY_STATES: ReadonlySet<string> = new Set<ConversationDeliveryState>([
   'sent',
