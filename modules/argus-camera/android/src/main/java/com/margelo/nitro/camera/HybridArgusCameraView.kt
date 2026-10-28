@@ -3,12 +3,19 @@ package com.margelo.nitro.camera
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
+import androidx.media3.common.C
 import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackException
+import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.DefaultLoadControl
+import androidx.media3.exoplayer.DefaultRenderersFactory
+import androidx.media3.exoplayer.ExoPlaybackException
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.analytics.AnalyticsListener
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
@@ -27,6 +34,7 @@ class HybridArgusCameraView(context: Context) : HybridArgusCameraViewSpec() {
   private var activeState = true
   private var mutedState = true
   private var fillState = false
+  private var audioFailed = false
 
   override val view: View
     get() = playerView
@@ -42,7 +50,12 @@ class HybridArgusCameraView(context: Context) : HybridArgusCameraViewSpec() {
     get() = mutedState
     set(value) {
       mutedState = value
-      runOnMain { player?.volume = volumeOf(value) }
+      runOnMain {
+        player?.let {
+          it.volume = volumeOf(value)
+          applyAudio(it)
+        }
+      }
     }
 
   override var fill: Boolean
@@ -56,6 +69,46 @@ class HybridArgusCameraView(context: Context) : HybridArgusCameraViewSpec() {
     if (fill) AspectRatioFrameLayout.RESIZE_MODE_ZOOM else AspectRatioFrameLayout.RESIZE_MODE_FIT
 
   private fun volumeOf(muted: Boolean): Float = if (muted) 0f else 1f
+
+  private fun applyAudio(exo: ExoPlayer) {
+    exo.trackSelectionParameters = exo.trackSelectionParameters
+      .buildUpon()
+      .setTrackTypeDisabled(C.TRACK_TYPE_AUDIO, mutedState || audioFailed)
+      .build()
+  }
+
+  private fun dropAudio(exo: ExoPlayer, reason: Throwable) {
+    if (audioFailed)
+      return
+    audioFailed = true
+    Log.w(TAG, "audio decoder failed; video plays without sound", reason)
+    applyAudio(exo)
+  }
+
+  private fun guardAudio(exo: ExoPlayer) {
+    exo.addListener(
+      object : Player.Listener {
+        override fun onPlayerError(error: PlaybackException) {
+          val failure = error as? ExoPlaybackException ?: return
+          if (failure.type != ExoPlaybackException.TYPE_RENDERER)
+            return
+          if (exo.getRendererType(failure.rendererIndex) == C.TRACK_TYPE_AUDIO)
+            dropAudio(exo, failure)
+        }
+      },
+    )
+    exo.addAnalyticsListener(
+      object : AnalyticsListener {
+        override fun onAudioCodecError(eventTime: AnalyticsListener.EventTime, audioCodecError: Exception) {
+          dropAudio(exo, audioCodecError)
+        }
+
+        override fun onAudioSinkError(eventTime: AnalyticsListener.EventTime, audioSinkError: Exception) {
+          dropAudio(exo, audioSinkError)
+        }
+      },
+    )
+  }
 
   override fun resetStream() {
     runOnMain { releasePlayer() }
@@ -76,7 +129,10 @@ class HybridArgusCameraView(context: Context) : HybridArgusCameraViewSpec() {
   private fun startStream(init: ByteArray) {
     releasePlayer()
     frames.restart(init)
-    val exo = ExoPlayer.Builder(playerView.context)
+    val renderers = DefaultRenderersFactory(playerView.context)
+      .setMediaCodecSelector(PlatformFlacSelector)
+      .setEnableDecoderFallback(true)
+    val exo = ExoPlayer.Builder(playerView.context, renderers)
       .setMediaSourceFactory(
         ProgressiveMediaSource.Factory(CameraDataSource.Factory(frames)),
       )
@@ -87,6 +143,8 @@ class HybridArgusCameraView(context: Context) : HybridArgusCameraViewSpec() {
       )
       .build()
     exo.volume = volumeOf(mutedState)
+    applyAudio(exo)
+    guardAudio(exo)
     player = exo
     playerView.player = exo
     exo.setMediaItem(MediaItem.fromUri(CameraDataSource.LIVE_URI))
@@ -102,6 +160,10 @@ class HybridArgusCameraView(context: Context) : HybridArgusCameraViewSpec() {
     player = null
     playerView.player = null
     frames.abort()
+  }
+
+  private companion object {
+    const val TAG = "ArgusCamera"
   }
 
   private fun runOnMain(block: () -> Unit) {
