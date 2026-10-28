@@ -16,6 +16,7 @@ import { useEffects } from '@/shared/theme/effects';
 import {
   heightLayoutOf,
   sheetBodyCapOf,
+  sheetBodyInsetOf,
   sheetCeilingOf,
   sheetChromeOf,
   sheetDetentsOf,
@@ -130,7 +131,8 @@ function useFocusRestore(keyboard: number) {
 
 function Body({ long, fill, clearance, cap, keyboard, testID, children }: BodyProps) {
   const { scroll, content } = useFocusRestore(keyboard);
-  const padding = [styles.body, { paddingBottom: clearance }, fill ? styles.grow : null];
+  const bottom = sheetBodyInsetOf({ clearance, keyboard, fill });
+  const padding = [styles.body, { paddingBottom: bottom }, fill ? styles.grow : null];
   const capped = long ? undefined : { maxHeight: cap };
   return (
     <GestureHandlerRootView style={styles.root}>

@@ -55,6 +55,18 @@ describe('accent-insensitive search in the database', () => {
     expect(likeWord('patio')).toBe('%p_t__%');
   });
 
+  test('consonants stay literal, so a word of common letters is not a pattern that matches anything', () => {
+    expect(likeWord('cocina')).toBe('%c_c___%');
+    const rows: Row[] = [
+      { id: '1', name: 'Cocina' },
+      { id: '2', name: 'Reunión' },
+      { id: '3', name: 'Comprar pan' },
+    ];
+    expect(rows.filter(matching(wordClauses(['name'], ['cocina']))).map((row) => row.id)).toEqual([
+      '1',
+    ]);
+  });
+
   test('the query finds accented rows, the fold removes what the wildcards let in', () => {
     expect(PEOPLE.filter(matching(wordClauses(['name'], ['jose']))).map((row) => row.id)).toEqual([
       '1',
@@ -155,7 +167,7 @@ describe('search projection', () => {
     expect(write).toEqual({
       key: 'command.search',
       scope: 'scope',
-      value: { rows: [hit('1', 'José Pérez')], hasMore: true },
+      value: { rows: [hit('1', 'José Pérez')], hasMore: true, scanned: 2 },
     });
   });
 });

@@ -1,7 +1,7 @@
 import { Q } from '@nozbe/watermelondb';
 import type { Clause } from '@nozbe/watermelondb/QueryDescription';
 
-const LIKE_WILDCARD = /[^a-z0-9]|[aceinouy]/g;
+const LIKE_WILDCARD = /[^a-z0-9]|[aeinou]/g;
 
 export const likeWord = (word: string): string => `%${word.replace(LIKE_WILDCARD, '_')}%`;
 

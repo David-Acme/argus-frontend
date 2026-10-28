@@ -134,6 +134,12 @@ export function sheetBodyCapOf(room: SheetRoom): number {
   return Math.max(0, sheetCeilingOf(room) - room.header - room.keyboard);
 }
 
+export type SheetBodyInset = { clearance: number; keyboard: number; fill: boolean };
+
+export function sheetBodyInsetOf({ clearance, keyboard, fill }: SheetBodyInset): number {
+  return fill ? clearance + keyboard : clearance;
+}
+
 export type SheetChromeRoom = SheetRoom & { footer: number };
 
 export type SheetChrome = { footerPinned: boolean; header: boolean };

@@ -5,8 +5,8 @@ import type {
   ProjectTaskModel,
   UserModel,
 } from '@/core/database';
-import type { ISearchHitCacheRow } from '@/core/interfaces';
-import type { KeysetPage, PagedRows } from '@/core/types';
+import type { ISearchHitCacheRow, ISearchHitsCacheValue } from '@/core/interfaces';
+import type { KeysetPage } from '@/core/types';
 import { VIEW_CACHE_KEYS } from '@/shared/constants/cache.constant';
 import { matchesWords } from '@/shared/libs/text-search';
 import type { ViewWrite } from './projection';
@@ -66,9 +66,10 @@ export function projectSearch(
   scope: string,
   words: readonly string[]
 ): ViewWrite[] {
-  const value: PagedRows<ISearchHitCacheRow> = {
+  const value: ISearchHitsCacheValue = {
     rows: page.rows.filter((row) => matchesWords(row.title, words)),
     hasMore: page.hasMore,
+    scanned: page.rows.length,
   };
   return [{ key: VIEW_CACHE_KEYS.commandSearch, scope, value }];
 }
