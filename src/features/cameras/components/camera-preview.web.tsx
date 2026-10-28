@@ -4,7 +4,7 @@ import { useCameraPreview } from '@/features/cameras/hooks/use-camera-preview';
 import { usePreviewStream } from '@/features/cameras/hooks/use-preview-stream';
 import { WebCameraPlayer } from '@/features/cameras/components/web-camera-player';
 
-export type CameraPreviewProps = { cameraId: string; order: number };
+export type CameraPreviewProps = { cameraId: string; order: number; still?: string };
 
 const CANVAS = {
   width: '100%',

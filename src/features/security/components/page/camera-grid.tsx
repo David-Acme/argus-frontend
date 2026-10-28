@@ -72,7 +72,7 @@ function CameraTile({ tile, order, frames, now, format, fill, onOpen, onTalk }: 
       reveal={fill ? reveal : undefined}
       onPress={() => onOpen(tile.id)}>
       {tile.state === 'live' && !face.stale ? (
-        <CameraPreview cameraId={tile.id} order={order} />
+        <CameraPreview cameraId={tile.id} order={order} still={frame} />
       ) : null}
     </Media>
   );

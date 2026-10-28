@@ -32,7 +32,7 @@ export function CameraMedia({ tile, detail, frame, order, fill, onOpen }: Camera
       fill={fill}
       onPress={() => onOpen(tile.id)}>
       {tile.state === 'live' && !face.stale ? (
-        <CameraPreview cameraId={tile.id} order={order} />
+        <CameraPreview cameraId={tile.id} order={order} still={frame} />
       ) : null}
     </Media>
   );

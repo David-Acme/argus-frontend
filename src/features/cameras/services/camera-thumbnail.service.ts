@@ -1,6 +1,9 @@
 import { CAMERA_THUMBNAIL_REFRESH_MS } from '@/features/cameras/constants';
 import { cameraControlService } from '@/features/cameras/services/camera-control.service';
-import { rememberCameraFrame } from '@/features/cameras/services/camera-frame-cache';
+import {
+  hasCameraFrame,
+  rememberCameraFrame,
+} from '@/features/cameras/services/camera-frame-cache';
 import { previewBoard } from '@/features/cameras/services/preview-board';
 
 type ThumbnailListener = (thumbnails: ReadonlyMap<string, string>) => void;
@@ -29,7 +32,7 @@ export class CameraThumbnailPoller {
   private async refresh(): Promise<void> {
     for (const id of this.ids) {
       if (this.stopped) return;
-      if (previewBoard.isLive(id)) continue;
+      if (previewBoard.isLive(id) && hasCameraFrame(id)) continue;
       const result = await cameraControlService.snapshot(id);
       if (this.stopped) return;
       if (result.ok && result.info?.image) {

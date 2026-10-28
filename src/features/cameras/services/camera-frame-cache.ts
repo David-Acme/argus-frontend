@@ -10,6 +10,10 @@ export function rememberCameraFrame(cameraId: string, image: string): void {
   frames.set(cameraId, image);
 }
 
+export function hasCameraFrame(cameraId: string): boolean {
+  return frames.has(cameraId);
+}
+
 export function lastCameraFrames(cameraIds: readonly string[]): Map<string, string> {
   const known = new Map<string, string>();
   for (const id of cameraIds) {

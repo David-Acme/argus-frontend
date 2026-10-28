@@ -15,6 +15,8 @@ mock.module('@/features/cameras/services/camera-control.service', () => ({
 const { CameraThumbnailPoller } =
   await import('@/features/cameras/services/camera-thumbnail.service');
 const { previewBoard } = await import('@/features/cameras/services/preview-board');
+const { hasCameraFrame, rememberCameraFrame } =
+  await import('@/features/cameras/services/camera-frame-cache');
 
 type Poller = InstanceType<typeof CameraThumbnailPoller>;
 
@@ -57,7 +59,17 @@ describe('camera thumbnails', () => {
     expect(scheduled).toBe(0);
   });
 
-  test('a camera already playing live is not polled for a still', async () => {
+  test('a live camera with no still yet is polled once, so the tile has one to come back to', async () => {
+    previewBoard.markLive('7', true);
+    poller = new CameraThumbnailPoller(['7'], () => undefined, false);
+    poller.start();
+    await settle();
+    previewBoard.markLive('7', false);
+    expect(hasCameraFrame('7')).toBe(true);
+  });
+
+  test('a camera already playing live with a still is not polled again', async () => {
+    rememberCameraFrame('2', 'frame-old');
     previewBoard.markLive('2', true);
     const { seen } = await refreshes(false);
     previewBoard.markLive('2', false);
