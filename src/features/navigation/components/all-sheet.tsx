@@ -7,7 +7,6 @@ import { matchesWords, searchWords } from '@/shared/libs/text-search';
 import { useSurfaces } from '@/shared/libs/surfaces';
 import { Avatar } from '@/shared/ui/avatar';
 import { Button } from '@/shared/ui/button';
-import { Field } from '@/shared/ui/field';
 import type { MenuItems } from '@/shared/ui/menu';
 import { Notice } from '@/shared/ui/notice';
 import { Row } from '@/shared/ui/row';
@@ -15,6 +14,7 @@ import { Section } from '@/shared/ui/section';
 import { Sheet } from '@/shared/ui/sheet';
 import { useCommandSearch } from '@/features/command';
 import { ModuleTile } from '@/features/navigation/components/module-tile';
+import { SheetSearchField } from '@/features/navigation/components/sheet-search-field';
 import { useNavPins } from '@/features/navigation/hooks/use-nav-pins';
 import {
   allSheetLong,
@@ -242,12 +242,14 @@ export function AllSheet({ onArgus }: AllSheetProps) {
   const pins = useNavPins();
   const actionsOf = usePinActions();
   const [query, setQuery] = useState('');
+  const [searchOpen, setSearchOpen] = useState(false);
   const groups = navGroups(resolved, pins);
   const modules = resolved.modules.map(moduleEntry);
   const general = [...groups.core.filter((entry) => entry.key === 'news'), ...groups.account];
   const searching = query.trim().length > 0;
   const shut = () => {
     setQuery('');
+    setSearchOpen(false);
     close();
   };
   const go = (entry: NavEntry) => {
@@ -265,9 +267,15 @@ export function AllSheet({ onArgus }: AllSheetProps) {
       onClose={shut}
       title={t('screens.navigation.all')}
       variant="list"
-      long={allSheetLong({ searching, full })}>
+      long={allSheetLong({ searching: searching || searchOpen, full })}>
       <View className={searching ? 'flex-1 gap-4' : 'gap-4'}>
-        <Field placeholder={t('screens.navigation.search')} value={query} onChangeText={setQuery} />
+        <SheetSearchField
+          label={t('screens.navigation.search')}
+          value={query}
+          open={searchOpen}
+          onOpen={() => setSearchOpen(true)}
+          onChangeText={setQuery}
+        />
         {searching ? (
           <SearchResults
             query={query}
