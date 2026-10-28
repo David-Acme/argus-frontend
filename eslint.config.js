@@ -10,7 +10,7 @@ const SOURCE = 'src/**/*.{ts,tsx}';
 const COMPONENTS = 'src/**/*.tsx';
 const DESIGN_SYSTEM = ['src/shared/ui/**', 'src/shared/components/ui/**'];
 const THEME = 'src/shared/theme/**';
-const LOCALES = 'src/core/i18n/locales/**';
+const LOCALES = 'src/core/locales/**';
 const GENERATED = ['uniwind-types.d.ts', 'expo-env.d.ts', '.expo/**'];
 
 const restrictedImports = builtinRules.get('no-restricted-imports');

@@ -4,13 +4,16 @@ import type {
   TranslationParamsOf,
   TranslationParamsRest,
 } from '@/core/types';
-import { defaultLanguage, localeDictionaries } from './locales';
+import { defaultLanguage, dictionaryOf } from '@/core/locales';
 import { log } from '@/core/services/log';
 
 const INTERPOLATION_RE = /\{(\w+)\}/g;
 
 export function readableKey(key: string): string {
-  const last = key.slice(key.lastIndexOf('.') + 1).replace(/[-_]+/g, ' ').trim();
+  const last = key
+    .slice(key.lastIndexOf('.') + 1)
+    .replace(/[-_]+/g, ' ')
+    .trim();
   return last ? last.charAt(0).toUpperCase() + last.slice(1) : '';
 }
 
@@ -34,7 +37,7 @@ export function translate<K extends TranslationKey>(
 
   let value = resolvePath(locale, key);
   if (value === undefined) {
-    value = resolvePath(localeDictionaries[defaultLanguage], key);
+    value = resolvePath(dictionaryOf(defaultLanguage), key);
   }
   if (value === undefined) {
     if (__DEV__) log.error('i18n', `missing translation key: ${key}`);
@@ -52,6 +55,6 @@ export function translate<K extends TranslationKey>(
 
 export function translateLoose(locale: I18nSchema, key: string): string {
   if (!key) return '';
-  const value = resolvePath(locale, key) ?? resolvePath(localeDictionaries[defaultLanguage], key);
+  const value = resolvePath(locale, key) ?? resolvePath(dictionaryOf(defaultLanguage), key);
   return value ?? key;
 }

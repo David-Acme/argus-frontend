@@ -6,7 +6,6 @@ src/features/agenda/components/calendar-event-share-dialog.tsx
 src/features/auth/components/brand-splash.tsx
 src/features/auth/components/entry-gate.tsx
 src/features/auth/components/server-unreachable.tsx
-src/features/auth/components/session-gate.tsx
 src/features/cameras/components/camera-fullscreen.tsx
 src/features/cameras/components/camera-live-view.native.tsx
 src/features/cameras/components/camera-live-view.web.tsx

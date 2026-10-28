@@ -31,3 +31,6 @@ mock.module('react-native', () => ({
 for (const [, path = ''] of iconSource.matchAll(/from '(lucide-react-native\/icons\/[a-z0-9-]+)'/g)) {
   mock.module(path, () => ({ default: () => null }));
 }
+
+const { loadDictionary } = await import('@/core/locales');
+await loadDictionary('en');

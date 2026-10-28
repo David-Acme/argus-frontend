@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { privacyDirectorySchema, privacyMeSchema } from '@/core/contracts/privacy.contract';
-import { localeDictionaries } from '@/core/i18n/locales';
+import { localeDictionaries } from '@/core/locales/all';
 import { translate } from '@/core/i18n/translate';
 import type { HouseholdPrivacy, PrivacyMe, PrivacyState, TranslateFn, TranslationKey } from '@/core/types';
 import { PRIVACY_JURISDICTION } from '@/features/privacy/constants/privacy';

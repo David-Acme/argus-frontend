@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { localeDictionaries } from '@/core/i18n/locales';
+import { localeDictionaries } from '@/core/locales/all';
 import { translate } from '@/core/i18n/translate';
 import type { ModuleDataOwner, ModuleRecord, TranslateFn } from '@/core/types';
 import { dataSummary, purgeReady, uninstallMode } from '@/features/modules/model/module-lifecycle';
