@@ -27,7 +27,7 @@
   `src/shared/theme/effects.ts`. Its dependencies:
   `@lodev09/react-native-true-sheet` 3.11.18 (native sheets),
   `@shopify/react-native-skia` 2.14.0 (Estela on phones; Canvas 2D on web and
-  Tauri), `expo-haptics`, `expo-blur`, `expo-glass-effect`, `expo-device`,
+  Tauri), `expo-haptics`, `expo-glass-effect`, `expo-device`,
   `sonner-native` and `sonner` (toasts). No UI sound.
 - **Package manager**: **bun** (`bun.lock`). Path alias `@/* → src/*`.
 
@@ -1078,8 +1078,8 @@ for Watermelon nor make an HTTP list request just because it mounted.
       and face capture load on use. Skia's CanvasKit never ships on web.
     - **Dependencies:** every new dependency records its size in
       `CONTEXT.md` (the redesign's: TrueSheet 3.11.18, Skia 2.14.0,
-      expo-haptics, expo-blur, expo-glass-effect, expo-device, sonner-native,
-      sonner).
+      expo-haptics, expo-glass-effect, expo-device, sonner-native,
+      sonner; expo-blur was removed unused on 2026-10-27).
 
     *Measured: `bun run check:bundle` (render under the Tauri CSP, entry and
     `dist/` bytes against `bundle-baseline.txt`, lazy packages absent from
