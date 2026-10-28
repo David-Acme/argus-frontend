@@ -8,7 +8,9 @@ import { cn } from '@/shared/libs/utils';
 
 type ClipPlayerProps = {
   file: ClipFile | null;
+  muted?: boolean;
   onEnded?: () => void;
+  onAudioFailed?: (stopped: boolean) => void;
   className?: string;
 };
 
@@ -19,7 +21,13 @@ const VIDEO_STYLE = {
   background: CAMERA_LIVE_BACKGROUND,
 } as const;
 
-export function ClipPlayer({ file, onEnded, className }: ClipPlayerProps) {
+export function ClipPlayer({
+  file,
+  muted = true,
+  onEnded,
+  onAudioFailed,
+  className,
+}: ClipPlayerProps) {
   const { t } = useTranslation();
   const video = useRef<HTMLVideoElement | null>(null);
   const [unsupported, setUnsupported] = useState(false);
@@ -73,7 +81,8 @@ export function ClipPlayer({ file, onEnded, className }: ClipPlayerProps) {
   const ended = useRef(onEnded);
   useEffect(() => {
     ended.current = onEnded;
-  }, [onEnded]);
+    if (file && !muted) onAudioFailed?.(false);
+  }, [file, muted, onAudioFailed, onEnded]);
 
   if (!file) return null;
 

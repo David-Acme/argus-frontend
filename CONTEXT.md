@@ -8496,6 +8496,15 @@ side is the backend's `services/camera/CONTEXT.md` › "Live previews".
   init starts a new timeline. The native view logs under `ArgusCamera`: each
   `playWhenReady` change, each playback state, the first rendered frame, and every 2 s
   `playing …, playWhenReady … at position … ms, buffered to … ms`.
+- **Clips are heard; tiles are not** (owner, 2026-10-28). The clip screen plays with
+  sound, with a mute button beside its progress; tiles and the tamper evidence stay
+  muted, their audio track off. The rebase moves every track by the same start in
+  seconds, so sound and picture stay in step. New clips carry FLAC the recorder repairs
+  (`clip_flac::repair`); older ones keep go2rtc's out-of-spec frames, so the view
+  reports an audio failure through `onAudioFailed(stopped)`: on a decoder or sink error,
+  or when the audio holds the clock still for two 2 s checks with data buffered ahead.
+  It turns the audio track off, logs one warning, and the clip says «Sin audio»; if the
+  player had stopped, the clip starts again without sound.
 - **Stills only where needed.** `CameraThumbnailPoller` skips a live camera that already
   has a still; it still paints every tile once before its video starts.
 

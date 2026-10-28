@@ -8,13 +8,21 @@ import { cn } from '@/shared/libs/utils';
 
 type ClipPlayerProps = {
   file: ClipFile | null;
+  muted?: boolean;
   onEnded?: () => void;
+  onAudioFailed?: (stopped: boolean) => void;
   className?: string;
 };
 
 const PLAYER_FRAME = { aspectRatio: 16 / 9 };
 
-export function ClipPlayer({ file, onEnded, className }: ClipPlayerProps) {
+export function ClipPlayer({
+  file,
+  muted = true,
+  onEnded,
+  onAudioFailed,
+  className,
+}: ClipPlayerProps) {
   const [player, setPlayer] = useState<ArgusCameraViewMethods | null>(null);
   const bindPlayer = useCallback((ref: ArgusCameraViewMethods) => {
     setPlayer((bound) => bound ?? ref);
@@ -32,8 +40,9 @@ export function ClipPlayer({ file, onEnded, className }: ClipPlayerProps) {
       <ArgusCameraView
         hybridRef={callback(bindPlayer)}
         active={file !== null}
-        muted
+        muted={muted}
         fill={false}
+        onAudioFailed={onAudioFailed ? callback(onAudioFailed) : undefined}
         style={{ width: '100%', height: '100%' }}
       />
     </View>

@@ -45,6 +45,14 @@ function playbackOf(overrides: Partial<ClipPlayback> = {}): ClipPlayback {
   };
 }
 
+type PlayerProps = {
+  muted?: boolean;
+  onEnded?: () => void;
+  onAudioFailed?: (stopped: boolean) => void;
+};
+
+const shownPlayer: { props: PlayerProps } = { props: {} };
+
 mock.module('expo-router', () => ({
   Redirect: ({ href }: { href: string | { pathname: string } }) => (
     <span data-testid="redirect">{typeof href === 'string' ? href : href.pathname}</span>
@@ -82,9 +90,12 @@ mock.module('@/features/cameras/hooks/use-clip-poster', () => ({
 }));
 
 mock.module('@/features/cameras/components/clip-player', () => ({
-  ClipPlayer: ({ onEnded }: { onEnded?: () => void }) => (
-    <span data-testid="clip-player" onClick={onEnded} />
-  ),
+  ClipPlayer: (props: PlayerProps) => {
+    shownPlayer.props = props;
+    return (
+      <span data-testid="clip-player" data-muted={String(props.muted)} onClick={props.onEnded} />
+    );
+  },
 }));
 
 mock.module('@/features/cameras/components/zone-editor', () => ({
@@ -253,6 +264,40 @@ describe('Grabaciones', () => {
     expect(screen.queryByRole('button', { name: 'Cerrar' })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Ver de nuevo' }));
     expect(calls).toEqual(['replay']);
+  });
+});
+
+describe('clip sound', () => {
+  const file = {
+    init: new Uint8Array(),
+    track: null,
+    fragments: [{ bytes: new Uint8Array(), keyframe: true, atUs: 0 }],
+  };
+  const muted = () => screen.getByTestId('clip-player').getAttribute('data-muted');
+
+  test('a clip plays with its sound, and one button mutes and unmutes it', () => {
+    render(<ClipStage playback={playbackOf({ state: 'ready', clip, file })} closable={false} />);
+    expect(muted()).toBe('false');
+    fireEvent.click(screen.getByRole('button', { name: 'Silenciar el clip' }));
+    expect(muted()).toBe('true');
+    fireEvent.click(screen.getByRole('button', { name: 'Activar el sonido' }));
+    expect(muted()).toBe('false');
+  });
+
+  test('when the audio fails the clip says «Sin audio», plays muted, and starts over if it had stopped', () => {
+    render(<ClipStage playback={playbackOf({ state: 'ready', clip, file })} closable={false} />);
+    act(() => shownPlayer.props.onAudioFailed?.(false));
+    expect(screen.getByText('Sin audio')).toBeDefined();
+    expect(screen.queryByRole('button', { name: 'Silenciar el clip' })).toBeNull();
+    expect(muted()).toBe('true');
+    expect(calls).toEqual([]);
+    act(() => shownPlayer.props.onAudioFailed?.(true));
+    expect(calls).toEqual(['replay']);
+  });
+
+  test('the closable stage stays muted', () => {
+    render(<ClipStage playback={playbackOf({ state: 'ready', clip, file })} />);
+    expect(muted()).toBe('true');
   });
 });
 

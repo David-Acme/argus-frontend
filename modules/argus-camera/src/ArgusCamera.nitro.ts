@@ -8,6 +8,7 @@ export interface ArgusCameraViewProps extends HybridViewProps {
   active: boolean;
   muted: boolean;
   fill: boolean;
+  onAudioFailed?: (stopped: boolean) => void;
 }
 
 export interface ArgusCameraViewMethods extends HybridViewMethods {

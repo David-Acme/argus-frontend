@@ -35,10 +35,13 @@ class HybridArgusCameraView(context: Context) : HybridArgusCameraViewSpec() {
   private var mutedState = true
   private var fillState = false
   private var audioFailed = false
+  private var lastPosition = -1L
+  private var stalledTicks = 0
   private val positionLog = object : Runnable {
     override fun run() {
       val exo = player ?: return
       Log.i(TAG, "playing ${exo.isPlaying}, playWhenReady ${exo.playWhenReady} at ${positionOf(exo)}")
+      watchStall(exo)
       mainHandler.postDelayed(this, POSITION_LOG_MS)
     }
   }
@@ -65,6 +68,8 @@ class HybridArgusCameraView(context: Context) : HybridArgusCameraViewSpec() {
       }
     }
 
+  override var onAudioFailed: ((stopped: Boolean) -> Unit)? = null
+
   override var fill: Boolean
     get() = fillState
     set(value) {
@@ -84,12 +89,24 @@ class HybridArgusCameraView(context: Context) : HybridArgusCameraViewSpec() {
       .build()
   }
 
-  private fun dropAudio(exo: ExoPlayer, reason: Throwable) {
+  private fun dropAudio(exo: ExoPlayer, reason: Throwable, stopped: Boolean) {
     if (audioFailed)
       return
     audioFailed = true
     Log.w(TAG, "audio decoder failed; video plays without sound", reason)
     applyAudio(exo)
+    onAudioFailed?.invoke(stopped)
+  }
+
+  private fun audioOn(): Boolean = !mutedState && !audioFailed
+
+  private fun watchStall(exo: ExoPlayer) {
+    val position = exo.currentPosition
+    val waiting = exo.playWhenReady && exo.bufferedPosition > position + STALL_MARGIN_MS
+    stalledTicks = if (audioOn() && waiting && position == lastPosition) stalledTicks + 1 else 0
+    lastPosition = position
+    if (stalledTicks >= STALL_TICKS)
+      dropAudio(exo, IllegalStateException("audio held the clock at $position ms"), false)
   }
 
   private fun guardAudio(exo: ExoPlayer) {
@@ -100,7 +117,7 @@ class HybridArgusCameraView(context: Context) : HybridArgusCameraViewSpec() {
           if (failure.type != ExoPlaybackException.TYPE_RENDERER)
             return
           if (exo.getRendererType(failure.rendererIndex) == C.TRACK_TYPE_AUDIO)
-            dropAudio(exo, failure)
+            dropAudio(exo, failure, true)
         }
       },
     )
@@ -119,11 +136,11 @@ class HybridArgusCameraView(context: Context) : HybridArgusCameraViewSpec() {
         }
 
         override fun onAudioCodecError(eventTime: AnalyticsListener.EventTime, audioCodecError: Exception) {
-          dropAudio(exo, audioCodecError)
+          dropAudio(exo, audioCodecError, exo.playerError != null)
         }
 
         override fun onAudioSinkError(eventTime: AnalyticsListener.EventTime, audioSinkError: Exception) {
-          dropAudio(exo, audioSinkError)
+          dropAudio(exo, audioSinkError, exo.playerError != null)
         }
       },
     )
@@ -169,6 +186,8 @@ class HybridArgusCameraView(context: Context) : HybridArgusCameraViewSpec() {
     exo.setMediaItem(MediaItem.fromUri(CameraDataSource.LIVE_URI))
     exo.prepare()
     exo.playWhenReady = activeState
+    lastPosition = -1L
+    stalledTicks = 0
     mainHandler.removeCallbacks(positionLog)
     mainHandler.postDelayed(positionLog, POSITION_LOG_MS)
   }
@@ -199,6 +218,8 @@ class HybridArgusCameraView(context: Context) : HybridArgusCameraViewSpec() {
   private companion object {
     const val TAG = "ArgusCamera"
     const val POSITION_LOG_MS = 2000L
+    const val STALL_MARGIN_MS = 500L
+    const val STALL_TICKS = 2
   }
 
   private fun runOnMain(block: () -> Unit) {
