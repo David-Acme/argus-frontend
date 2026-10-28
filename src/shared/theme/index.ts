@@ -39,6 +39,7 @@ export {
   heightClassOf,
   heightLayoutOf,
   navBarOf,
+  navGlyphBoxOf,
   navOffsetsOf,
   paletteTopOf,
   paneSplitOf,

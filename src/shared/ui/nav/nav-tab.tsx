@@ -1,6 +1,6 @@
 import { clsx } from 'clsx';
 import { Pressable, View } from 'react-native';
-import type { NavBarLayout } from '@/shared/theme';
+import { navGlyphBoxOf, type NavBarLayout } from '@/shared/theme';
 import { Icon } from '@/shared/ui/icon';
 import { Presence, useCentrePresence, type PresenceState } from '@/shared/ui/presence';
 import { PressableSurface } from '@/shared/ui/pressable';
@@ -110,7 +110,16 @@ export function ArgusTab({
         onPress={handlers.onPress}
         className={clsx('web:focus-ring', FRAME, selected && 'bg-tab-on')}>
         {presence ? (
-          <Presence state={listening ? 'listen' : presence} size={layout.presence} paused={still} />
+          <View
+            testID="argus-tab-glyph"
+            className="items-center justify-center overflow-visible"
+            style={{ height: navGlyphBoxOf(layout) }}>
+            <Presence
+              state={listening ? 'listen' : presence}
+              size={layout.presence}
+              paused={still}
+            />
+          </View>
         ) : (
           <Icon name={item.icon} size={layout.icon} />
         )}

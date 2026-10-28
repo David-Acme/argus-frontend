@@ -70,6 +70,10 @@ export type NavBarLayout = {
   presence: number;
 };
 
+export function navGlyphBoxOf({ icon }: Pick<NavBarLayout, 'icon'>): number {
+  return icon === 'small' ? size.iconSmall : size.icon;
+}
+
 export type NavOffsets = { footprint: number; clearance: number; cap: number; toast: number };
 
 const REGULAR_FOOTPRINT = size.tabBar + inset.nav.barBottom;

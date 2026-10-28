@@ -187,6 +187,8 @@ describe('Nav', () => {
     fireEvent.click(screen.getByRole('tab', { name: COPY.argusHint }));
     expect(calls).toContain('press');
     expect(container.querySelector('canvas')?.style.width).toBe('36px');
+    const glyph = screen.getByTestId('argus-tab-glyph');
+    expect(glyph.style.height).toBe('24px');
   });
 
   test('a short phone gets a 48 bar with small icons, a tiny one and a phone on its side drop the labels', () => {

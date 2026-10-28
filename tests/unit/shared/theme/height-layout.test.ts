@@ -7,6 +7,7 @@ import {
   paletteTopOf,
   paneSplitOf,
   phoneLandscape,
+  navGlyphBoxOf,
   sheetBodyCapOf,
   sheetBodyInsetOf,
   sheetCeilingOf,
@@ -113,6 +114,11 @@ describe('responsive by height', () => {
       568 - 20 - space[4] - 70 - 280
     );
     expect(sheetBodyCapOf({ height: 360, top: 0, header: 70, keyboard: 320 })).toBe(0);
+  });
+
+  test("Estela in the bar sits in the icons' box, so the Argus label shares their baseline", () => {
+    expect(navGlyphBoxOf({ icon: 'default' })).toBe(size.icon);
+    expect(navGlyphBoxOf({ icon: 'small' })).toBe(size.iconSmall);
   });
 
   test('a sheet that fills the screen keeps its body above the keyboard, so a centred empty state stays in sight', () => {
