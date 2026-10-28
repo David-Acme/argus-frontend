@@ -80,6 +80,7 @@ function InvitationScreen() {
       top={<OnboardingTop onBack={back} />}
       footer={
         <Button
+          key={copy.action}
           variant="primary"
           block
           icon={copy.action === 'scan' ? 'qr' : undefined}
