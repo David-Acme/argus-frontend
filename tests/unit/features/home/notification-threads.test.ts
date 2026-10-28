@@ -13,6 +13,7 @@ import {
   phaseOf,
   rowTimes,
   threadKeyOf,
+  threadServerKey,
   unreadIdsOf,
   unreadThreadCount,
   urgencyOf,
@@ -46,6 +47,53 @@ const episode = (
   urgency: string,
   extra: Partial<INotificationPreviewCacheRow> = {}
 ) => row(id, { threadKey: 'guard:episode:7', kind: 'guard_episode', phase, urgency }, extra);
+
+describe('one reminder, one row', () => {
+  const SECOND = 1_793_091_210;
+  const agenda = row(
+    '1022',
+    {
+      kind: 'agenda_reminder',
+      reminderId: 21,
+      scheduledAt: SECOND,
+      threadKey: `agenda:reminder:21:${SECOND}`,
+    },
+    { title: 'Abrir la ventana', body: '', createdAt: (SECOND + 9) * 1000 }
+  );
+  const call = row(
+    '1021',
+    {
+      kind: 'assistant_reminder',
+      reminderId: 21,
+      scheduledId: 10,
+      threadKey: 'assistant:scheduled:10',
+    },
+    { title: 'Recordatorio · Abrir la ventana', body: 'Abrir la ventana', createdAt: SECOND * 1000 }
+  );
+
+  test('the agenda notice and the assistant notice of the same occurrence are one thread', () => {
+    const threads = groupNotifications([agenda, call]);
+    expect(threads).toHaveLength(1);
+    expect(threads[0]?.entries.map((entry) => entry.id)).toEqual(['1022', '1021']);
+    expect(threads[0] && threadServerKey(threads[0])).toBeNull();
+  });
+
+  test('the same reminder on another day stays its own thread', () => {
+    const tomorrow = row(
+      '1100',
+      {
+        kind: 'agenda_reminder',
+        reminderId: 21,
+        scheduledAt: SECOND + 86_400,
+        threadKey: 'agenda:reminder:21:next',
+      },
+      { createdAt: (SECOND + 86_400) * 1000 }
+    );
+    expect(groupNotifications([tomorrow, agenda, call])).toHaveLength(2);
+    const [alone] = groupNotifications([tomorrow]);
+    expect(alone && threadServerKey(alone)).toBe('agenda:reminder:21:next');
+  });
+});
 
 describe('notification threads', () => {
   test('rows sharing a threadKey collapse into one thread led by the newest row', () => {

@@ -80,12 +80,49 @@ function toThread(
   };
 }
 
+const REMINDER_TWIN_S = 15 * 60;
+
+type ReminderMoment = { reminderId: number; at: number };
+
+type ReminderMark = ReminderMoment & { key: string };
+
+function reminderMomentOf(
+  row: Pick<INotificationPreviewCacheRow, 'data' | 'createdAt'>
+): ReminderMoment | null {
+  const { reminderId, scheduledAt } = row.data;
+  if (typeof reminderId !== 'number' || !Number.isSafeInteger(reminderId) || reminderId <= 0)
+    return null;
+  const at = typeof scheduledAt === 'number' ? scheduledAt : Math.round(row.createdAt / 1000);
+  return { reminderId, at };
+}
+
+function reminderTwinKey(row: INotificationPreviewCacheRow, marks: ReminderMark[]): string {
+  const moment = reminderMomentOf(row);
+  const own = threadKeyOf(row);
+  if (!moment) return own;
+  const twin = marks.find(
+    (mark) =>
+      mark.reminderId === moment.reminderId && Math.abs(mark.at - moment.at) <= REMINDER_TWIN_S
+  );
+  if (twin) return twin.key;
+  marks.push({ ...moment, key: own });
+  return own;
+}
+
+export function threadServerKey(
+  thread: Pick<NotificationThread, 'latest' | 'entries'>
+): string | null {
+  const key = notificationThreadKey(thread.latest.data);
+  return thread.entries.every((entry) => notificationThreadKey(entry.data) === key) ? key : null;
+}
+
 export function groupNotifications(
   rows: readonly INotificationPreviewCacheRow[]
 ): NotificationThread[] {
   const byKey = new Map<string, INotificationPreviewCacheRow[]>();
+  const reminders: ReminderMark[] = [];
   for (const row of rows) {
-    const key = threadKeyOf(row);
+    const key = reminderTwinKey(row, reminders);
     const entries = byKey.get(key);
     if (entries) entries.push(row);
     else byKey.set(key, [row]);

@@ -1,12 +1,14 @@
 import type { INotificationPreviewCacheRow } from '@/core/interfaces';
-import { notificationThreadKey } from '@/core/services/notification';
 import type { NotificationThreadTarget } from '@/core/types';
 import {
   defineLens,
   type OptimisticIntentInput,
   type OptimisticLens,
 } from '@/shared/libs/optimistic';
-import type { NotificationThread } from '@/features/home/model/notification-threads';
+import {
+  threadServerKey,
+  type NotificationThread,
+} from '@/features/home/model/notification-threads';
 
 export const NOTIFICATION_LENSES: readonly OptimisticLens<INotificationPreviewCacheRow>[] = [
   defineLens<INotificationPreviewCacheRow, { isRead: boolean }>({
@@ -40,6 +42,6 @@ export const threadTargetOf = (
   userId: string
 ): NotificationThreadTarget => ({
   userId,
-  threadKey: notificationThreadKey(thread.latest.data),
+  threadKey: threadServerKey(thread),
   ids: thread.entries.map((entry) => entry.id),
 });
