@@ -32,7 +32,7 @@ function ClipVideo({ clip, playback, closable }: VideoProps) {
   const poster = useClipPoster({ id: clip.id, cameraId: clip.cameraId });
   return (
     <View className="rounded-media overflow-hidden" style={FRAME}>
-      {poster && !playback.file ? (
+      {poster ? (
         <View className="absolute inset-0">
           <Media fill frame={{ uri: poster }} />
         </View>

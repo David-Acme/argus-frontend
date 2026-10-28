@@ -1,9 +1,9 @@
 package com.margelo.nitro.camera
 
 import android.content.Context
-import android.graphics.Color
 import android.os.Handler
 import android.os.Looper
+import android.view.LayoutInflater
 import android.view.View
 import androidx.media3.common.MediaItem
 import androidx.media3.common.util.UnstableApi
@@ -20,10 +20,8 @@ import com.margelo.nitro.views.HybridView
 class HybridArgusCameraView(context: Context) : HybridArgusCameraViewSpec() {
   private val mainHandler = Handler(Looper.getMainLooper())
   private val frames = CameraFrameBuffer()
-  private val playerView: PlayerView = PlayerView(context).apply {
-    useController = false
-    setShutterBackgroundColor(Color.BLACK)
-  }
+  private val playerView: PlayerView =
+    LayoutInflater.from(context).inflate(R.layout.argus_camera_player, null, false) as PlayerView
   private var player: ExoPlayer? = null
   private var activeState = true
   private var mutedState = true
@@ -35,7 +33,7 @@ class HybridArgusCameraView(context: Context) : HybridArgusCameraViewSpec() {
     get() = activeState
     set(value) {
       activeState = value
-      player?.playWhenReady = value
+      runOnMain { player?.playWhenReady = value }
     }
 
   override var muted: Boolean

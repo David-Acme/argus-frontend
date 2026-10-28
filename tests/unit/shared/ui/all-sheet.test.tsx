@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, mock, test } from 'bun:test';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { viewFor } from '@tests/support/access-fixtures';
 import type { UserRole } from '@/core/types';
@@ -156,6 +156,11 @@ function mountSheet() {
 
 const heading = (name: string) => screen.queryByRole('heading', { name });
 
+function search(text: string) {
+  fireEvent.click(screen.getByRole('button', { name: 'Buscar en Argus' }));
+  fireEvent.change(screen.getByPlaceholderText('Buscar en Argus'), { target: { value: text } });
+}
+
 afterEach(() => {
   routes.length = 0;
   sheet.log.length = 0;
@@ -184,7 +189,7 @@ describe('the «Todo» sheet', () => {
 
   test('typing searches inside the sheet: matching sections first, then the paged results', () => {
     mountSheet();
-    fireEvent.change(screen.getByPlaceholderText('Buscar en Argus'), { target: { value: 'cli' } });
+    search('cli');
     expect(heading('Apartados')).not.toBeNull();
     expect(heading('Cámaras')).not.toBeNull();
     expect(heading('Módulos')).toBeNull();
@@ -192,11 +197,22 @@ describe('the «Todo» sheet', () => {
     expect(routes).toEqual(['/clips']);
   });
 
+  test('at half height the field opens the search first, and only then takes the keyboard', async () => {
+    mountSheet();
+    const field = () => screen.getByPlaceholderText('Buscar en Argus');
+    expect(document.activeElement).not.toBe(field());
+    fireEvent.click(screen.getByRole('button', { name: 'Buscar en Argus' }));
+    expect(screen.queryByRole('button', { name: 'Buscar en Argus' })).toBeNull();
+    expect(sheet.log).toEqual([]);
+    await act(() => new Promise((resolve) => setTimeout(resolve, 350)));
+    expect(document.activeElement).toBe(field());
+  });
+
   test('a search that finds nothing offers no «Cargar más resultados», only the empty notice', () => {
     found.results = false;
     found.footer = 'loading';
     mountSheet();
-    fireEvent.change(screen.getByPlaceholderText('Buscar en Argus'), { target: { value: 'zzz' } });
+    search('zzz');
     expect(screen.queryByRole('button', { name: 'Cargar más resultados' })).toBeNull();
     expect(screen.getByText('Sin resultados para «zzz»')).toBeDefined();
   });
@@ -206,7 +222,7 @@ describe('the «Todo» sheet', () => {
     found.footer = 'loading';
     found.pending = true;
     mountSheet();
-    fireEvent.change(screen.getByPlaceholderText('Buscar en Argus'), { target: { value: 'zzz' } });
+    search('zzz');
     expect(screen.queryByText('Sin resultados para «zzz»')).toBeNull();
     expect(screen.queryByRole('button', { name: 'Cargar más resultados' })).toBeNull();
   });

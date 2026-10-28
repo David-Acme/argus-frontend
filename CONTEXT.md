@@ -8444,8 +8444,17 @@ side is the backend's `services/camera/CONTEXT.md` › "Live previews".
   `fastStart`, because ExoPlayer would keep the replayed GOP's age as latency. Web
   (`camera-preview.web.tsx`, `WebCameraPlayer`) subscribes with `fastStart` and paints
   on a transparent canvas; without WebCodecs the tile keeps its still.
-- **Stills only where needed.** `CameraThumbnailPoller` skips a camera that is playing
-  live; it still paints every tile once before its video starts.
+- **A texture, never a SurfaceView, on Android** (phone run 4). Media3's `PlayerView`
+  defaults to a SurfaceView, which punches a hole through the window: it ignores the
+  tile's opacity, its rounded clip and the still drawn under it, and a remounted or
+  clipped one stayed black although the decoder ran. `ArgusCameraView` inflates its
+  `PlayerView` from `res/layout/argus_camera_player.xml` with `surface_type`
+  `texture_view` and a transparent shutter, so the view composes like any other and is
+  transparent until its first frame: the still (or a clip's poster) under it stays in
+  sight until the picture replaces it. The full live view mostly plays over WebRTC
+  (`CameraRtcVideo`); when it falls back to the native pipe it draws the same way.
+- **Stills only where needed.** `CameraThumbnailPoller` skips a live camera that already
+  has a still; it still paints every tile once before its video starts.
 
 ### The approved follow-ups (2026-10-27)
 

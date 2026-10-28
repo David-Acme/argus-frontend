@@ -1,6 +1,6 @@
 hex-literal 68
 arbitrary-value 39
-style-object 60
+style-object 59
 raw-pressable-in-features 14
 window-dimensions-in-features 3
 template-key 65
