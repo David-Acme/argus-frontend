@@ -16,6 +16,7 @@ import {
 import { bindResponseFeed } from '@/features/response/services/response-feed';
 import { responseService } from '@/features/response/services/response.service';
 import { useResponseStore } from '@/features/response/stores/response.store';
+import { nowSeconds } from '@/shared/libs/day';
 
 const CLOCK_MS = 30_000;
 
@@ -88,12 +89,7 @@ export function useResponseVerdict() {
             : undefined,
         call: () => {
           store.apply(
-            withVerdict(
-              response,
-              verdict,
-              { userId: user.id, name: user.name },
-              Math.floor(Date.now() / 1000)
-            )
+            withVerdict(response, verdict, { userId: user.id, name: user.name }, nowSeconds())
           );
           return responseService.decide(response.id, verdict);
         },

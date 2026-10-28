@@ -1,4 +1,4 @@
-import { localeDictionaries } from '@/core/i18n/locales';
+import { localeDictionaries } from '@/core/locales/all';
 import { translate } from '@/core/i18n/translate';
 import type {
   GuardEnvironment,

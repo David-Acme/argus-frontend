@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { localeDictionaries } from '@/core/i18n/locales';
+import { localeDictionaries } from '@/core/locales/all';
 import { translate } from '@/core/i18n/translate';
 import type { IApiError } from '@/core/interfaces';
 import { WRITE_NOT_SENT, WRITE_UNCONFIRMED } from '@/core/services/http/write-refusal';

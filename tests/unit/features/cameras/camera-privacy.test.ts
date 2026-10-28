@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import type { ICameraCacheRow, ICameraOverviewRow } from '@/core/interfaces';
-import { localeDictionaries } from '@/core/i18n/locales';
+import { localeDictionaries } from '@/core/locales/all';
 import { translate } from '@/core/i18n/translate';
 import type { CameraPrivacyState, TranslateFn } from '@/core/types';
 import {

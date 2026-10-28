@@ -1,6 +1,6 @@
 import { mock } from 'bun:test';
 import { createElement, type ReactElement, type ReactNode } from 'react';
-import { es } from '@/core/i18n/locales/es';
+import { es } from '@/core/locales/es';
 import { translateLoose } from '@/core/i18n/translate';
 
 type Props = Record<string, unknown> & { children?: ReactNode };

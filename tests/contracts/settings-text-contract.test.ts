@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { backendPath } from '@tests/support/backend-dir';
-import { localeDictionaries } from '@/core/i18n/locales';
+import { localeDictionaries } from '@/core/locales/all';
 import type { LanguageCode } from '@/core/types';
 
 type CatalogEntry = { key: string; group: string; basic: boolean };

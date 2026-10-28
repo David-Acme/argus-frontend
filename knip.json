@@ -1,0 +1,23 @@
+{
+  "$schema": "https://unpkg.com/knip@6.41.0/schema.json",
+  "entry": [
+    "index.ts",
+    "src/app/**/*.{ts,tsx}",
+    "src/**/*.{native,web,ios,android}.{ts,tsx}",
+    "modules/*/src/index.ts",
+    "scripts/**/*.{ts,mjs}",
+    "tests/**/*.test.{ts,tsx}",
+    "tests/**/*.e2e.ts",
+    "tests/e2e/e2e.config.ts",
+    "tests/setup.ts",
+    "tests/unit/shared/ui/setup.ts"
+  ],
+  "project": [
+    "src/**/*.{ts,tsx}",
+    "modules/*/src/**/*.ts",
+    "scripts/**/*.{ts,mjs}",
+    "tests/**/*.{ts,tsx}"
+  ],
+  "ignoreBinaries": ["e2e"],
+  "ignoreDependencies": ["argus-push", "argus-camera", "argus-face", "argus-mic", "argus-net", "expo-glass-effect"]
+}

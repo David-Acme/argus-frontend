@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { panicResultSchema, safetyStatusSchema } from '@/core/contracts/safety.contract';
-import { localeDictionaries } from '@/core/i18n/locales';
+import { localeDictionaries } from '@/core/locales/all';
 import { translate } from '@/core/i18n/translate';
 import {
   ENABLE_REACH_WARNING_COPY,

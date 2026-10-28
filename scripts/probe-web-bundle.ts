@@ -2,8 +2,8 @@ import { readFileSync } from 'node:fs';
 import { extname, join, normalize, resolve, sep } from 'node:path';
 import { chromium, type Page } from 'playwright-core';
 import { budgetFailures, measureBundle, parseBundleBaseline } from './lib/bundle-budget';
-import { welcome as welcomeEn } from '../src/core/i18n/locales/en/screens/welcome';
-import { welcome as welcomeEs } from '../src/core/i18n/locales/es/screens/welcome';
+import { welcome as welcomeEn } from '../src/core/locales/en/screens/welcome';
+import { welcome as welcomeEs } from '../src/core/locales/es/screens/welcome';
 
 const ROOT = join(import.meta.dir, '..');
 const DIST = join(ROOT, 'dist');

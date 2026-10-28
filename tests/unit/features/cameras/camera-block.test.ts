@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { localeDictionaries } from '@/core/i18n/locales';
+import { localeDictionaries } from '@/core/locales/all';
 import { listenSwitchPaused } from '@/features/cameras/model/camera-block';
 
 describe('a camera that cannot act now offers nothing it cannot do', () => {

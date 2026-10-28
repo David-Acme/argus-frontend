@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { localeDictionaries } from '@/core/i18n/locales';
+import { localeDictionaries } from '@/core/locales/all';
 import { readableKey, translate } from '@/core/i18n/translate';
 
 Object.assign(globalThis, { __DEV__: false });

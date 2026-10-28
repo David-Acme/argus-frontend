@@ -4,9 +4,9 @@ import {
   recordingsLineOf,
   settingsSectionsOf,
   settingsSummaryOf,
-  startOfDay,
   zoneNames,
 } from '@/features/cameras/model/camera-settings';
+import { startOfLocalDay } from '@/shared/libs/day';
 
 const full = { ptz: true, presets: true, privacy: true, motion: true, autoTrack: false };
 
@@ -66,7 +66,7 @@ describe('the sections of Ajustes de la cámara', () => {
 describe('the live rows', () => {
   test('recordings count those since local midnight', () => {
     const now = new Date(2026, 9, 26, 15, 0).getTime();
-    const midnight = startOfDay(now) / 1000;
+    const midnight = startOfLocalDay(now) / 1000;
     expect(
       clipsToday(
         [{ startedAt: midnight + 10 }, { startedAt: midnight - 10 }, { startedAt: midnight }],

@@ -8,4 +8,4 @@ export type {
   TranslationKey,
   TranslationParamsOf,
   TranslationParamsRest,
-} from '@/core/i18n/locales/schema';
+} from '@/core/locales/schema';

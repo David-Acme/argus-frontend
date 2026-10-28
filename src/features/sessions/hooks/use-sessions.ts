@@ -11,6 +11,7 @@ import { runServiceAction } from '@/shared/libs/service-action';
 import { overviewOf, SESSION_LENSES } from '@/features/sessions/model/sessions';
 import { useSignOut } from '@/features/sessions/hooks/use-sign-out';
 import { sessionsService } from '@/features/sessions/services/sessions.service';
+import { nowSeconds } from '@/shared/libs/day';
 
 type SessionBusy = 'here' | 'others' | 'all' | null;
 
@@ -22,8 +23,6 @@ const EMPTY: readonly AuthSession[] = [];
 const CLOCK_TICK_MS = 30_000;
 
 const loadSessions = () => sessionsService.list();
-
-const nowSeconds = () => Math.floor(Date.now() / 1000);
 
 function withoutRevoked(
   list: AuthSessionList | null,

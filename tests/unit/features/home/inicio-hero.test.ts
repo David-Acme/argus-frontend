@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
-import { en } from '@/core/i18n/locales/en';
-import { es } from '@/core/i18n/locales/es';
+import { en } from '@/core/locales/en';
+import { es } from '@/core/locales/es';
 import {
   ageOf,
   dayPart,

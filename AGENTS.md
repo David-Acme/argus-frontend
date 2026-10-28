@@ -52,6 +52,13 @@ The baselines are:
   `bun run lint`;
 - the list of files not yet formatted, read by `bun run check:format`;
 - `scripts/lib/bundle-baseline.txt`, read by `bun run check:bundle`;
+- proposed, not yet in `verify`: `scripts/lib/duplication-baseline.txt`
+  (duplicated lines and clones of `src`, jscpd 4.0.5 through `bunx`,
+  `.jscpd.json`), read by `bun run check:duplication`, and
+  `scripts/lib/unused-baseline.txt` (knip 6.41.0 through `bunx`, `knip.json`:
+  unused files, dependencies, unlisted dependencies, exports and types;
+  unresolved imports are not counted, knip does not read the `.native`/`.web`
+  suffixes and tsc resolves every import), read by `bun run check:unused`;
 - later: `scripts/lib/layout-baseline.txt` (R8) and
   `scripts/lib/perf-baseline.txt` (R9).
 
@@ -976,14 +983,25 @@ for Watermelon nor make an HTTP list request just because it mounted.
 
 #### Rule 27 today: the i18n engine (no external library)
 
-- **Dictionaries**: `src/core/i18n/locales/{locale}/` — one folder per locale;
+- **Dictionaries**: `src/core/locales/{locale}/` — one folder per locale;
   namespaces are **folders named like the routes** (`common/`, `screens/home/`,
   `screens/qr/`, `screens/not-found/`), each with an `index.ts` (route-folder
   convention). Default locale is `es`. `en` is forced to the same shape by
   `localeDictionaries satisfies Record<LanguageCode, I18nSchema>` in
-  `locales/index.ts` — a key added in `es` but missing in `en` fails tsc.
+  `locales/all.ts` — a key added in `es` but missing in `en` fails tsc. That
+  module imports both dictionaries and is for tests and scripts only.
+- **Only the default dictionary is in the entry chunk.** `es` (the default
+  and the fallback of every missing key) loads eagerly; `en` is the lazy
+  `english` chunk, loaded by `loadDictionary('en')`. Until it arrives,
+  `dictionaryOf('en')` is the boot dictionary: English `common` and
+  `screens.welcome` (all the splash reads) over `es`. `SessionGate` holds the
+  splash until both the session and the active dictionary are ready, and
+  `useLocaleStore.setLanguage` switches the language only once its dictionary
+  is loaded (a later choice wins), so no frame shows a key or the other
+  language. The locale data lives in `core/locales`, a slice of its own, so
+  the store and the engine both read it without a cycle.
 - **Typed keys**: `TranslationKey` (public in `core/types/i18n.type.ts`, derived
-  in `core/i18n/locales/schema.ts` from the `es` literal) is the flattened union
+  in `core/locales/schema.ts` from the `es` literal) is the flattened union
   of all dotted paths — a wrong key is a tsc error. Keys are **kebab-case**
   (`screens.qr.detected-description`, `common.open-settings`).
 - **Interpolation**: `{name}` placeholders; params are typed per key via
@@ -1001,7 +1019,9 @@ for Watermelon nor make an HTTP list request just because it mounted.
   persisted under `app.language` via `storageService` (like `app.theme`). The
   stored preference **wins**; `system` resolves the device locale by **prefix**
   (`es-*` → `es`, `en-*` → `en` via `expo-localization`), fallback `es`. Sync
-  init at module load (MMKV/localStorage are sync) — no layout effect needed.
+  init at module load (MMKV/localStorage are sync) — no layout effect needed;
+  the resolved language is known before the first render, its dictionary is
+  awaited by `SessionGate` behind the splash.
 - **Missing keys/params**: dev-only `log.error` + fallback to the default
   locale → the key's last segment as words (`readableKey`) as last resort,
   never the dotted key. Never crashes.
@@ -1572,6 +1592,8 @@ bun run check:boundaries # rules 6-9, 11 + lint policy (rule 2) + references (ru
 bun run check:quality  # the counters of quality-baseline.txt and memo-exceptions.txt
 bun run check:format   # Prettier ratchet over the list of unformatted files (rule 33)
 bun run check:bundle   # exports the bundle, serves it under the Tauri CSP, loads it in chromium, checks bundle-baseline.txt
+bun run check:duplication # jscpd ratchet over src against duplication-baseline.txt (proposed)
+bun run check:unused   # knip ratchet against unused-baseline.txt (proposed)
 bun run test:e2e:run   # web E2E against the exported dist/
 bun run verify         # comments + boundaries + quality + format + typecheck + lint + tests + bundle + E2E
 bun run web:build      # expo export --platform web → dist/ (for Tauri)
@@ -1679,7 +1701,7 @@ cd src-tauri && cargo check
 | `src/shared/hooks/use-reduce-motion.ts` | OS "reduce motion" setting, live |
 | `src/core/stores/` | Zustand stores (barrel): `auth`, `locale`, `onboarding`, `navigation`, `qr-scan`, `toast`, `confirm` (the avatar store lives in `features/voice/stores`) |
 | `src/core/i18n/` | Custom i18n engine (barrel: `t`/`setLanguage`/`getLanguage`, `translate`, `locales/`) |
-| `src/core/i18n/locales/schema.ts` | `I18nSchema`/`TranslationKey`/`TranslateFn` derivation from the `es` dictionary |
+| `src/core/locales/schema.ts` | `I18nSchema`/`TranslationKey`/`TranslateFn` derivation from the `es` dictionary |
 | `src/core/types/i18n.type.ts` | i18n public types (barrel surface) |
 | `src/core/stores/locale.store.ts` | `useLocaleStore` — language preference/state, `app.language` |
 | `src/shared/hooks/use-translation.ts` | `useTranslation()` reactive hook (real-time) |
