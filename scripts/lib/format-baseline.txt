@@ -147,7 +147,6 @@ src/features/cameras/components/camera-form-schema.ts
 src/features/cameras/components/camera-live-status.tsx
 src/features/cameras/components/camera-privacy-placeholder.tsx
 src/features/cameras/components/camera-snapshot-view.tsx
-src/features/cameras/components/clip-player.native.tsx
 src/features/cameras/components/tamper-evidence-view.tsx
 src/features/cameras/components/web-camera-player.ts
 src/features/cameras/hooks/use-camera-aim.ts
