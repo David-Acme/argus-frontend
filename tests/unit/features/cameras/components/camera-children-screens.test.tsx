@@ -36,7 +36,10 @@ function playbackOf(overrides: Partial<ClipPlayback> = {}): ClipPlayback {
     file: null,
     image: null,
     open: (opened) => calls.push(`open:${opened.id}`),
+    ended: false,
+    round: 0,
     replay: () => calls.push('replay'),
+    finish: () => calls.push('finish'),
     close: () => calls.push('close'),
     ...overrides,
   };
@@ -79,7 +82,9 @@ mock.module('@/features/cameras/hooks/use-clip-poster', () => ({
 }));
 
 mock.module('@/features/cameras/components/clip-player', () => ({
-  ClipPlayer: () => <span data-testid="clip-player" />,
+  ClipPlayer: ({ onEnded }: { onEnded?: () => void }) => (
+    <span data-testid="clip-player" onClick={onEnded} />
+  ),
 }));
 
 mock.module('@/features/cameras/components/zone-editor', () => ({
@@ -221,17 +226,30 @@ describe('Grabaciones', () => {
     expect(calls).toEqual(['close']);
   });
 
-  test('on the clip screen the stage stays and offers to play again', () => {
-    render(
+  test('while a clip plays its stage shows how far it is, and «Ver de nuevo» only once it ends', () => {
+    const file = {
+      init: new Uint8Array(),
+      track: null,
+      fragments: [
+        { bytes: new Uint8Array(), keyframe: true, atUs: 0 },
+        { bytes: new Uint8Array(), keyframe: false, atUs: 19_000_000 },
+      ],
+    };
+    const { rerender } = render(
+      <ClipStage playback={playbackOf({ state: 'ready', clip, file })} closable={false} />
+    );
+    expect(screen.getByRole('progressbar', { name: 'Reproduciendo, 0:00 de 0:19' })).toBeDefined();
+    expect(screen.queryByRole('button', { name: 'Ver de nuevo' })).toBeNull();
+    fireEvent.click(screen.getByTestId('clip-player'));
+    expect(calls).toEqual(['finish']);
+    calls.length = 0;
+    rerender(
       <ClipStage
-        playback={playbackOf({
-          state: 'ready',
-          clip,
-          file: { init: new Uint8Array(), track: null, fragments: [] },
-        })}
+        playback={playbackOf({ state: 'ready', clip, file, ended: true })}
         closable={false}
       />
     );
+    expect(screen.queryByRole('progressbar')).toBeNull();
     expect(screen.queryByRole('button', { name: 'Cerrar' })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Ver de nuevo' }));
     expect(calls).toEqual(['replay']);

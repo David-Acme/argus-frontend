@@ -212,6 +212,7 @@ export const cameras = {
     'open-cameras': 'Ver cámaras',
     'open-all': 'Ver todos los clips',
     play: 'Ver el clip de {camera}',
+    playing: 'Reproduciendo, {elapsed} de {total}',
     replay: 'Ver de nuevo',
     'today-at': 'hoy {time}',
     'yesterday-at': 'ayer {time}',
