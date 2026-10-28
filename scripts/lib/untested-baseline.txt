@@ -16,7 +16,6 @@ src/features/cameras/components/camera-snapshot-view.tsx
 src/features/cameras/components/camera-zones-overlay.tsx
 src/features/cameras/components/clip-player.native.tsx
 src/features/cameras/components/clip-player.web.tsx
-src/features/cameras/components/recording-paused-banner.tsx
 src/features/cameras/components/tamper-evidence-view.tsx
 src/features/cameras/components/zone-editor.tsx
 src/features/cameras/screens/camera-lab-screen.tsx
@@ -121,7 +120,6 @@ src/shared/components/ui/option-row.tsx
 src/shared/components/ui/orbit-hero.tsx
 src/shared/components/ui/panel.tsx
 src/shared/components/ui/permission-list.tsx
-src/shared/components/ui/section-header.tsx
 src/shared/components/ui/segmented-control.tsx
 src/shared/components/ui/select-field.tsx
 src/shared/components/ui/select.tsx
@@ -129,7 +127,6 @@ src/shared/components/ui/sheet.tsx
 src/shared/components/ui/status-badge.tsx
 src/shared/components/ui/switch.tsx
 src/shared/components/ui/text.tsx
-src/shared/components/ui/textarea.tsx
 src/shared/components/ui/timeline.tsx
 src/shared/components/ui/toast-card.tsx
 src/shared/components/ui/toaster.tsx

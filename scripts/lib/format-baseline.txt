@@ -148,7 +148,6 @@ src/features/cameras/components/camera-live-status.tsx
 src/features/cameras/components/camera-privacy-placeholder.tsx
 src/features/cameras/components/camera-snapshot-view.tsx
 src/features/cameras/components/clip-player.native.tsx
-src/features/cameras/components/recording-paused-banner.tsx
 src/features/cameras/components/tamper-evidence-view.tsx
 src/features/cameras/components/web-camera-player.ts
 src/features/cameras/hooks/use-camera-aim.ts
@@ -332,13 +331,11 @@ src/shared/components/ui/option-row.tsx
 src/shared/components/ui/orbit-hero.tsx
 src/shared/components/ui/permission-list.tsx
 src/shared/components/ui/qr-code-layout.ts
-src/shared/components/ui/section-header.tsx
 src/shared/components/ui/segmented-control.tsx
 src/shared/components/ui/select.tsx
 src/shared/components/ui/sheet.tsx
 src/shared/components/ui/status-badge.tsx
 src/shared/components/ui/text.tsx
-src/shared/components/ui/textarea.tsx
 src/shared/components/ui/toast-card.tsx
 src/shared/components/ui/toaster.tsx
 src/shared/constants/color.constant.ts
