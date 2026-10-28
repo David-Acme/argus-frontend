@@ -40,6 +40,8 @@
     "check:quality": "bun scripts/check-quality.ts",
     "check:format": "bun scripts/check-format.ts",
     "check:bundle": "bun scripts/probe-web-bundle.ts",
+    "check:duplication": "bun scripts/check-duplication.ts",
+    "check:unused": "bun scripts/check-unused.ts",
     "check:tokens": "bun scripts/gen-tokens.ts --check",
     "ui-map:audit": "bun scripts/ui-map-audit.ts",
     "test:e2e": "bun run web:build && bun run test:e2e:run",

@@ -52,6 +52,13 @@ The baselines are:
   `bun run lint`;
 - the list of files not yet formatted, read by `bun run check:format`;
 - `scripts/lib/bundle-baseline.txt`, read by `bun run check:bundle`;
+- proposed, not yet in `verify`: `scripts/lib/duplication-baseline.txt`
+  (duplicated lines and clones of `src`, jscpd 4.0.5 through `bunx`,
+  `.jscpd.json`), read by `bun run check:duplication`, and
+  `scripts/lib/unused-baseline.txt` (knip 6.41.0 through `bunx`, `knip.json`:
+  unused files, dependencies, unlisted dependencies, exports and types;
+  unresolved imports are not counted, knip does not read the `.native`/`.web`
+  suffixes and tsc resolves every import), read by `bun run check:unused`;
 - later: `scripts/lib/layout-baseline.txt` (R8) and
   `scripts/lib/perf-baseline.txt` (R9).
 
@@ -1585,6 +1592,8 @@ bun run check:boundaries # rules 6-9, 11 + lint policy (rule 2) + references (ru
 bun run check:quality  # the counters of quality-baseline.txt and memo-exceptions.txt
 bun run check:format   # Prettier ratchet over the list of unformatted files (rule 33)
 bun run check:bundle   # exports the bundle, serves it under the Tauri CSP, loads it in chromium, checks bundle-baseline.txt
+bun run check:duplication # jscpd ratchet over src against duplication-baseline.txt (proposed)
+bun run check:unused   # knip ratchet against unused-baseline.txt (proposed)
 bun run test:e2e:run   # web E2E against the exported dist/
 bun run verify         # comments + boundaries + quality + format + typecheck + lint + tests + bundle + E2E
 bun run web:build      # expo export --platform web → dist/ (for Tauri)

@@ -1,0 +1,7 @@
+{
+  "path": ["src"],
+  "minTokens": 60,
+  "ignore": ["**/locales/**", "**/*.generated.*"],
+  "reporters": ["json"],
+  "silent": true
+}
