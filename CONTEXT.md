@@ -8469,6 +8469,17 @@ side is the backend's `services/camera/CONTEXT.md` › "Live previews".
   and the handover does not jump; the clip player and the full view keep the whole
   picture. The full live view mostly plays over WebRTC
   (`CameraRtcVideo`); when it falls back to the native pipe it draws the same way.
+- **Audio never holds the picture** (phone run 4). A camera's stream carries FLAC audio,
+  and ExoPlayer's clock follows the audio renderer: Samsung's `c2.sec.flac.decoder`
+  rejected every frame («decodeOneFrame returns invalid frame -5») and the video stopped
+  on its first frame. The stored frames are decodable but out of spec (STREAMINFO says
+  32768-sample blocks for 512-sample frames, and every frame's coded sample number is
+  U+FFFD, Go's utf8 encoding of a number past 0x10FFFF). So a muted view (every tile and
+  clip) disables its audio track; the decoder list for audio/flac keeps the platform
+  decoder (`c2.android.flac.decoder`) ahead of any vendor one
+  (`PlatformFlacSelector`), with decoder fallback on; and an audio codec or sink error
+  disables the audio track for that view, logged once under `ArgusCamera`, while the
+  video plays on.
 - **Stills only where needed.** `CameraThumbnailPoller` skips a live camera that already
   has a still; it still paints every tile once before its video starts.
 
