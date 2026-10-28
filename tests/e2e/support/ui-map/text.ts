@@ -1,5 +1,5 @@
 import type { Locator } from 'playwright-core';
-import { localeDictionaries } from '../../../../src/core/i18n/locales';
+import { localeDictionaries } from '../../../../src/core/locales/all';
 import type { TranslationKey } from '../../../../src/core/types';
 import { sleep, type Scene } from './capture';
 

@@ -19,8 +19,8 @@ import {
   RECURRENCE_SEARCH_LIMIT,
 } from '@/shared/constants';
 import { deviceTimeZone, zoneWallReader, type ZoneWallReader } from '@/shared/hooks/use-date-formatter/date';
+import { DAY_MS } from '@/shared/libs/day';
 
-const DAY_MS = 86_400_000;
 const SECOND_MS = 1_000;
 
 type CivilDate = Pick<WallTime, 'year' | 'month' | 'day'>;

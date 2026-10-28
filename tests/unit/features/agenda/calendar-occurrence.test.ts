@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { localeDictionaries } from '@/core/i18n/locales';
+import { localeDictionaries } from '@/core/locales/all';
 import type { CalendarEntry } from '@/core/types';
 import { applyIntents, settledIntents, type OptimisticIntent } from '@/shared/libs/optimistic';
 import {

@@ -1,3 +1,5 @@
+import { DAY_MS } from '@/shared/libs/day';
+
 export type ResultDay = 'today' | 'tomorrow' | 'yesterday' | 'other';
 
 export type ResultDayInput = {
@@ -5,8 +7,6 @@ export type ResultDayInput = {
   now: number;
   startOfDay: (at: number) => number;
 };
-
-const DAY_MS = 24 * 60 * 60 * 1000;
 
 export function resultDayOf({ at, now, startOfDay }: ResultDayInput): ResultDay {
   const days = Math.round((startOfDay(at) - startOfDay(now)) / DAY_MS);

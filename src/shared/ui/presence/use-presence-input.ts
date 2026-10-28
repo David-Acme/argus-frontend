@@ -1,9 +1,9 @@
 import { useIsFocused } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { AppState } from 'react-native';
+import { useEffect } from 'react';
 import { useSharedValue, type SharedValue } from 'react-native-reanimated';
 import type { PresenceEvent, PresenceState } from './engine/types';
 import { isResting } from './plan';
+import { useAppActive } from '@/shared/hooks/use-app-active';
 
 export type PresenceInput = {
   state: PresenceState;
@@ -25,17 +25,6 @@ export type InputSource = {
   event: PresenceCue | undefined;
   paused: boolean;
 };
-
-function useAppActive(): boolean {
-  const [active, setActive] = useState(AppState.currentState !== 'background');
-  useEffect(() => {
-    const subscription = AppState.addEventListener('change', (next) =>
-      setActive(next === 'active')
-    );
-    return () => subscription.remove();
-  }, []);
-  return active;
-}
 
 export function usePresenceInput(source: InputSource): {
   input: SharedValue<PresenceInput>;

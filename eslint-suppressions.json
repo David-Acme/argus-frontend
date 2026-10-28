@@ -1274,11 +1274,6 @@
       "count": 6
     }
   },
-  "src/shared/components/ui/textarea.tsx": {
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 6
-    }
-  },
   "src/shared/components/ui/toast-card.tsx": {
     "better-tailwindcss/no-restricted-classes": {
       "count": 1

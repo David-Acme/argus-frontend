@@ -1,4 +1,5 @@
 import type { ActivityAction, ActivityFilter, ActivityPeriod } from '@/core/types';
+import { DAY_MS, startOfLocalDay } from '@/shared/libs/day';
 
 export const ACTIVITY_PAGE_SIZE = 50;
 
@@ -15,28 +16,20 @@ export const EMPTY_ACTIVITY_FILTER: ActivityFilter = {
   to: null,
 };
 
-const DAY_MS = 86_400_000;
-
-const startOfDay = (ms: number): number => {
-  const day = new Date(ms);
-  day.setHours(0, 0, 0, 0);
-  return day.getTime();
-};
-
 export type ActivityWindow = { from: number | null; to: number | null };
 
 export function activityWindow(filter: ActivityFilter, now: number): ActivityWindow {
   const seconds = (ms: number) => Math.floor(ms / 1000);
   switch (filter.period) {
     case 'today':
-      return { from: seconds(startOfDay(now)), to: null };
+      return { from: seconds(startOfLocalDay(now)), to: null };
     case 'week':
-      return { from: seconds(startOfDay(now) - 6 * DAY_MS), to: null };
+      return { from: seconds(startOfLocalDay(now) - 6 * DAY_MS), to: null };
     case 'month':
-      return { from: seconds(startOfDay(now) - 29 * DAY_MS), to: null };
+      return { from: seconds(startOfLocalDay(now) - 29 * DAY_MS), to: null };
     case 'custom': {
-      const from = filter.from === null ? null : seconds(startOfDay(filter.from));
-      const to = filter.to === null ? null : seconds(startOfDay(filter.to) + DAY_MS - 1000);
+      const from = filter.from === null ? null : seconds(startOfLocalDay(filter.from));
+      const to = filter.to === null ? null : seconds(startOfLocalDay(filter.to) + DAY_MS - 1000);
       return from !== null && to !== null && from > to ? { from: to, to: from } : { from, to };
     }
     case 'all':

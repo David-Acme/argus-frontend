@@ -1,6 +1,7 @@
 import type { ICameraDetection } from '@/core/interfaces';
 import type { TranslateFn } from '@/core/types';
 import type { SecurityTile } from '@/features/security/model/camera-tiles';
+import { startOfLocalDay } from '@/shared/libs/day';
 
 export type ActivityRow = { id: string; name: string; meta: string; count: number };
 
@@ -16,7 +17,7 @@ export function activityToday(
   tiles: readonly SecurityTile[],
   { events, now, t, time, what }: ActivityInput
 ): ActivityRow[] {
-  const startOfToday = new Date(now).setHours(0, 0, 0, 0);
+  const startOfToday = startOfLocalDay(now);
   const today = events.filter((event) => event.at >= startOfToday);
   return tiles.map((tile) => {
     const own = today.filter((event) => String(event.cameraId) === tile.id);

@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { deepLinkPath } from '@/app/+native-intent';
 import { readWatchConversation, readWatchList, WATCH_ROUTES } from '@/core/contracts/watch.contract';
-import { localeDictionaries } from '@/core/i18n/locales';
+import { localeDictionaries } from '@/core/locales/all';
 import { translate } from '@/core/i18n/translate';
 import type { TranslateFn, WatchConversation, WatchTurn } from '@/core/types';
 import {

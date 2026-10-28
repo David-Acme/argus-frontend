@@ -14,6 +14,8 @@ export const BASELINES: readonly Baseline[] = [
   { path: 'scripts/lib/format-baseline.txt', kind: 'list' },
   { path: 'scripts/lib/memo-exceptions.txt', kind: 'memo' },
   { path: 'scripts/lib/bundle-baseline.txt', kind: 'bundle' },
+  { path: 'scripts/lib/duplication-baseline.txt', kind: 'counts' },
+  { path: 'scripts/lib/unused-baseline.txt', kind: 'counts' },
   { path: 'eslint-suppressions.json', kind: 'suppressions' },
 ];
 

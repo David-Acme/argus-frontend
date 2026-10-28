@@ -1,6 +1,9 @@
-import { deviceLoginDeniedSchema, deviceLoginDetailsSchema } from '@/core/contracts/session.contract';
+import {
+  deviceLoginDeniedSchema,
+  deviceLoginDetailsSchema,
+} from '@/core/contracts/session.contract';
 import { createLoginProof } from '@/core/services/device-login';
-import { httpService } from '@/core/services/http';
+import { expectShape, httpService } from '@/core/services/http';
 import { errorResponse } from '@/core/services/http/http-envelope';
 import { sessionService } from '@/core/services/session.service';
 import { useLocaleStore } from '@/core/stores';
@@ -29,15 +32,6 @@ const DEVICE_LOGIN_PROOF_HEADER = 'X-Argus-Login-Proof';
 
 const FACE_FILE = { name: 'image', uri: '', filename: 'face.jpg', contentType: 'image/jpeg' };
 
-function readDenial(response: IServiceResponse<unknown>): IServiceResponse<{ denied: true }> {
-  if (!response.ok) return { ...response, info: null };
-  const result = deviceLoginDeniedSchema.safeParse(response.info);
-  if (!result.success) {
-    return errorResponse(response.status, 'INVALID_RESPONSE', 'The refusal is not in the expected shape');
-  }
-  return { ...response, info: result.data };
-}
-
 class AuthService {
   private readonly loginProofs = new Map<string, string>();
 
@@ -46,7 +40,7 @@ class AuthService {
       LOGIN_PATH,
       { ...FACE_FILE, uri: imageUri },
       undefined,
-      { skipAuthRetry: true },
+      { skipAuthRetry: true }
     );
     await this.establishLoginSession(response);
     return response;
@@ -54,14 +48,19 @@ class AuthService {
 
   async register(input: IRegisterInput): Promise<IServiceResponse<IResponseLoginDto>> {
     const lang = useLocaleStore.getState().language;
-    const response = await httpService.postMultipart<IResponseLoginDto>(REGISTER_PATH, {
-      ...FACE_FILE,
-      uri: input.imageUri,
-    }, {
-      lang,
-      ...(input.name ? { name: input.name } : {}),
-      ...(input.inviteCode ? { inviteCode: input.inviteCode } : {}),
-    }, { skipAuthRetry: true });
+    const response = await httpService.postMultipart<IResponseLoginDto>(
+      REGISTER_PATH,
+      {
+        ...FACE_FILE,
+        uri: input.imageUri,
+      },
+      {
+        lang,
+        ...(input.name ? { name: input.name } : {}),
+        ...(input.inviteCode ? { inviteCode: input.inviteCode } : {}),
+      },
+      { skipAuthRetry: true }
+    );
     await this.establishLoginSession(response);
     return response;
   }
@@ -75,7 +74,9 @@ class AuthService {
   }
 
   async logout(notice?: SessionEndNotice): Promise<void> {
-    const revoke = httpService.patch<{ updated: boolean } | null>(LOGOUT_PATH).catch(() => undefined);
+    const revoke = httpService
+      .patch<{ updated: boolean } | null>(LOGOUT_PATH)
+      .catch(() => undefined);
     await Promise.race([
       revoke,
       new Promise<void>((resolve) => setTimeout(resolve, LOGOUT_REVOKE_TIMEOUT_MS)),
@@ -98,7 +99,7 @@ class AuthService {
     const response = await httpService.post<ICreateDeviceLoginResponse>(
       DEVICE_LOGIN_PATH,
       { pollHash: proof.pollHash },
-      { skipAuthRetry: true },
+      { skipAuthRetry: true }
     );
     if (response.ok && response.info) {
       this.loginProofs.clear();
@@ -109,39 +110,45 @@ class AuthService {
 
   async deviceLoginDetails(id: string): Promise<IServiceResponse<DeviceLoginDetails>> {
     const response = await httpService.get<unknown>(
-      `${DEVICE_LOGIN_PATH}/${encodeURIComponent(id)}/details`,
+      `${DEVICE_LOGIN_PATH}/${encodeURIComponent(id)}/details`
     );
-    if (!response.ok) return { ...response, info: null };
-    const result = deviceLoginDetailsSchema.safeParse(response.info);
-    if (!result.success) {
-      return errorResponse(response.status, 'INVALID_RESPONSE', 'The login request is not in the expected shape');
-    }
-    return { ...response, info: result.data };
+    return expectShape(response, deviceLoginDetailsSchema, 'The login request');
   }
 
   async approveDeviceLogin(id: string): Promise<IServiceResponse<{ approved: boolean } | null>> {
     return httpService.post<{ approved: boolean } | null>(
       `${DEVICE_LOGIN_PATH}/${encodeURIComponent(id)}/approve`,
-      {},
+      {}
     );
   }
 
   async denyDeviceLogin(id: string): Promise<IServiceResponse<{ denied: true }>> {
-    return readDenial(await httpService.post(`${DEVICE_LOGIN_PATH}/${encodeURIComponent(id)}/deny`));
+    return expectShape(
+      await httpService.post(`${DEVICE_LOGIN_PATH}/${encodeURIComponent(id)}/deny`),
+      deviceLoginDeniedSchema,
+      'The refusal'
+    );
   }
 
   async pollDeviceLogin(id: string): Promise<IServiceResponse<IDeviceLoginStatusResponse>> {
     const proof = this.loginProofs.get(id);
-    const response = await httpService.get<IDeviceLoginStatusResponse>(`${DEVICE_LOGIN_PATH}/${id}`, {
-      skipAuthRetry: true,
-      headers: proof ? { [DEVICE_LOGIN_PROOF_HEADER]: proof } : {},
-    });
+    const response = await httpService.get<IDeviceLoginStatusResponse>(
+      `${DEVICE_LOGIN_PATH}/${id}`,
+      {
+        skipAuthRetry: true,
+        headers: proof ? { [DEVICE_LOGIN_PROOF_HEADER]: proof } : {},
+      }
+    );
     const info = response.ok ? response.info : null;
     if (info && info.status !== 'pending') this.loginProofs.delete(id);
     if (info?.status !== 'approved') return response;
     const { accessToken, refreshToken, userId, role } = info;
     if (!accessToken || !refreshToken || !userId || !role) {
-      return errorResponse(response.status, 'INVALID_RESPONSE', 'The approved login is missing its session');
+      return errorResponse(
+        response.status,
+        'INVALID_RESPONSE',
+        'The approved login is missing its session'
+      );
     }
     await sessionService.establish({
       accessToken,
@@ -153,7 +160,7 @@ class AuthService {
   }
 
   private async establishLoginSession(
-    response: IServiceResponse<IResponseLoginDto>,
+    response: IServiceResponse<IResponseLoginDto>
   ): Promise<void> {
     if (!response.ok || !response.info) return;
     await sessionService.establish(this.toSession(response.info));

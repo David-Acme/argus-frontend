@@ -226,6 +226,7 @@ describe('check-quality', () => {
       "  await withTimeout(http.get('/a'), 10);",
       "  await get('/b');",
       "  await parsed(httpService.get('/c'));",
+      "  expectShape(await httpService.get('/d'), shape, 'D');",
       "  const pad = RN.Platform['select']({ web: 1, default: 2 });",
       '  return web ? <RN.Pressable style={[{ padding: pad }]} /> : null;',
       '}',

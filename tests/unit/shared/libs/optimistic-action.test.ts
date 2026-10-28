@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, mock, test } from 'bun:test';
-import { localeDictionaries } from '@/core/i18n/locales';
+import { localeDictionaries } from '@/core/locales/all';
 import type { IServiceResponse } from '@/core/interfaces';
 import type { ToastAction } from '@/core/types';
 

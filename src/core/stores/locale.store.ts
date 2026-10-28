@@ -1,5 +1,6 @@
 import { getLocales } from 'expo-localization';
 import { create } from 'zustand';
+import { dictionaryLoaded, loadDictionary } from '@/core/locales';
 import { storageService } from '@/core/services/storage';
 import { I18N_DEFAULT_LANGUAGE, I18N_STORAGE_KEY, SUPPORTED_LANGUAGES } from '@/shared/constants';
 import type { LanguageCode, LanguagePreference } from '@/core/types';
@@ -29,6 +30,8 @@ const resolveLanguage = (preference: LanguagePreference): LanguageCode => {
 
 const initialPreference = readPreference();
 
+let languageRequest = 0;
+
 type LocaleStoreState = {
   preference: LanguagePreference;
   language: LanguageCode;
@@ -40,6 +43,14 @@ export const useLocaleStore = create<LocaleStoreState>((set) => ({
   language: resolveLanguage(initialPreference),
   setLanguage: (preference) => {
     storageService.set(I18N_STORAGE_KEY, preference);
-    set({ preference, language: resolveLanguage(preference) });
+    const language = resolveLanguage(preference);
+    const request = ++languageRequest;
+    if (dictionaryLoaded(language)) {
+      set({ preference, language });
+      return;
+    }
+    void loadDictionary(language).then(() => {
+      if (request === languageRequest) set({ preference, language });
+    });
   },
 }));

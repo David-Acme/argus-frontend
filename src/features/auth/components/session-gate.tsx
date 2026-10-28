@@ -1,5 +1,6 @@
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useState, type PropsWithChildren } from 'react';
+import { dictionaryLoaded, getLanguage, loadDictionary } from '@/core/i18n';
 import { synchronizeService } from '@/core/services/sync';
 import { sessionService } from '@/core/services/session.service';
 import { useAuthStore } from '@/core/stores/auth.store';
@@ -13,7 +14,9 @@ if (IS_NATIVE) {
 type SessionGateProps = PropsWithChildren;
 
 export function SessionGate({ children }: SessionGateProps) {
-  const [ready, setReady] = useState(sessionService.isInitialized);
+  const [ready, setReady] = useState(
+    () => sessionService.isInitialized && dictionaryLoaded(getLanguage())
+  );
 
   useEffect(() => {
     let active = true;
@@ -25,12 +28,11 @@ export function SessionGate({ children }: SessionGateProps) {
       endSession: (notice) => sessionService.endSession(notice),
     });
 
-    void sessionService
-      .initialize()
-      .finally(() => {
+    void Promise.allSettled([sessionService.initialize(), loadDictionary(getLanguage())]).then(
+      () => {
         if (active) setReady(true);
-      })
-      .catch(() => undefined);
+      }
+    );
 
     return () => {
       active = false;

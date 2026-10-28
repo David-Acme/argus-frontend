@@ -12,12 +12,11 @@ import { useInvitationPreview } from '@/features/people/hooks/use-invitation-pre
 import { invitationLinesOf } from '@/features/people/model/invitations';
 import type { InvitationLine } from '@/features/people/model/invitations';
 import { INVITATION_LENSES, invitationStateOf } from '@/features/people/model/people-optimistic';
+import { nowSeconds } from '@/shared/libs/day';
 
 const MINUTE_MS = 60_000;
 
 const refresh = () => void synchronizeService.syncOnce();
-
-const nowSeconds = () => Math.floor(Date.now() / 1000);
 
 const NO_INVITATIONS: readonly IInvitationRecord[] = [];
 

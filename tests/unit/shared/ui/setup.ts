@@ -135,5 +135,8 @@ mock.module('react-native-reanimated', async () => {
 });
 
 const { cleanup } = await import('@testing-library/react');
+const { loadDictionary } = await import('@/core/locales');
+
+await loadDictionary('en');
 
 afterEach(() => cleanup());

@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { privacyDirectorySchema } from '@/core/contracts/privacy.contract';
-import { localeDictionaries } from '@/core/i18n/locales';
+import { localeDictionaries } from '@/core/locales/all';
 import { translate } from '@/core/i18n/translate';
 import type { PrivacyDirectory, UserPrivacy } from '@/core/types';
 import {
