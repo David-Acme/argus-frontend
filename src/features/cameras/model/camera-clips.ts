@@ -145,6 +145,18 @@ export function clipDetail(clip: ICameraClip, moment: string): string {
   return isImageClip(clip) ? moment : `${moment} · ${formatClipDuration(clip.durationMs)}`;
 }
 
+export type ClipCaptionInput = { clip: ICameraClip; camera: string | null; moment: string };
+
+export type ClipCaption = { line: string; duration: string | null; spoken: string };
+
+export function clipCaption({ clip, camera, moment }: ClipCaptionInput): ClipCaption {
+  return {
+    line: camera ? `${camera} · ${moment}` : moment,
+    duration: isImageClip(clip) ? null : formatClipDuration(clip.durationMs),
+    spoken: [camera, clipDetail(clip, moment)].filter(Boolean).join(', '),
+  };
+}
+
 export function clipFacts(t: TranslateFn, clip: ICameraClip): string {
   return [
     isImageClip(clip) ? '' : formatClipDuration(clip.durationMs),

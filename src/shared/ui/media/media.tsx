@@ -26,6 +26,7 @@ import type { MediaControl, MediaDormant, MediaEye } from '@/shared/ui/media/med
 
 type MediaContent = {
   name?: string;
+  label?: string;
   detail?: string;
   live?: string;
   dormant?: MediaDormant;
@@ -128,8 +129,8 @@ function Reveal({ shown, children }: RevealProps) {
   );
 }
 
-function accessibleName({ name, live, detail }: MediaContent): string {
-  return [name, live, detail].filter(Boolean).join(', ');
+function accessibleName({ name, label, live, detail }: MediaContent): string {
+  return label ?? [name, live, detail].filter(Boolean).join(', ');
 }
 
 function tileFrame({ dormant, fill }: Pick<MediaTileProps, 'dormant' | 'fill'>) {

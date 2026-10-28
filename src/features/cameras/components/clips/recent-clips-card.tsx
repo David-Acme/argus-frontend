@@ -12,7 +12,6 @@ import { useCameraRows } from '@/features/cameras/hooks/use-camera-rows';
 import { useClipFeed } from '@/features/cameras/hooks/use-clip-feed';
 import {
   CLIP_FEED_ALL,
-  clipDetail,
   clipGridRows,
   clipMoment,
   visibleClips,
@@ -51,16 +50,15 @@ export function RecentClipsCard() {
               <ClipTile
                 clip={clip}
                 cameraName={names.get(clip.cameraId) ?? ''}
-                detail={clipDetail(
-                  clip,
-                  clipMoment({
-                    at: clip.startedAt * 1000,
-                    now,
-                    t,
-                    time: date.formatTime,
-                    day: date.formatDayMonth,
-                  })
-                )}
+                moment={clipMoment({
+                  at: clip.startedAt * 1000,
+                  now,
+                  t,
+                  time: date.formatTime,
+                  day: date.formatDayMonth,
+                })}
+                showCamera={cameras.length > 1}
+                duration={false}
                 onOpen={open}
               />
             ) : null}

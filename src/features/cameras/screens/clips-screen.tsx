@@ -25,7 +25,6 @@ import { useClipFeed, type ClipFeed } from '@/features/cameras/hooks/use-clip-fe
 import { CAMERA_LIST_HREF, CLIP_HREF } from '@/features/cameras/constants/routes.constant';
 import {
   clipColumns,
-  clipDetail,
   clipFeedScope,
   clipGridRows,
   clipMoment,
@@ -40,12 +39,13 @@ const SKELETON_TILES = 4;
 type GridProps = {
   clips: readonly ICameraClip[];
   names: ReadonlyMap<string, string>;
+  showCamera: boolean;
   onOpen: (clip: ICameraClip) => void;
 };
 
 type EmptyCopy = { message: string; detail: string };
 
-function ClipGrid({ clips, names, onOpen }: GridProps) {
+function ClipGrid({ clips, names, showCamera, onOpen }: GridProps) {
   const { t } = useTranslation();
   const date = useDateFormatter();
   const now = useNow(MINUTE_MS);
@@ -64,16 +64,14 @@ function ClipGrid({ clips, names, onOpen }: GridProps) {
                 <ClipTile
                   clip={clip}
                   cameraName={names.get(clip.cameraId) ?? ''}
-                  detail={clipDetail(
-                    clip,
-                    clipMoment({
-                      at: clip.startedAt * 1000,
-                      now,
-                      t,
-                      time: date.formatTime,
-                      day: date.formatDayMonth,
-                    })
-                  )}
+                  moment={clipMoment({
+                    at: clip.startedAt * 1000,
+                    now,
+                    t,
+                    time: date.formatTime,
+                    day: date.formatDayMonth,
+                  })}
+                  showCamera={showCamera}
                   onOpen={onOpen}
                 />
               ) : null}
@@ -267,7 +265,14 @@ export default function ClipsScreen() {
           copy={copy}
           skeleton={<GridSkeleton />}
           empty={{ ...empty, icon: 'play', centred: true, action: emptyAction }}>
-          {(clips) => <ClipGrid clips={clips} names={names} onOpen={open} />}
+          {(clips) => (
+            <ClipGrid
+              clips={clips}
+              names={names}
+              showCamera={cameraId === null && cameras.length > 1}
+              onOpen={open}
+            />
+          )}
         </ResourceView>
       </Section>
       <FeedFooter paging={feed.paging} />

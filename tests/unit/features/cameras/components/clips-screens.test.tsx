@@ -158,19 +158,35 @@ afterEach(() => {
 });
 
 describe('a clip tile', () => {
-  test('names its camera, says when and how long, and plays on a tap', () => {
+  test('names its camera, says when and how long under the frame, and plays on a tap', () => {
     const tapped: string[] = [];
     render(
       <ClipTile
         clip={clipOf('9')}
         cameraName="Cocina"
-        detail="hoy 14:02 · 0:21"
+        moment="hoy 14:02"
         onOpen={(clip) => tapped.push(clip.id)}
       />
     );
+    expect(screen.getByText('Cocina · hoy 14:02')).toBeDefined();
+    expect(screen.getByText('0:21')).toBeDefined();
     fireEvent.click(screen.getByRole('button', { name: 'Cocina, hoy 14:02 · 0:21' }));
     fireEvent.click(screen.getByRole('button', { name: 'Ver el clip de Cocina' }));
     expect(tapped).toEqual(['9', '9']);
+  });
+
+  test('without its camera name, a tile says only when', () => {
+    render(
+      <ClipTile
+        clip={clipOf('9')}
+        cameraName="Cocina"
+        moment="hoy 14:02"
+        showCamera={false}
+        onOpen={() => undefined}
+      />
+    );
+    expect(screen.getByText('hoy 14:02')).toBeDefined();
+    expect(screen.queryByText(/Cocina ·/)).toBeNull();
   });
 });
 
@@ -208,6 +224,17 @@ describe('the Clips screen', () => {
     fireEvent.click(screen.getByRole('tab', { name: 'Patio' }));
     fireEvent.click(screen.getByRole('button', { name: 'Ver el clip de Patio' }));
     expect(pushed).toEqual(['camera:4', '/clips/[id]?camera=4']);
+  });
+
+  test('filtered to one camera, the tiles drop its name; with every camera they keep it', () => {
+    feed.rows = [clipOf('9'), clipOf('8', '4')];
+    const all = render(<ClipsScreen />);
+    expect(screen.getAllByText(/^Cocina · /).length).toBe(1);
+    all.unmount();
+    params.camera = '3';
+    feed.rows = [clipOf('9')];
+    render(<ClipsScreen />);
+    expect(screen.queryByText(/^Cocina · /)).toBeNull();
   });
 
   test('an empty list is a centred notice that leads to the cameras', () => {
